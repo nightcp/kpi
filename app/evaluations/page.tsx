@@ -16,7 +16,7 @@ import { evaluationApi, scoreApi, employeeApi, templateApi, type KPIEvaluation, 
 import { useUser } from "@/lib/user-context";
 
 export default function EvaluationsPage() {
-  const { currentUser, isManager, isHR, isEmployee } = useUser();
+  const { currentUser, isManager, isHR } = useUser();
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [templates, setTemplates] = useState<KPITemplate[]>([]);
@@ -393,8 +393,9 @@ export default function EvaluationsPage() {
     }
     return evaluations.filter(evaluation => {
       if (isManager) {
-        // 经理可以看到下属的评估
-        return evaluation.employee?.manager_id === currentUser.id;
+        // 管理者可以看到自己的考核 + 下属的考核
+        return evaluation.employee_id === currentUser.id || 
+               evaluation.employee?.manager_id === currentUser.id;
       } else {
         // 员工只能看到自己的评估
         return evaluation.employee_id === currentUser.id;
@@ -408,10 +409,14 @@ export default function EvaluationsPage() {
     
     switch (action) {
       case 'self':
-        return evaluation.status === 'pending' && isEmployee && evaluation.employee_id === currentUser.id;
+        // 任何人都可以对自己的考核进行自评（包括管理者）
+        return evaluation.status === 'pending' && evaluation.employee_id === currentUser.id;
       case 'manager':
-        // 主管只能评估自己直接下属的员工
-        return evaluation.status === 'self_evaluated' && isManager;
+        // 主管只能评估自己直接下属的员工，但不能评估自己
+        return evaluation.status === 'self_evaluated' && 
+               isManager && 
+               evaluation.employee?.manager_id === currentUser.id &&
+               evaluation.employee_id !== currentUser.id;
       case 'hr':
         return evaluation.status === 'manager_evaluated' && isHR;
       default:
