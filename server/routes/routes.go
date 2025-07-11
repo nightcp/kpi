@@ -2,6 +2,7 @@ package routes
 
 import (
 	"dootask-kpi-server/handlers"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -86,4 +87,12 @@ func SetupRoutes(r *gin.RouterGroup) {
 		exportRoutes.GET("/department/:id", handlers.ExportDepartmentEvaluations)
 		exportRoutes.GET("/period/:period", handlers.ExportPeriodEvaluations)
 	}
+
+	// 健康检查
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "OK",
+			"message": "KPI系统后端服务正常运行",
+		})
+	})
 }

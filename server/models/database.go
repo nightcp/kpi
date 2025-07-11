@@ -2,6 +2,7 @@ package models
 
 import (
 	"log"
+	"os"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,8 +15,11 @@ var DB *gorm.DB
 func InitDB() {
 	var err error
 
+	// 创建db目录
+	os.MkdirAll("db", 0755)
+
 	// 连接SQLite数据库
-	DB, err = gorm.Open(sqlite.Open("kpi.db"), &gorm.Config{
+	DB, err = gorm.Open(sqlite.Open("db/kpi.db"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
