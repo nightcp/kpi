@@ -78,14 +78,15 @@ func SetupRoutes(r *gin.RouterGroup) {
 		statsRoutes.GET("/department/:id", handlers.GetDepartmentStats)
 		statsRoutes.GET("/employee/:id", handlers.GetEmployeeStats)
 		statsRoutes.GET("/trends", handlers.GetTrends)
+		statsRoutes.GET("/data", handlers.GetStatisticsData)
 	}
 
 	// 导出功能
 	exportRoutes := r.Group("/export")
 	{
-		exportRoutes.GET("/evaluation/:id", handlers.ExportEvaluation)
-		exportRoutes.GET("/department/:id", handlers.ExportDepartmentEvaluations)
-		exportRoutes.GET("/period/:period", handlers.ExportPeriodEvaluations)
+		exportRoutes.GET("/evaluation/:id", handlers.ExportEvaluationToExcel)
+		exportRoutes.GET("/department/:id", handlers.ExportDepartmentToExcel)
+		exportRoutes.GET("/period/:period", handlers.ExportPeriodToExcel)
 	}
 
 	// 健康检查

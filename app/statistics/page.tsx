@@ -34,138 +34,43 @@ import {
   Calendar,
   Download
 } from "lucide-react";
-import { statisticsApi, exportApi, type DashboardStats, type DepartmentStats, type MonthlyTrend, type ScoreDistribution, type TopPerformer, type RecentEvaluation } from "@/lib/api";
+import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api";
 
 export default function StatisticsPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1);
 
-  // 模拟统计数据
-  const [departmentStats, setDepartmentStats] = useState<DepartmentStats[]>([
-    { name: '技术部', total: 15, completed: 12, pending: 3, avg_score: 85 },
-    { name: '市场部', total: 8, completed: 6, pending: 2, avg_score: 78 },
-    { name: '人事部', total: 5, completed: 4, pending: 1, avg_score: 82 },
-    { name: '财务部', total: 6, completed: 5, pending: 1, avg_score: 80 }
-  ]);
-
-  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([
-    { month: '1月', evaluations: 28, avg_score: 82, completion_rate: 85 },
-    { month: '2月', evaluations: 32, avg_score: 84, completion_rate: 87 },
-    { month: '3月', evaluations: 30, avg_score: 81, completion_rate: 83 },
-    { month: '4月', evaluations: 35, avg_score: 85, completion_rate: 90 },
-    { month: '5月', evaluations: 33, avg_score: 83, completion_rate: 88 },
-    { month: '6月', evaluations: 36, avg_score: 86, completion_rate: 91 }
-  ]);
-
-  const [scoreDistribution] = useState<ScoreDistribution[]>([
-    { range: '90-100', count: 15, color: '#22c55e' },
-    { range: '80-89', count: 25, color: '#3b82f6' },
-    { range: '70-79', count: 18, color: '#f59e0b' },
-    { range: '60-69', count: 8, color: '#ef4444' },
-    { range: '60以下', count: 4, color: '#6b7280' }
-  ]);
-
-  const [topPerformers] = useState<TopPerformer[]>([
-    { name: '张三', department: '技术部', score: 95, evaluations: 3 },
-    { name: '李四', department: '市场部', score: 92, evaluations: 2 },
-    { name: '王五', department: '技术部', score: 90, evaluations: 3 },
-    { name: '赵六', department: '人事部', score: 88, evaluations: 2 },
-    { name: '钱七', department: '财务部', score: 87, evaluations: 2 }
-  ]);
-
-  const [recentEvaluations] = useState<RecentEvaluation[]>([
-    { id: 1, employee: '张三', department: '技术部', template: '技术岗位月度考核', score: 85, status: 'completed', date: '2024-12-01' },
-    { id: 2, employee: '李四', department: '市场部', template: '市场岗位季度考核', score: 78, status: 'manager_evaluated', date: '2024-12-02' },
-    { id: 3, employee: '王五', department: '技术部', template: '技术岗位月度考核', score: 92, status: 'completed', date: '2024-12-03' },
-    { id: 4, employee: '赵六', department: '人事部', template: '人事岗位月度考核', score: 80, status: 'pending', date: '2024-12-04' },
-    { id: 5, employee: '钱七', department: '财务部', template: '财务岗位月度考核', score: 88, status: 'self_evaluated', date: '2024-12-05' }
-  ]);
-
-  // 获取仪表板统计数据
-  const fetchDashboardStats = async () => {
+  // 获取统计数据
+  const fetchStatisticsData = useCallback(async () => {
     try {
-      const response = await statisticsApi.getDashboard();
-      setDashboardStats(response.data);
+      setLoading(true);
+      const [dashboardResponse, statisticsResponse] = await Promise.all([
+        statisticsApi.getDashboard(),
+        statisticsApi.getData({
+          year: selectedYear.toString(),
+          period: selectedPeriod,
+          month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
+          quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
+        })
+      ]);
+      
+      setDashboardStats(dashboardResponse.data);
+      setStatisticsData(statisticsResponse.data);
     } catch (error) {
       console.error("获取统计数据失败:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  // 获取筛选后的数据
-  const getFilteredData = useCallback(() => {
-    // 根据选择的周期和年份筛选数据
-    const periodMultiplier = selectedPeriod === 'monthly' ? 1 : selectedPeriod === 'quarterly' ? 0.25 : 0.083;
-    const yearOffset = selectedYear - 2024;
-    
-    // 根据具体的月份或季度调整数据
-    let specificOffset = 0;
-    if (selectedPeriod === 'monthly') {
-      specificOffset = (selectedMonth - 6) * 0.5; // 以6月为基准
-    } else if (selectedPeriod === 'quarterly') {
-      specificOffset = (selectedQuarter - 2) * 1.5; // 以第2季度为基准
-    }
-    
-    return {
-      evaluations: Math.max(20, Math.floor(125 * periodMultiplier + yearOffset * 10 + specificOffset * 2)),
-      averageScore: Math.max(70, Math.min(95, 83.5 + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)),
-      completionRate: Math.max(60, Math.min(100, 85 + Math.random() * 10 - 5 + yearOffset * 3 + specificOffset))
-    };
-  }, [selectedPeriod, selectedYear, selectedMonth, selectedQuarter]);
+  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter]);
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
-
-  // 监听筛选条件变化
-  useEffect(() => {
-    const filteredData = getFilteredData();
-    setDashboardStats(prev => prev ? {
-      ...prev,
-      total_evaluations: filteredData.evaluations,
-      average_score: filteredData.averageScore,
-      completed_evaluations: Math.floor(filteredData.evaluations * filteredData.completionRate / 100)
-    } : null);
-
-    // 更新部门统计数据
-    const periodMultiplier = selectedPeriod === 'monthly' ? 1 : selectedPeriod === 'quarterly' ? 0.25 : 0.083;
-    const yearOffset = selectedYear - 2024;
-    
-    let specificOffset = 0;
-    if (selectedPeriod === 'monthly') {
-      specificOffset = (selectedMonth - 6) * 0.5;
-    } else if (selectedPeriod === 'quarterly') {
-      specificOffset = (selectedQuarter - 2) * 1.5;
-    }
-    
-    setDepartmentStats([
-      { name: '技术部', total: Math.max(1, Math.floor(15 * periodMultiplier + yearOffset * 2 + specificOffset)), completed: Math.max(1, Math.floor(12 * periodMultiplier + yearOffset * 1 + specificOffset)), pending: Math.max(0, Math.floor(3 * periodMultiplier + yearOffset * 0.5)), avg_score: Math.max(70, Math.min(95, 85 + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)) },
-      { name: '市场部', total: Math.max(1, Math.floor(8 * periodMultiplier + yearOffset * 1 + specificOffset)), completed: Math.max(1, Math.floor(6 * periodMultiplier + yearOffset * 0.5 + specificOffset)), pending: Math.max(0, Math.floor(2 * periodMultiplier + yearOffset * 0.3)), avg_score: Math.max(70, Math.min(95, 78 + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)) },
-      { name: '人事部', total: Math.max(1, Math.floor(5 * periodMultiplier + yearOffset * 0.5 + specificOffset)), completed: Math.max(1, Math.floor(4 * periodMultiplier + yearOffset * 0.3 + specificOffset)), pending: Math.max(0, Math.floor(1 * periodMultiplier + yearOffset * 0.2)), avg_score: Math.max(70, Math.min(95, 82 + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)) },
-      { name: '财务部', total: Math.max(1, Math.floor(6 * periodMultiplier + yearOffset * 0.8 + specificOffset)), completed: Math.max(1, Math.floor(5 * periodMultiplier + yearOffset * 0.6 + specificOffset)), pending: Math.max(0, Math.floor(1 * periodMultiplier + yearOffset * 0.2)), avg_score: Math.max(70, Math.min(95, 80 + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)) }
-    ]);
-
-    // 更新月度趋势数据
-    const baseTrends = [
-      { month: '1月', evaluations: 28, avg_score: 82, completion_rate: 85 },
-      { month: '2月', evaluations: 32, avg_score: 84, completion_rate: 87 },
-      { month: '3月', evaluations: 30, avg_score: 81, completion_rate: 83 },
-      { month: '4月', evaluations: 35, avg_score: 85, completion_rate: 90 },
-      { month: '5月', evaluations: 33, avg_score: 83, completion_rate: 88 },
-      { month: '6月', evaluations: 36, avg_score: 86, completion_rate: 91 }
-    ];
-    
-             setMonthlyTrends(baseTrends.map(trend => ({
-      ...trend,
-      evaluations: Math.max(5, Math.floor(trend.evaluations * periodMultiplier + yearOffset * 3 + specificOffset)),
-      avg_score: Math.max(70, Math.min(95, trend.avg_score + Math.random() * 4 - 2 + yearOffset * 2 + specificOffset)),
-      completion_rate: Math.max(60, Math.min(100, trend.completion_rate + Math.random() * 6 - 3 + yearOffset * 3 + specificOffset))
-    })));
-  }, [selectedPeriod, selectedYear, selectedMonth, selectedQuarter, getFilteredData]);
+    fetchStatisticsData();
+  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter, fetchStatisticsData]);
 
   // 获取状态标签
   const getStatusBadge = (status: string) => {
@@ -188,19 +93,36 @@ export default function StatisticsPage() {
   // 导出报告
   const handleExport = async (type: string) => {
     try {
-      let response;
+      let blob: Blob;
+      let fileName: string;
+      
       switch (type) {
         case 'period':
-          response = await exportApi.period(selectedPeriod);
+          blob = await exportApi.period(selectedPeriod, {
+            year: selectedYear.toString(),
+            month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
+            quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
+          });
+          fileName = `周期评估统计-${selectedPeriod}-${selectedYear}.xlsx`;
           break;
         case 'department':
-          response = await exportApi.department(1); // 示例部门ID
+          blob = await exportApi.department(1); // 示例部门ID
+          fileName = `部门评估汇总-${new Date().getTime()}.xlsx`;
           break;
         default:
           return;
       }
-      // 这里应该处理文件下载
-      console.log('导出成功:', response);
+      
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('导出失败:', error);
     }
@@ -364,7 +286,7 @@ export default function StatisticsPage() {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={departmentStats}>
+                  <BarChart data={statisticsData?.departmentStats || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -385,7 +307,7 @@ export default function StatisticsPage() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={departmentStats}>
+                  <BarChart data={statisticsData?.departmentStats || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis domain={[0, 100]} />
@@ -409,7 +331,7 @@ export default function StatisticsPage() {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyTrends}>
+                  <LineChart data={statisticsData?.monthlyTrends || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis yAxisId="left" />
@@ -430,7 +352,7 @@ export default function StatisticsPage() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyTrends}>
+                  <AreaChart data={statisticsData?.monthlyTrends || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -456,7 +378,7 @@ export default function StatisticsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={scoreDistribution}
+                      data={statisticsData?.scoreDistribution || []}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -465,7 +387,7 @@ export default function StatisticsPage() {
                       fill="#8884d8"
                       dataKey="count"
                     >
-                      {scoreDistribution.map((entry, index) => (
+                      {(statisticsData?.scoreDistribution || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -498,7 +420,7 @@ export default function StatisticsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topPerformers.map((performer, index) => (
+                    {(statisticsData?.topPerformers || []).map((performer, index) => (
                       <TableRow key={performer.name}>
                         <TableCell>
                           <div className="flex items-center">
@@ -544,7 +466,7 @@ export default function StatisticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentEvaluations.map((evaluation) => (
+                {(statisticsData?.recentEvaluations || []).map((evaluation) => (
                   <TableRow key={evaluation.id}>
                     <TableCell className="font-medium">{evaluation.employee}</TableCell>
                     <TableCell>{evaluation.department}</TableCell>
