@@ -457,7 +457,7 @@ func UpdateSelfScore(c *gin.Context) {
 
 	// 如果该评分所属考核的员工没有主管且当前状态是自评，则自动流转
 	var evaluation models.KPIEvaluation
-	if err := models.DB.Preload("Employee").Where("status = ?", "self_evaluated").First(&evaluation, score.EvaluationID).Error; err == nil {
+	if err := models.DB.Preload("Employee").Where("status = ?", "pending").First(&evaluation, score.EvaluationID).Error; err == nil {
 		if evaluation.Employee.ManagerID == nil {
 			// 没有主管，自动将所有评分的manager_score设为self_score
 			var scores []models.KPIScore
