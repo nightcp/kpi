@@ -48,12 +48,6 @@ export default function EmployeesPage() {
       setDepartments(response.data || []);
     } catch (error) {
       console.error("获取部门列表失败:", error);
-      setDepartments([
-        { id: 1, name: "技术部", description: "技术部", created_at: "2024-01-01T00:00:00Z" },
-        { id: 2, name: "市场部", description: "市场部", created_at: "2024-01-01T00:00:00Z" },
-        { id: 3, name: "人事部", description: "人事部", created_at: "2024-01-01T00:00:00Z" },
-        { id: 4, name: "财务部", description: "财务部", created_at: "2024-01-01T00:00:00Z" }
-      ]);
     }
   };
 
