@@ -13,8 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Eye, Award, FileCheck, CheckCircle, Clock, Star, Edit2, Save, X } from "lucide-react";
 import { evaluationApi, scoreApi, employeeApi, templateApi, type KPIEvaluation, type KPIScore, type Employee, type KPITemplate } from "@/lib/api";
+import { useUser } from "@/lib/user-context";
 
 export default function EvaluationsPage() {
+  const { currentUser, isManager, isHR, isEmployee } = useUser();
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [templates, setTemplates] = useState<KPITemplate[]>([]);
@@ -22,8 +24,6 @@ export default function EvaluationsPage() {
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<KPIEvaluation | null>(null);
   const [scores, setScores] = useState<KPIScore[]>([]);
-  const [currentRole] = useState('hr'); // 模拟当前用户角色：改为hr测试HR审核
-  const [currentUserId] = useState(6); // 模拟当前用户ID：孙八（HR经理）
   const [activeTab, setActiveTab] = useState("details"); // 新增：标签页状态
   const [editingScore, setEditingScore] = useState<number | null>(null); // 新增：正在编辑的评分ID
   const [tempScore, setTempScore] = useState<number>(0); // 新增：临时评分
@@ -386,30 +386,34 @@ export default function EvaluationsPage() {
 
   // 根据用户角色过滤评估
   const getFilteredEvaluations = () => {
-    if (currentRole === 'hr') {
+    if (!currentUser) return [];
+    
+    if (isHR) {
       return evaluations; // HR可以看到所有评估
     }
     return evaluations.filter(evaluation => {
-      if (currentRole === 'manager') {
+      if (isManager) {
         // 经理可以看到下属的评估
-        return evaluation.employee?.manager_id === currentUserId;
+        return evaluation.employee?.manager_id === currentUser.id;
       } else {
         // 员工只能看到自己的评估
-        return evaluation.employee_id === currentUserId;
+        return evaluation.employee_id === currentUser.id;
       }
     });
   };
 
   // 检查是否可以进行某个操作
   const canPerformAction = (evaluation: KPIEvaluation, action: 'self' | 'manager' | 'hr') => {
+    if (!currentUser) return false;
+    
     switch (action) {
       case 'self':
-        return evaluation.status === 'pending' && currentRole === 'employee' && evaluation.employee_id === currentUserId;
+        return evaluation.status === 'pending' && isEmployee && evaluation.employee_id === currentUser.id;
       case 'manager':
         // 主管只能评估自己直接下属的员工
-        return evaluation.status === 'self_evaluated' && currentRole === 'manager';
+        return evaluation.status === 'self_evaluated' && isManager;
       case 'hr':
-        return evaluation.status === 'manager_evaluated' && currentRole === 'hr';
+        return evaluation.status === 'manager_evaluated' && isHR;
       default:
         return false;
     }
@@ -453,7 +457,7 @@ export default function EvaluationsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">考核管理</h1>
           <p className="text-gray-600 mt-1 sm:mt-2">管理员工绩效考核流程</p>
         </div>
-        {currentRole === 'hr' && (
+        {isHR && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">

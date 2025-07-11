@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar, MobileHeader } from "@/components/sidebar";
+import { UserProvider } from "@/lib/user-context";
+import { UserSwitcher } from "@/components/user-switcher";
 import { useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,23 +31,28 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={inter.className}>
-        <div className="min-h-screen flex flex-col lg:flex-row">
-          {/* 移动端头部 */}
-          <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
-          
-          {/* 侧边栏 */}
-          <Sidebar 
-            isMobileMenuOpen={isMobileMenuOpen} 
-            setIsMobileMenuOpen={setIsMobileMenuOpen} 
-          />
-          
-          {/* 主内容区域 */}
-          <main className="flex-1 p-4 lg:p-6 bg-gray-50 min-w-0">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
-          </main>
-        </div>
+        <UserProvider>
+          <div className="min-h-screen flex flex-col lg:flex-row">
+            {/* 移动端头部 */}
+            <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+            
+            {/* 侧边栏 */}
+            <Sidebar 
+              isMobileMenuOpen={isMobileMenuOpen} 
+              setIsMobileMenuOpen={setIsMobileMenuOpen} 
+            />
+            
+            {/* 主内容区域 */}
+            <main className="flex-1 p-4 lg:p-6 bg-gray-50 min-w-0">
+              <div className="max-w-7xl mx-auto">
+                {children}
+              </div>
+            </main>
+            
+            {/* 用户切换组件 */}
+            <UserSwitcher />
+          </div>
+        </UserProvider>
       </body>
     </html>
   );
