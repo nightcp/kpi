@@ -154,19 +154,20 @@ export default function EmployeesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* 响应式头部 */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">员工管理</h1>
-          <p className="text-gray-600 mt-2">管理员工信息和组织架构</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">员工管理</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2">管理员工信息和组织架构</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAdd}>
+            <Button onClick={handleAdd} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               添加员工
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[95vw] max-w-md mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingEmployee ? "编辑员工" : "添加员工"}
@@ -246,11 +247,11 @@ export default function EmployeesPage() {
                   </Select>
                 </div>
               )}
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:space-x-2 sm:gap-0">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
                   取消
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingEmployee ? "更新" : "创建"}
                 </Button>
               </div>
@@ -274,53 +275,117 @@ export default function EmployeesPage() {
               暂无员工数据
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>姓名</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>职位</TableHead>
-                  <TableHead>部门</TableHead>
-                  <TableHead>直属上级</TableHead>
-                  <TableHead>角色</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* 桌面端表格显示 */}
+              <div className="hidden lg:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>姓名</TableHead>
+                      <TableHead>邮箱</TableHead>
+                      <TableHead>职位</TableHead>
+                      <TableHead>部门</TableHead>
+                      <TableHead>直属上级</TableHead>
+                      <TableHead>角色</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees.map((employee) => (
+                      <TableRow key={employee.id}>
+                        <TableCell className="font-medium">{employee.name}</TableCell>
+                        <TableCell>{employee.email}</TableCell>
+                        <TableCell>{employee.position}</TableCell>
+                        <TableCell>{employee.department?.name}</TableCell>
+                        <TableCell>{employee.manager?.name || "-"}</TableCell>
+                        <TableCell>{getRoleBadge(employee.role)}</TableCell>
+                        <TableCell>
+                          <Badge variant={employee.is_active ? "default" : "secondary"}>
+                            {employee.is_active ? "活跃" : "停用"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(employee)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(employee.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* 移动端卡片显示 */}
+              <div className="lg:hidden space-y-4">
                 {employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="font-medium">{employee.name}</TableCell>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.position}</TableCell>
-                    <TableCell>{employee.department?.name}</TableCell>
-                    <TableCell>{employee.manager?.name || "-"}</TableCell>
-                    <TableCell>{getRoleBadge(employee.role)}</TableCell>
-                    <TableCell>
-                      <Badge variant={employee.is_active ? "default" : "secondary"}>
-                        {employee.is_active ? "活跃" : "停用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(employee)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(employee.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <Card key={employee.id} className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-gray-900">{employee.name}</h3>
+                          <p className="text-sm text-gray-600">{employee.position}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(employee)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(employee.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">邮箱:</span>
+                          <span className="text-sm font-medium">{employee.email}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">部门:</span>
+                          <span className="text-sm font-medium">{employee.department?.name}</span>
+                        </div>
+                        {employee.manager && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">直属上级:</span>
+                            <span className="text-sm font-medium">{employee.manager.name}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">角色:</span>
+                          {getRoleBadge(employee.role)}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">状态:</span>
+                          <Badge variant={employee.is_active ? "default" : "secondary"}>
+                            {employee.is_active ? "活跃" : "停用"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

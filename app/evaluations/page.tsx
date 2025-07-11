@@ -282,7 +282,7 @@ export default function EvaluationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">考核管理</h1>
           <p className="text-gray-600 mt-2">管理员工绩效考核流程</p>

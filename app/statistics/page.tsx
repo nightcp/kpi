@@ -220,7 +220,7 @@ export default function StatisticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">统计分析</h1>
           <p className="text-gray-600 mt-2">
@@ -230,7 +230,7 @@ export default function StatisticsPage() {
              '全年'}数据
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
             <SelectTrigger className="w-auto">
               <SelectValue />
@@ -288,7 +288,7 @@ export default function StatisticsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button className="ml-2" onClick={() => handleExport('period')}>
+          <Button onClick={() => handleExport('period')}>
             <Download className="w-4 h-4 mr-2" />
             导出报告
           </Button>

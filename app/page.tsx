@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Users, Building, FileText, TrendingUp, Clock, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react";
 import { statisticsApi, type DashboardStats } from "@/lib/api";
 import Link from "next/link";
@@ -64,61 +63,62 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 lg:space-y-8">
+      {/* 响应式头部 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">仪表板</h1>
-        <p className="text-gray-600 mt-2">欢迎使用KPI绩效考核系统</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">仪表板</h1>
+        <p className="text-gray-600 mt-1 sm:mt-2">欢迎使用KPI绩效考核系统</p>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总员工数</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">总员工数</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_employees || 0}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats?.total_employees || 0}</div>
             <p className="text-xs text-muted-foreground">活跃员工</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">部门数量</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">部门数量</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_departments || 0}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats?.total_departments || 0}</div>
             <p className="text-xs text-muted-foreground">组织部门</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">待处理</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">待处理</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.pending_evaluations || 0}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats?.pending_evaluations || 0}</div>
             <p className="text-xs text-muted-foreground">需要处理</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">平均分数</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">平均分数</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.average_score?.toFixed(1) || "0.0"}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats?.average_score?.toFixed(1) || "0.0"}</div>
             <p className="text-xs text-muted-foreground">整体表现</p>
           </CardContent>
         </Card>
       </div>
 
       {/* 次要统计 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">总评估数</CardTitle>
@@ -160,38 +160,42 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>最近评估</CardTitle>
+            <CardTitle>
+              <div className="flex items-center justify-between">
+                <div>最近评估</div>
+                {stats?.recent_evaluations && stats.recent_evaluations.length > 0 && (
+                  <Link href="/evaluations" className="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-normal text-sm leading-none">
+                    <Eye className="w-4 h-4" />
+                    查看全部
+                  </Link>
+                )}
+              </div>
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col gap-2">
             {stats?.recent_evaluations && stats.recent_evaluations.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {stats.recent_evaluations.slice(0, 5).map((evaluation) => (
-                  <div key={evaluation.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={evaluation.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg space-y-2 sm:space-y-0">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                         <span className="font-medium">{evaluation.employee?.name}</span>
-                        <span className="text-sm text-gray-500">{evaluation.employee?.position}</span>
+                        <span className="text-sm text-gray-500">{evaluation.employee?.department?.name} - {evaluation.employee?.position}</span>
                       </div>
-                      <div className="text-sm text-gray-600">{evaluation.template?.name}</div>
-                      <div className="text-xs text-gray-500">{evaluation.employee?.department?.name}</div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between sm:justify-end sm:space-x-2">
                       <div className="text-right">
-                        <div className="text-lg font-semibold">{evaluation.total_score}</div>
-                        <div className="text-xs text-gray-500">得分</div>
+                        <div className="flex items-center justify-end">
+                          <div className="text-xs text-gray-500">得分</div>
+                          <div className="text-lg font-semibold ml-1">{evaluation.total_score}</div>
+                        </div>
                       </div>
-                      {getStatusBadge(evaluation.status)}
+                      <div className="sm:ml-2">
+                        {getStatusBadge(evaluation.status)}
+                      </div>
                     </div>
                   </div>
                 ))}
-                <div className="text-center pt-2">
-                  <Link href="/evaluations">
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-2" />
-                      查看全部
-                    </Button>
-                  </Link>
-                </div>
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
@@ -207,14 +211,14 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>快速操作</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+          <CardContent className="flex flex-col gap-3">
             <Link href="/evaluations">
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">考核管理</p>
                   <p className="text-sm text-gray-600">创建和管理员工KPI评估</p>
                 </div>
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">
                   <Plus className="w-3 h-3 mr-1" />
                   新建
                 </Badge>
@@ -222,29 +226,29 @@ export default function Dashboard() {
             </Link>
             <Link href="/templates">
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer">
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">KPI模板</p>
                   <p className="text-sm text-gray-600">创建和管理KPI考核模板</p>
                 </div>
-                <Badge variant="secondary">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
               </div>
             </Link>
             <Link href="/statistics">
               <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">统计分析</p>
                   <p className="text-sm text-gray-600">查看绩效统计和分析报告</p>
                 </div>
-                <Badge variant="secondary">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
               </div>
             </Link>
             <Link href="/employees">
               <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer">
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">员工管理</p>
                   <p className="text-sm text-gray-600">管理员工信息和组织架构</p>
                 </div>
-                <Badge variant="secondary">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
               </div>
             </Link>
           </CardContent>

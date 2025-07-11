@@ -187,7 +187,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">系统设置</h1>
           <p className="text-gray-600 mt-2">管理系统配置和参数</p>

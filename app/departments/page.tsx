@@ -93,19 +93,20 @@ export default function DepartmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* 响应式头部 */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">部门管理</h1>
-          <p className="text-gray-600 mt-2">管理组织架构和部门信息</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">部门管理</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2">管理组织架构和部门信息</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAdd}>
+            <Button onClick={handleAdd} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               添加部门
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="w-[95vw] max-w-md mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingDepartment ? "编辑部门" : "添加部门"}
@@ -129,11 +130,11 @@ export default function DepartmentsPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:space-x-2 sm:gap-0">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
                   取消
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingDepartment ? "更新" : "创建"}
                 </Button>
               </div>
@@ -157,49 +158,101 @@ export default function DepartmentsPage() {
               暂无部门数据
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>部门名称</TableHead>
-                  <TableHead>描述</TableHead>
-                  <TableHead>员工数量</TableHead>
-                  <TableHead>创建时间</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* 桌面端表格显示 */}
+              <div className="hidden lg:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>部门名称</TableHead>
+                      <TableHead>描述</TableHead>
+                      <TableHead>员工数量</TableHead>
+                      <TableHead>创建时间</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {departments.map((department) => (
+                      <TableRow key={department.id}>
+                        <TableCell className="font-medium">{department.name}</TableCell>
+                        <TableCell>{department.description}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {department.employees?.length || 0} 人
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(department.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(department)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(department.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* 移动端卡片显示 */}
+              <div className="lg:hidden space-y-4">
                 {departments.map((department) => (
-                  <TableRow key={department.id}>
-                    <TableCell className="font-medium">{department.name}</TableCell>
-                    <TableCell>{department.description}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {department.employees?.length || 0} 人
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(department.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(department)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(department.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <Card key={department.id} className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-gray-900">{department.name}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{department.description}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(department)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(department.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">员工数量:</span>
+                          <Badge variant="secondary">
+                            {department.employees?.length || 0} 人
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">创建时间:</span>
+                          <span className="text-sm font-medium">
+                            {new Date(department.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

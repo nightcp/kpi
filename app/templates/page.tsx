@@ -221,7 +221,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">KPI模板管理</h1>
           <p className="text-gray-600 mt-2">创建和管理KPI考核模板</p>
