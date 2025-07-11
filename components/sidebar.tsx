@@ -18,6 +18,7 @@ import { useEffect, useMemo } from "react";
 import { useUser } from "@/lib/user-context";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
+import { Badge } from "./ui/badge";
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -28,6 +29,16 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const pathname = usePathname();
   const router = useRouter();
   const {currentUser, isHR} = useUser();
+
+  // 根据用户角色生成角色徽章
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'hr':
+        return <Badge variant="destructive">HR</Badge>;
+      case 'manager':
+        return <Badge variant="default">主管</Badge>;
+    }
+  };
 
   // 根据用户角色动态生成导航菜单
   const navigation = useMemo(() => {
@@ -91,8 +102,9 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-bold text-gray-800">KPI考核系统</h1>
             {currentUser && (
-              <div className="text-sm text-gray-500">
-                {currentUser.name} - {currentUser.department_name}
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <div>{currentUser.name} - {currentUser.department_name}</div>
+                <div>{getRoleBadge(currentUser.role)}</div>
               </div>
             )}
           </div>

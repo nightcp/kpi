@@ -434,7 +434,7 @@ export default function EvaluationsPage() {
     }
     return evaluations.filter(evaluation => {
       if (isManager) {
-        // 管理者可以看到自己的考核 + 下属的考核
+        // 主管可以看到自己的考核 + 下属的考核
         return evaluation.employee_id === currentUser.id || 
                evaluation.employee?.manager_id === currentUser.id;
       } else {
@@ -450,7 +450,7 @@ export default function EvaluationsPage() {
     
     switch (action) {
       case 'self':
-        // 任何人都可以对自己的考核进行自评（包括管理者）
+        // 任何人都可以对自己的考核进行自评（包括主管）
         return evaluation.status === 'pending' && evaluation.employee_id === currentUser.id;
       case 'manager':
         // 主管只能评估自己直接下属的员工，但不能评估自己

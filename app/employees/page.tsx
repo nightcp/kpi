@@ -147,7 +147,7 @@ export default function EmployeesPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "manager":
-        return <Badge variant="default">经理</Badge>;
+        return <Badge variant="default">主管</Badge>;
       case "hr":
         return <Badge variant="secondary">HR</Badge>;
       default:
@@ -228,7 +228,7 @@ export default function EmployeesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="employee">员工</SelectItem>
-                    <SelectItem value="manager">经理</SelectItem>
+                    <SelectItem value="manager">主管</SelectItem>
                     <SelectItem value="hr">HR</SelectItem>
                   </SelectContent>
                 </Select>

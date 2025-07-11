@@ -30,7 +30,7 @@ export function UserSwitcher() {
       case 'hr':
         return <Badge variant="destructive">HR</Badge>;
       case 'manager':
-        return <Badge variant="default">管理者</Badge>;
+        return <Badge variant="default">主管</Badge>;
       case 'employee':
         return <Badge variant="secondary">员工</Badge>;
       default:
@@ -122,7 +122,7 @@ export function UserSwitcher() {
               onClick={() => switchUser(6)}
               className="flex-1 text-xs"
             >
-              HR测试
+              HR
             </Button>
             <Button
               size="sm"
@@ -130,7 +130,7 @@ export function UserSwitcher() {
               onClick={() => switchUser(1)}
               className="flex-1 text-xs"
             >
-              管理者
+              主管
             </Button>
             <Button
               size="sm"
