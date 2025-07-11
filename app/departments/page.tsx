@@ -30,13 +30,6 @@ export default function DepartmentsPage() {
       setDepartments(response.data || []);
     } catch (error) {
       console.error("获取部门列表失败:", error);
-      // 模拟数据
-      setDepartments([
-        { id: 1, name: "技术部", description: "负责产品研发和技术支持", created_at: "2024-01-01T00:00:00Z" },
-        { id: 2, name: "市场部", description: "负责市场营销和客户关系", created_at: "2024-01-01T00:00:00Z" },
-        { id: 3, name: "人事部", description: "负责人力资源管理", created_at: "2024-01-01T00:00:00Z" },
-        { id: 4, name: "财务部", description: "负责财务管理和会计", created_at: "2024-01-01T00:00:00Z" }
-      ]);
     }
     setLoading(false);
   };

@@ -92,16 +92,6 @@ export default function StatisticsPage() {
       setDashboardStats(response.data);
     } catch (error) {
       console.error("获取统计数据失败:", error);
-      // 使用模拟数据
-      setDashboardStats({
-        total_employees: 34,
-        total_departments: 4,
-        total_evaluations: 125,
-        pending_evaluations: 12,
-        completed_evaluations: 98,
-        average_score: 83.5,
-        recent_evaluations: []
-      });
     }
     setLoading(false);
   };

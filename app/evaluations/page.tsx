@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,51 +52,6 @@ export default function EvaluationsPage() {
     } catch (error) {
       console.error("获取评估列表失败:", error);
       setError("获取评估列表失败，请刷新重试");
-      // 模拟数据
-      setEvaluations([
-        {
-          id: 1,
-          employee_id: 2,
-          template_id: 1,
-          period: "monthly",
-          year: 2024,
-          month: 12,
-          status: "pending",
-          total_score: 0,
-          final_comment: "",
-          created_at: "2024-12-01T00:00:00Z",
-          employee: { id: 2, name: "李四", email: "lisi@company.com", position: "高级开发工程师", department_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } },
-          template: { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" }
-        },
-        {
-          id: 2,
-          employee_id: 3,
-          template_id: 1,
-          period: "monthly",
-          year: 2024,
-          month: 12,
-          status: "self_evaluated",
-          total_score: 78,
-          final_comment: "",
-          created_at: "2024-12-01T00:00:00Z",
-          employee: { id: 3, name: "王五", email: "wangwu@company.com", position: "前端开发工程师", department_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } },
-          template: { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" }
-        },
-        {
-          id: 3,
-          employee_id: 5,
-          template_id: 2,
-          period: "quarterly",
-          year: 2024,
-          quarter: 4,
-          status: "manager_evaluated",
-          total_score: 85,
-          final_comment: "",
-          created_at: "2024-10-01T00:00:00Z",
-          employee: { id: 5, name: "钱七", email: "qianqi@company.com", position: "市场专员", department_id: 2, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "市场部" } },
-          template: { id: 2, name: "市场岗位季度考核", description: "适用于市场人员的季度绩效考核", period: "quarterly", is_active: true, created_at: "2024-01-01T00:00:00Z" }
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -131,33 +86,6 @@ export default function EvaluationsPage() {
       setScores(response.data || []);
     } catch (error) {
       console.error("获取评估详情失败:", error);
-      // 模拟数据
-      setScores([
-        {
-          id: 1,
-          evaluation_id: evaluationId,
-          item_id: 1,
-          self_score: 18,
-          self_comment: "本月完成了3个重要功能模块，代码质量良好",
-          manager_score: 16,
-          manager_comment: "代码质量不错，但还有改进空间",
-          final_score: 16,
-          created_at: "2024-12-01T00:00:00Z",
-          item: { id: 1, template_id: 1, name: "代码质量", description: "代码规范性、可维护性评估", max_score: 20, order: 1, created_at: "2024-01-01T00:00:00Z" }
-        },
-        {
-          id: 2,
-          evaluation_id: evaluationId,
-          item_id: 2,
-          self_score: 23,
-          self_comment: "按时完成了所有分配的任务",
-          manager_score: 20,
-          manager_comment: "任务完成及时，质量较好",
-          final_score: 20,
-          created_at: "2024-12-01T00:00:00Z",
-          item: { id: 2, template_id: 1, name: "任务完成度", description: "按时完成分配的开发任务", max_score: 25, order: 2, created_at: "2024-01-01T00:00:00Z" }
-        }
-      ]);
     }
   };
 
@@ -426,7 +354,7 @@ export default function EvaluationsPage() {
   };
 
   // 根据用户角色过滤评估
-  const getFilteredEvaluations = () => {
+  const getFilteredEvaluations = useMemo(() => {
     if (!currentUser) return [];
     
     if (isHR) {
@@ -442,7 +370,7 @@ export default function EvaluationsPage() {
         return evaluation.employee_id === currentUser.id;
       }
     });
-  };
+  }, [currentUser, evaluations, isHR, isManager]);
 
   // 检查是否可以进行某个操作
   const canPerformAction = (evaluation: KPIEvaluation, action: 'self' | 'manager' | 'hr' | 'confirm') => {
@@ -629,7 +557,7 @@ export default function EvaluationsPage() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{evaluations.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{getFilteredEvaluations.length}</div>
             <p className="text-xs text-muted-foreground">
               全部考核项目
             </p>
@@ -642,7 +570,7 @@ export default function EvaluationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {evaluations.filter(e => ["pending", "self_evaluated", "manager_evaluated", "pending_confirm"].includes(e.status)).length}
+              {getFilteredEvaluations.filter(e => ["pending", "self_evaluated", "manager_evaluated", "pending_confirm"].includes(e.status)).length}
             </div>
             <p className="text-xs text-muted-foreground">
               需要处理的考核
@@ -656,7 +584,7 @@ export default function EvaluationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {evaluations.filter(e => e.status === "completed").length}
+              {getFilteredEvaluations.filter(e => e.status === "completed").length}
             </div>
             <p className="text-xs text-muted-foreground">
               已完成的考核
@@ -670,8 +598,8 @@ export default function EvaluationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {evaluations.length > 0 ? 
-                Math.round(evaluations.reduce((acc, e) => acc + e.total_score, 0) / evaluations.length) : 0}
+              {getFilteredEvaluations.length > 0 ? 
+                Math.round(getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length) : 0}
             </div>
             <p className="text-xs text-muted-foreground">
               总体考核平均分
@@ -717,14 +645,14 @@ export default function EvaluationsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getFilteredEvaluations().length === 0 ? (
+                    {getFilteredEvaluations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                           暂无考核数据
                         </TableCell>
                       </TableRow>
                     ) : (
-                      getFilteredEvaluations().map((evaluation) => (
+                      getFilteredEvaluations.map((evaluation) => (
                         <TableRow key={evaluation.id}>
                           <TableCell className="font-medium">
                             {evaluation.employee?.name}
@@ -769,12 +697,12 @@ export default function EvaluationsPage() {
 
             {/* 移动端卡片显示 */}
             <div className="lg:hidden space-y-4">
-              {getFilteredEvaluations().length === 0 ? (
+              {getFilteredEvaluations.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   暂无考核数据
                 </div>
               ) : (
-                getFilteredEvaluations().map((evaluation) => (
+                getFilteredEvaluations.map((evaluation) => (
                   <Card key={evaluation.id} className="border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">

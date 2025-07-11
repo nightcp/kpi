@@ -45,12 +45,6 @@ export default function TemplatesPage() {
       setTemplates(response.data || []);
     } catch (error) {
       console.error("获取模板列表失败:", error);
-      // 模拟数据
-      setTemplates([
-        { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" },
-        { id: 2, name: "市场岗位季度考核", description: "适用于市场人员的季度绩效考核", period: "quarterly", is_active: true, created_at: "2024-01-01T00:00:00Z" },
-        { id: 3, name: "管理岗位年度考核", description: "适用于管理人员的年度绩效考核", period: "yearly", is_active: true, created_at: "2024-01-01T00:00:00Z" }
-      ]);
     }
     setLoading(false);
   };
@@ -62,18 +56,7 @@ export default function TemplatesPage() {
       setItems(response.data || []);
     } catch (error) {
       console.error("获取KPI项目失败:", error);
-      // 模拟数据
-      if (templateId === 1) {
-        setItems([
-          { id: 1, template_id: 1, name: "代码质量", description: "代码规范性、可维护性评估", max_score: 20, order: 1, created_at: "2024-01-01T00:00:00Z" },
-          { id: 2, template_id: 1, name: "任务完成度", description: "按时完成分配的开发任务", max_score: 25, order: 2, created_at: "2024-01-01T00:00:00Z" },
-          { id: 3, template_id: 1, name: "技术创新", description: "技术方案创新和改进", max_score: 15, order: 3, created_at: "2024-01-01T00:00:00Z" },
-          { id: 4, template_id: 1, name: "团队协作", description: "与团队成员的协作配合", max_score: 20, order: 4, created_at: "2024-01-01T00:00:00Z" },
-          { id: 5, template_id: 1, name: "学习成长", description: "技术学习和个人提升", max_score: 20, order: 5, created_at: "2024-01-01T00:00:00Z" }
-        ]);
-      } else {
-        setItems([]);
-      }
+      setItems([]);
     }
   };
 

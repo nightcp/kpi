@@ -18,22 +18,6 @@ export default function Dashboard() {
       setStats(response.data);
     } catch (error) {
       console.error("获取统计数据失败:", error);
-      // 使用模拟数据
-      setStats({
-        total_employees: 7,
-        total_departments: 4,
-        total_evaluations: 15,
-        pending_evaluations: 3,
-        completed_evaluations: 12,
-        average_score: 83.5,
-        recent_evaluations: [
-          { id: 1, employee_id: 1, template_id: 1, period: "monthly", year: 2024, month: 12, status: "completed", total_score: 85, final_comment: "", created_at: "2024-12-01T00:00:00Z", employee: { id: 1, name: "张三", email: "zhangsan@company.com", position: "技术总监", department_id: 1, role: "manager", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } }, template: { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" } },
-          { id: 2, employee_id: 2, template_id: 1, period: "monthly", year: 2024, month: 12, status: "manager_evaluated", total_score: 92, final_comment: "", created_at: "2024-12-02T00:00:00Z", employee: { id: 2, name: "李四", email: "lisi@company.com", position: "高级开发工程师", department_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } }, template: { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" } },
-          { id: 3, employee_id: 3, template_id: 1, period: "monthly", year: 2024, month: 12, status: "pending", total_score: 78, final_comment: "", created_at: "2024-12-03T00:00:00Z", employee: { id: 3, name: "王五", email: "wangwu@company.com", position: "前端开发工程师", department_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } }, template: { id: 1, name: "技术岗位月度考核", description: "适用于技术人员的月度绩效考核", period: "monthly", is_active: true, created_at: "2024-01-01T00:00:00Z" } },
-          { id: 4, employee_id: 4, template_id: 2, period: "quarterly", year: 2024, quarter: 4, status: "completed", total_score: 88, final_comment: "", created_at: "2024-12-04T00:00:00Z", employee: { id: 4, name: "赵六", email: "zhaoliu@company.com", position: "市场总监", department_id: 2, role: "manager", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "市场部" } }, template: { id: 2, name: "市场岗位季度考核", description: "适用于市场人员的季度绩效考核", period: "quarterly", is_active: true, created_at: "2024-01-01T00:00:00Z" } },
-          { id: 5, employee_id: 5, template_id: 2, period: "quarterly", year: 2024, quarter: 4, status: "self_evaluated", total_score: 76, final_comment: "", created_at: "2024-12-05T00:00:00Z", employee: { id: 5, name: "钱七", email: "qianqi@company.com", position: "市场专员", department_id: 2, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "市场部" } }, template: { id: 2, name: "市场岗位季度考核", description: "适用于市场人员的季度绩效考核", period: "quarterly", is_active: true, created_at: "2024-01-01T00:00:00Z" } }
-        ]
-      });
     }
     setLoading(false);
   };

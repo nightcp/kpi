@@ -37,16 +37,6 @@ export default function EmployeesPage() {
       setEmployees(response.data || []);
     } catch (error) {
       console.error("获取员工列表失败:", error);
-      // 模拟数据
-      setEmployees([
-        { id: 1, name: "张三", email: "zhangsan@company.com", position: "技术总监", department_id: 1, role: "manager", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" } },
-        { id: 2, name: "李四", email: "lisi@company.com", position: "高级开发工程师", department_id: 1, manager_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" }, manager: { name: "张三" } },
-        { id: 3, name: "王五", email: "wangwu@company.com", position: "前端开发工程师", department_id: 1, manager_id: 1, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "技术部" }, manager: { name: "张三" } },
-        { id: 4, name: "赵六", email: "zhaoliu@company.com", position: "市场总监", department_id: 2, role: "manager", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "市场部" } },
-        { id: 5, name: "钱七", email: "qianqi@company.com", position: "市场专员", department_id: 2, manager_id: 4, role: "employee", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "市场部" }, manager: { name: "赵六" } },
-        { id: 6, name: "孙八", email: "sunba@company.com", position: "HR经理", department_id: 3, role: "hr", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "人事部" } },
-        { id: 7, name: "周九", email: "zhoujiu@company.com", position: "财务经理", department_id: 4, role: "manager", is_active: true, created_at: "2024-01-01T00:00:00Z", department: { name: "财务部" } }
-      ]);
     }
     setLoading(false);
   };
