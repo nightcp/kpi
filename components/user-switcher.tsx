@@ -6,10 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function UserSwitcher() {
   const { currentUser, switchUser, isManager, isHR, isEmployee } = useUser();
-
+  const [selectUserOpen, setSelectUserOpen] = useState(false);
+  
   if (!currentUser) return null;
 
   const getRoleIcon = (role: string) => {
@@ -53,8 +56,11 @@ export function UserSwitcher() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50">
-      <Card className="w-80 shadow-lg border-2 border-orange-200 bg-orange-50">
+    <div className={cn(
+      'fixed top-4 right-0 z-50 transition-all duration-300 opacity-0 hover:opacity-100 translate-x-[99%] hover:translate-x-0',
+      selectUserOpen && 'opacity-100 translate-x-0'
+    )}>
+      <Card className="w-80 shadow-lg border-2 border-orange-200 bg-orange-50 mr-4">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Bell className="h-4 w-4 text-orange-600" />
@@ -93,6 +99,7 @@ export function UserSwitcher() {
           <div className="space-y-2">
             <label className="text-xs font-medium text-gray-700">切换测试用户：</label>
             <Select
+              onOpenChange={setSelectUserOpen}
               value={currentUser.id.toString()}
               onValueChange={(value) => switchUser(parseInt(value))}
             >
