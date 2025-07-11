@@ -93,36 +93,28 @@ export default function StatisticsPage() {
   // 导出报告
   const handleExport = async (type: string) => {
     try {
-      let blob: Blob;
-      let fileName: string;
+      let response;
       
       switch (type) {
         case 'period':
-          blob = await exportApi.period(selectedPeriod, {
+          response = await exportApi.period(selectedPeriod, {
             year: selectedYear.toString(),
             month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
             quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
           });
-          fileName = `周期评估统计-${selectedPeriod}-${selectedYear}.xlsx`;
           break;
         case 'department':
-          blob = await exportApi.department(1); // 示例部门ID
-          fileName = `部门评估汇总-${new Date().getTime()}.xlsx`;
+          response = await exportApi.department(1); // 示例部门ID
           break;
         default:
           return;
       }
       
-      // 创建下载链接
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // 直接跳转到下载URL
+      window.open(response.file_url, '_blank');
+      
+      // 显示成功消息
+      console.log(response.message);
     } catch (error) {
       console.error('导出失败:', error);
     }

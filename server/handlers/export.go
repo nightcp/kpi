@@ -9,10 +9,19 @@ import (
 	"time"
 
 	"dootask-kpi-server/models"
+	"dootask-kpi-server/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 )
+
+// 导出响应结构
+type ExportResponse struct {
+	FileURL  string `json:"file_url"`
+	FileName string `json:"file_name"`
+	FileSize int64  `json:"file_size"`
+	Message  string `json:"message"`
+}
 
 // 导出评估报告为Excel
 func ExportEvaluationToExcel(c *gin.Context) {
@@ -165,8 +174,8 @@ func ExportEvaluationToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "F", "F", 25)
 	f.SetColWidth(sheetName, "G", "G", 10)
 
-	// 创建导出目录
-	exportDir := "./exports"
+	// 创建公共导出目录
+	exportDir := "./public/exports"
 	if err := os.MkdirAll(exportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
@@ -189,15 +198,28 @@ func ExportEvaluationToExcel(c *gin.Context) {
 		return
 	}
 
-	// 返回文件
-	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.File(filePath)
+	// 获取文件大小
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "获取文件信息失败",
+		})
+		return
+	}
 
-	// 删除临时文件
+	// 返回下载URL
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+
+	c.JSON(http.StatusOK, ExportResponse{
+		FileURL:  downloadURL,
+		FileName: fileName,
+		FileSize: fileInfo.Size(),
+		Message:  "导出成功",
+	})
+
+	// 30分钟后删除文件
 	go func() {
-		time.Sleep(time.Minute * 5) // 5分钟后删除
+		time.Sleep(time.Minute * 30)
 		os.Remove(filePath)
 	}()
 }
@@ -329,8 +351,8 @@ func ExportDepartmentToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "G", "G", 20)
 	f.SetColWidth(sheetName, "H", "H", 20)
 
-	// 创建导出目录
-	exportDir := "./exports"
+	// 创建公共导出目录
+	exportDir := "./public/exports"
 	if err := os.MkdirAll(exportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
@@ -352,15 +374,28 @@ func ExportDepartmentToExcel(c *gin.Context) {
 		return
 	}
 
-	// 返回文件
-	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.File(filePath)
+	// 获取文件大小
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "获取文件信息失败",
+		})
+		return
+	}
 
-	// 删除临时文件
+	// 返回下载URL
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+
+	c.JSON(http.StatusOK, ExportResponse{
+		FileURL:  downloadURL,
+		FileName: fileName,
+		FileSize: fileInfo.Size(),
+		Message:  "导出成功",
+	})
+
+	// 30分钟后删除文件
 	go func() {
-		time.Sleep(time.Minute * 5) // 5分钟后删除
+		time.Sleep(time.Minute * 30)
 		os.Remove(filePath)
 	}()
 }
@@ -505,8 +540,8 @@ func ExportPeriodToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "H", "H", 20)
 	f.SetColWidth(sheetName, "I", "I", 20)
 
-	// 创建导出目录
-	exportDir := "./exports"
+	// 创建公共导出目录
+	exportDir := "./public/exports"
 	if err := os.MkdirAll(exportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
@@ -515,8 +550,9 @@ func ExportPeriodToExcel(c *gin.Context) {
 	}
 
 	// 生成文件名
-	fileName := fmt.Sprintf("周期评估统计-%s-%d.xlsx",
+	fileName := fmt.Sprintf("周期评估统计-%s-%s-%d.xlsx",
 		period,
+		year,
 		time.Now().Unix())
 	filePath := filepath.Join(exportDir, fileName)
 
@@ -528,17 +564,52 @@ func ExportPeriodToExcel(c *gin.Context) {
 		return
 	}
 
-	// 返回文件
+	// 获取文件大小
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "获取文件信息失败",
+		})
+		return
+	}
+
+	// 返回下载URL
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+
+	c.JSON(http.StatusOK, ExportResponse{
+		FileURL:  downloadURL,
+		FileName: fileName,
+		FileSize: fileInfo.Size(),
+		Message:  "导出成功",
+	})
+
+	// 30分钟后删除文件
+	go func() {
+		time.Sleep(time.Minute * 30)
+		os.Remove(filePath)
+	}()
+}
+
+// 文件下载处理
+func DownloadFile(c *gin.Context) {
+	fileName := c.Param("filename")
+	filePath := filepath.Join("./public/exports", fileName)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "文件不存在",
+		})
+		return
+	}
+
+	// 设置响应头
 	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.File(filePath)
 
-	// 删除临时文件
-	go func() {
-		time.Sleep(time.Minute * 5) // 5分钟后删除
-		os.Remove(filePath)
-	}()
+	// 返回文件
+	c.File(filePath)
 }
 
 // 获取状态文本

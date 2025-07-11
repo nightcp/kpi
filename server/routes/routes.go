@@ -89,6 +89,12 @@ func SetupRoutes(r *gin.RouterGroup) {
 		exportRoutes.GET("/period/:period", handlers.ExportPeriodToExcel)
 	}
 
+	// 文件下载
+	downloadRoutes := r.Group("/download")
+	{
+		downloadRoutes.GET("/exports/:filename", handlers.DownloadFile)
+	}
+
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

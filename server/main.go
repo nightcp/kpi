@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"dootask-kpi-server/middleware"
 	"dootask-kpi-server/models"
 	"dootask-kpi-server/routes"
 
@@ -34,6 +35,9 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	// 基础中间件
+	r.Use(middleware.BaseMiddleware())
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {

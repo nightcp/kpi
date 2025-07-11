@@ -154,7 +154,7 @@ export interface ExportResponse {
   file_url: string;
   file_name: string;
   file_size: number;
-  created_at: string;
+  message: string;
 }
 
 // 设置相关接口
@@ -266,16 +266,14 @@ export const statisticsApi = {
   getDepartment: (id: number): Promise<StatisticsResponse> => api.get('/statistics/department/' + id),
   getEmployee: (id: number): Promise<StatisticsResponse> => api.get('/statistics/employee/' + id),
   getTrends: (period?: string): Promise<StatisticsResponse> => api.get('/statistics/trends', { params: { period } }),
-  getData: (params?: { year?: string; period?: string; month?: string; quarter?: string }): Promise<{ data: StatisticsResponse }> => 
-    api.get('/statistics/data', { params }),
+  getData: (params?: { year?: string; period?: string; month?: string; quarter?: string }): Promise<{ data: StatisticsResponse }> => api.get('/statistics/data', { params }),
 };
 
 // 导出API
 export const exportApi = {
-  evaluation: (id: number): Promise<Blob> => api.get(`/export/evaluation/${id}`, { responseType: 'blob' }),
-  department: (id: number): Promise<Blob> => api.get(`/export/department/${id}`, { responseType: 'blob' }),
-  period: (period: string, params?: { year?: string; month?: string; quarter?: string }): Promise<Blob> => 
-    api.get(`/export/period/${period}`, { params, responseType: 'blob' }),
+  evaluation: (id: number): Promise<ExportResponse> => api.get(`/export/evaluation/${id}`),
+  department: (id: number): Promise<ExportResponse> => api.get(`/export/department/${id}`),
+  period: (period: string, params?: { year?: string; month?: string; quarter?: string }): Promise<ExportResponse> => api.get(`/export/period/${period}`, { params }),
 };
 
 export default api; 
