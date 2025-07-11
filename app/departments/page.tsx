@@ -59,7 +59,7 @@ export default function DepartmentsPage() {
 
   // 删除部门
   const handleDelete = async (id: number) => {
-    const result = await Confirm("确定要删除这个部门吗？")
+    const result = await Confirm("删除部门", "确定要删除这个部门吗？")
     if (result) {
       try {
         await departmentApi.delete(id);

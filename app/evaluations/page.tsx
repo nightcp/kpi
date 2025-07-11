@@ -167,7 +167,7 @@ export default function EvaluationsPage() {
     if (selectedEvaluation) {
       const validationError = validateStageTransition(selectedEvaluation, stage);
       if (validationError) {
-        Alert(validationError);
+        Alert("验证失败", validationError);
         return;
       }
     }
@@ -177,12 +177,12 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已自评
       const uncompletedItems = scores.filter(score => !score.self_score || score.self_score === 0);
       if (uncompletedItems.length > 0) {
-        Alert(`请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`);
+        Alert("自评", `请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`);
         return;
       }
       
       // 确认提交自评
-      const result = await Confirm('确定要提交自评吗？提交后将无法修改。')
+      const result = await Confirm("自评", "确定要提交自评吗？提交后将无法修改。")
       if (!result) {
         return;
       }
@@ -195,12 +195,12 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已进行主管评分
       const uncompletedItems = scores.filter(score => !score.manager_score || score.manager_score === 0);
       if (uncompletedItems.length > 0) {
-        Alert(`请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`);
+        Alert("主管评分", `请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`);
         return;
       }
       
       // 确认提交主管评分
-      const result = await Confirm('确定要提交主管评分吗？提交后将无法修改，评估将进入HR审核阶段。')
+      const result = await Confirm("主管评分", "确定要提交主管评分吗？提交后将无法修改，评估将进入HR审核阶段。")
       if (!result) {
         return;
       }
@@ -211,12 +211,12 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已确定最终得分
       const unconfirmedItems = scores.filter(score => !score.final_score && !score.manager_score);
       if (unconfirmedItems.length > 0) {
-        Alert(`请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`);
+        Alert("HR审核", `请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`);
         return;
       }
       
       // 确认完成HR审核
-      const result = await Confirm('确定要完成HR审核吗？提交后将无法再修改，评估将进入员工确认阶段。')
+      const result = await Confirm("HR审核", "确定要完成HR审核吗？提交后将无法再修改，评估将进入员工确认阶段。")
       if (!result) {
         return;
       }
@@ -227,12 +227,12 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已确认最终得分
       const alreadyConfirmed = scores.find(score => score.final_score);
       if (alreadyConfirmed) {
-        Alert("已确认最终得分，无法再修改。");
+        Alert("确认最终得分", "已确认最终得分，无法再修改。");
         return;
       }
 
       // 确认最终得分
-      const result = await Confirm('确定要确认最终得分吗？确认后将无法再修改。')
+      const result = await Confirm("确认最终得分", "确定要确认最终得分吗？确认后将无法再修改。")
       if (!result) {
         return;
       }
@@ -297,17 +297,17 @@ export default function EvaluationsPage() {
       
       // 成功提示
       if (stage === 'self') {
-        await Alert('自评提交成功！请等待上级主管评分。');
+        await Alert("自评", "自评提交成功！请等待上级主管评分。");
       } else if (stage === 'manager') {
-        await Alert('主管评分提交成功！评估已转入HR审核阶段。');
+        await Alert("主管评分", "主管评分提交成功！评估已转入HR审核阶段。");
       } else if (stage === 'hr') {
-        await Alert('HR审核完成！请等待员工确认最终得分。');
+        await Alert("HR审核", "HR审核完成！请等待员工确认最终得分。");
       } else if (stage === 'confirm') {
-        await Alert('最终得分确认成功！绩效评估已正式结束。');
+        await Alert("确认最终得分", "最终得分确认成功！绩效评估已正式结束。");
       }
     } catch (error) {
       console.error("更新状态失败:", error);
-      alert('提交失败，请重试。');
+      Alert("提交失败", "提交失败，请重试。");
     } finally {
       if (stage === 'self') {
         setIsSubmittingSelfEvaluation(false);

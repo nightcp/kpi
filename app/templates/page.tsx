@@ -111,7 +111,7 @@ export default function TemplatesPage() {
 
   // 删除模板
   const handleDeleteTemplate = async (id: number) => {
-    const result = await Confirm("确定要删除这个模板吗？")
+    const result = await Confirm("删除模板", "确定要删除这个模板吗？")
     if (result) {
       try {
         await templateApi.delete(id);
@@ -128,7 +128,7 @@ export default function TemplatesPage() {
 
   // 删除KPI项目
   const handleDeleteItem = async (id: number) => {
-    const result = await Confirm("确定要删除这个KPI项目吗？")
+    const result = await Confirm("删除KPI项目", "确定要删除这个KPI项目吗？")
     if (result) {
       try {
         await itemApi.delete(id);

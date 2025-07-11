@@ -88,7 +88,7 @@ export default function SettingsPage() {
 
   // 重置设置
   const handleResetSettings = async () => {
-    const result = await Confirm('确定要重置所有设置吗？这将恢复系统默认配置。')
+    const result = await Confirm("重置设置", "确定要重置所有设置吗？这将恢复系统默认配置。")
     if (result) {
       setSettings({
         system_name: "DooTask KPI 绩效管理系统",
@@ -174,7 +174,7 @@ export default function SettingsPage() {
 
   // 清理数据
   const handleCleanupData = async () => {
-    const result = await Confirm('确定要清理过期数据吗？此操作无法撤销。')
+    const result = await Confirm("清理数据", "确定要清理过期数据吗？此操作无法撤销。")
     if (result) {
       setLoading(true);
       try {

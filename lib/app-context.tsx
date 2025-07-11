@@ -4,8 +4,8 @@ import { createContext, useCallback, useContext, useRef } from "react";
 import AlertLayout, { AlertLayoutRef, AlertProps } from "@/components/alert";
 
 interface AppContextType {
-  Alert: (message: string | AlertProps) => Promise<void>;
-  Confirm: (message: string | AlertProps) => Promise<boolean>;
+  Alert: (title: string | AlertProps, message?: string) => Promise<void>;
+  Confirm: (title: string | AlertProps, message?: string) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -13,11 +13,12 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const alertLayoutRef = useRef<AlertLayoutRef>(null);
 
-  const Alert = useCallback((message: string | AlertProps) => {
+  const Alert = useCallback((title: string | AlertProps, message?: string) => {
     return new Promise<void>((resolve) => {
       alertLayoutRef.current?.setAlert({
         type: "alert",
-        ...(typeof message === "string" ? { title: message } : message),
+        message,
+        ...(typeof title === "string" ? { title } : title),
 
         onConfirm: () => {
           resolve();
@@ -26,11 +27,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const Confirm = useCallback((message: string | AlertProps) => {
+  const Confirm = useCallback((title: string | AlertProps, message?: string) => {
     return new Promise<boolean>((resolve) => {
       alertLayoutRef.current?.setAlert({
         type: "confirm",
-        ...(typeof message === "string" ? { title: message } : message),
+        message,
+        ...(typeof title === "string" ? { title } : title),
 
         onConfirm: () => {
           resolve(true);

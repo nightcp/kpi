@@ -96,7 +96,7 @@ export default function EmployeesPage() {
 
   // 删除员工
   const handleDelete = async (id: number) => {
-    const result = await Confirm("确定要删除这个员工吗？")
+    const result = await Confirm("删除员工", "确定要删除这个员工吗？")
     if (result) {
       try {
         await employeeApi.delete(id);
