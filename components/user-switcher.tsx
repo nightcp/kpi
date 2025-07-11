@@ -41,13 +41,13 @@ export function UserSwitcher() {
   const getRolePermissions = () => {
     const permissions = [];
     if (isHR) {
-      permissions.push("创建考核", "最终审核", "查看所有数据");
+      permissions.push("创建考核", "最终审核", "所有数据");
     }
     if (isManager) {
-      permissions.push("上级评分", "查看下属考核");
+      permissions.push("上级评分", "自己的考核", "下属考核");
     }
     if (isEmployee) {
-      permissions.push("自评", "查看自己的考核");
+      permissions.push("自评", "自己的考核", "确认最终得分");
     }
     return permissions;
   };

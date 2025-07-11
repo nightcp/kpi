@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, ClipboardList, Settings, Eye } from "lucide-react";
 import { templateApi, itemApi, type KPITemplate, type KPIItem } from "@/lib/api";
+import { useAppContext } from "@/lib/app-context";
 
 export default function TemplatesPage() {
+  const { Confirm } = useAppContext();
   const [templates, setTemplates] = useState<KPITemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<KPITemplate | null>(null);
   const [templateTabValue, setTemplateTabValue] = useState("templates");
@@ -126,7 +128,8 @@ export default function TemplatesPage() {
 
   // 删除模板
   const handleDeleteTemplate = async (id: number) => {
-    if (confirm("确定要删除这个模板吗？")) {
+    const result = await Confirm("确定要删除这个模板吗？")
+    if (result) {
       try {
         await templateApi.delete(id);
         fetchTemplates();
@@ -142,7 +145,8 @@ export default function TemplatesPage() {
 
   // 删除KPI项目
   const handleDeleteItem = async (id: number) => {
-    if (confirm("确定要删除这个KPI项目吗？")) {
+    const result = await Confirm("确定要删除这个KPI项目吗？")
+    if (result) {
       try {
         await itemApi.delete(id);
         if (selectedTemplate) {

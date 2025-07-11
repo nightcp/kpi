@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { departmentApi, type Department } from "@/lib/api";
+import { useAppContext } from "@/lib/app-context";
 
 export default function DepartmentsPage() {
+  const { Confirm } = useAppContext();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -64,7 +66,8 @@ export default function DepartmentsPage() {
 
   // 删除部门
   const handleDelete = async (id: number) => {
-    if (confirm("确定要删除这个部门吗？")) {
+    const result = await Confirm("确定要删除这个部门吗？")
+    if (result) {
       try {
         await departmentApi.delete(id);
         fetchDepartments();

@@ -14,8 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Eye, Award, FileCheck, CheckCircle, Clock, Star, Edit2, Save, X } from "lucide-react";
 import { evaluationApi, scoreApi, employeeApi, templateApi, type KPIEvaluation, type KPIScore, type Employee, type KPITemplate } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
+import { useAppContext } from "@/lib/app-context";
 
 export default function EvaluationsPage() {
+  const { Alert, Confirm } = useAppContext();
   const { currentUser, isManager, isHR } = useUser();
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -237,7 +239,7 @@ export default function EvaluationsPage() {
     if (selectedEvaluation) {
       const validationError = validateStageTransition(selectedEvaluation, stage);
       if (validationError) {
-        alert(validationError);
+        Alert(validationError);
         return;
       }
     }
@@ -247,12 +249,13 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已自评
       const uncompletedItems = scores.filter(score => !score.self_score || score.self_score === 0);
       if (uncompletedItems.length > 0) {
-        alert(`请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`);
+        Alert(`请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`);
         return;
       }
       
       // 确认提交自评
-      if (!confirm('确定要提交自评吗？提交后将无法修改。')) {
+      const result = await Confirm('确定要提交自评吗？提交后将无法修改。')
+      if (!result) {
         return;
       }
       
@@ -264,12 +267,13 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已进行主管评分
       const uncompletedItems = scores.filter(score => !score.manager_score || score.manager_score === 0);
       if (uncompletedItems.length > 0) {
-        alert(`请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`);
+        Alert(`请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`);
         return;
       }
       
       // 确认提交主管评分
-      if (!confirm('确定要提交主管评分吗？提交后将无法修改，评估将进入HR审核阶段。')) {
+      const result = await Confirm('确定要提交主管评分吗？提交后将无法修改，评估将进入HR审核阶段。')
+      if (!result) {
         return;
       }
     }
@@ -279,12 +283,13 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已确定最终得分
       const unconfirmedItems = scores.filter(score => !score.final_score && !score.manager_score);
       if (unconfirmedItems.length > 0) {
-        alert(`请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`);
+        Alert(`请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`);
         return;
       }
       
       // 确认完成HR审核
-      if (!confirm('确定要完成HR审核吗？提交后将无法再修改，评估将进入员工确认阶段。')) {
+      const result = await Confirm('确定要完成HR审核吗？提交后将无法再修改，评估将进入员工确认阶段。')
+      if (!result) {
         return;
       }
     }
@@ -294,12 +299,13 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已确认最终得分
       const alreadyConfirmed = scores.find(score => score.final_score);
       if (alreadyConfirmed) {
-        alert("已确认最终得分，无法再修改。");
+        Alert("已确认最终得分，无法再修改。");
         return;
       }
 
       // 确认最终得分
-      if (!confirm('确定要确认最终得分吗？确认后将无法再修改。')) {
+      const result = await Confirm('确定要确认最终得分吗？确认后将无法再修改。')
+      if (!result) {
         return;
       }
     }
@@ -363,13 +369,13 @@ export default function EvaluationsPage() {
       
       // 成功提示
       if (stage === 'self') {
-        alert('自评提交成功！请等待上级主管评分。');
+        await Alert('自评提交成功！请等待上级主管评分。');
       } else if (stage === 'manager') {
-        alert('主管评分提交成功！评估已转入HR审核阶段。');
+        await Alert('主管评分提交成功！评估已转入HR审核阶段。');
       } else if (stage === 'hr') {
-        alert('HR审核完成！请等待员工确认最终得分。');
+        await Alert('HR审核完成！请等待员工确认最终得分。');
       } else if (stage === 'confirm') {
-        alert('最终得分确认成功！绩效评估已正式结束。');
+        await Alert('最终得分确认成功！绩效评估已正式结束。');
       }
     } catch (error) {
       console.error("更新状态失败:", error);
@@ -1048,7 +1054,7 @@ export default function EvaluationsPage() {
                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             {/* 自评区域 */}
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center">
+                              <Label className="text-sm font-medium flex items-center h-6">
                                 自评分数
                                 {canPerformAction(selectedEvaluation, 'self') && (
                                   <Button
@@ -1108,7 +1114,7 @@ export default function EvaluationsPage() {
 
                             {/* 主管评分区域 */}
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center">
+                              <Label className="text-sm font-medium flex items-center h-6">
                                 主管评分
                                 {canPerformAction(selectedEvaluation, 'manager') && (
                                   <Button
@@ -1183,7 +1189,7 @@ export default function EvaluationsPage() {
 
                             {/* 最终得分区域 */}
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center">
+                              <Label className="text-sm font-medium flex items-center h-6">
                                 最终得分
                                 {canPerformAction(selectedEvaluation, 'hr') && !score.final_score && (
                                   <Button

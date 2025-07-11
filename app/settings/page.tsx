@@ -23,8 +23,10 @@ import {
   AlertCircle
 } from "lucide-react";
 import { type SystemSettings, type Message } from "@/lib/api";
+import { useAppContext } from "@/lib/app-context";
 
 export default function SettingsPage() {
+  const { Confirm } = useAppContext();
   const [settings, setSettings] = useState<SystemSettings>({
     // 系统设置
     system_name: "DooTask KPI 绩效管理系统",
@@ -85,8 +87,9 @@ export default function SettingsPage() {
   };
 
   // 重置设置
-  const handleResetSettings = () => {
-    if (confirm('确定要重置所有设置吗？这将恢复系统默认配置。')) {
+  const handleResetSettings = async () => {
+    const result = await Confirm('确定要重置所有设置吗？这将恢复系统默认配置。')
+    if (result) {
       setSettings({
         system_name: "DooTask KPI 绩效管理系统",
         system_version: "1.0.0",
@@ -171,7 +174,8 @@ export default function SettingsPage() {
 
   // 清理数据
   const handleCleanupData = async () => {
-    if (confirm('确定要清理过期数据吗？此操作无法撤销。')) {
+    const result = await Confirm('确定要清理过期数据吗？此操作无法撤销。')
+    if (result) {
       setLoading(true);
       try {
         // 模拟清理操作

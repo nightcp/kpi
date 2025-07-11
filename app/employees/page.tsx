@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { employeeApi, departmentApi, type Employee, type Department } from "@/lib/api";
+import { useAppContext } from "@/lib/app-context";
 
 export default function EmployeesPage() {
+  const { Confirm } = useAppContext();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [managers, setManagers] = useState<Employee[]>([]);
@@ -110,7 +112,8 @@ export default function EmployeesPage() {
 
   // 删除员工
   const handleDelete = async (id: number) => {
-    if (confirm("确定要删除这个员工吗？")) {
+    const result = await Confirm("确定要删除这个员工吗？")
+    if (result) {
       try {
         await employeeApi.delete(id);
         fetchEmployees();
