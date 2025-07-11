@@ -293,7 +293,7 @@ export default function EvaluationsPage() {
       let newStatus = "";
       switch (stage) {
         case 'self':
-          newStatus = 'self_evaluated';
+          newStatus = isManager ? 'manager_evaluated' : 'self_evaluated';
           break;
         case 'manager':
           newStatus = 'manager_evaluated';

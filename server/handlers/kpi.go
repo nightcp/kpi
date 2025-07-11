@@ -436,6 +436,25 @@ func UpdateSelfScore(c *gin.Context) {
 		return
 	}
 
+	// 如果该评分所属考核的员工没有主管且当前状态是自评，则自动流转
+	var evaluation models.KPIEvaluation
+	if err := models.DB.Preload("Employee").Where("status = ?", "self_evaluated").First(&evaluation, score.EvaluationID).Error; err == nil {
+		if evaluation.Employee.ManagerID == nil {
+			// 没有主管，自动将所有评分的manager_score设为self_score
+			var scores []models.KPIScore
+			if err := models.DB.Where("evaluation_id = ?", evaluation.ID).Find(&scores).Error; err == nil {
+				for _, s := range scores {
+					if s.SelfScore != nil {
+						models.DB.Model(&s).Updates(map[string]interface{}{
+							"manager_score":   s.SelfScore,
+							"manager_comment": "无主管，自动确认",
+						})
+					}
+				}
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "自评分数更新成功",
 		"data":    score,
