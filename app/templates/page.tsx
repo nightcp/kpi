@@ -16,6 +16,7 @@ import { templateApi, type KPITemplate, type KPIItem } from "@/lib/api";
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<KPITemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<KPITemplate | null>(null);
+  const [templateTabValue, setTemplateTabValue] = useState("templates");
   const [items, setItems] = useState<KPIItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
@@ -185,6 +186,7 @@ export default function TemplatesPage() {
   const handleSelectTemplate = (template: KPITemplate) => {
     setSelectedTemplate(template);
     fetchTemplateItems(template.id);
+    setTemplateTabValue("items");
   };
 
   // 打开编辑模板对话框
@@ -283,12 +285,14 @@ export default function TemplatesPage() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue="templates" className="w-full">
+      <Tabs className="w-full" value={templateTabValue} onValueChange={setTemplateTabValue}>
         <TabsList>
           <TabsTrigger value="templates">模板列表</TabsTrigger>
-          <TabsTrigger value="items" disabled={!selectedTemplate}>
-            KPI项目 {selectedTemplate && `(${selectedTemplate.name})`}
-          </TabsTrigger>
+          {selectedTemplate && (
+            <TabsTrigger value="items">
+              KPI项目 {selectedTemplate && `(${selectedTemplate.name})`}
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="templates">
