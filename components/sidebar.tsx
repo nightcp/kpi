@@ -14,17 +14,10 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { useEffect } from "react";
-
-const navigation = [
-  { name: "仪表板", href: "/", icon: Home },
-  { name: "部门管理", href: "/departments", icon: Building },
-  { name: "员工管理", href: "/employees", icon: Users },
-  { name: "KPI模板", href: "/templates", icon: ClipboardList },
-  { name: "考核管理", href: "/evaluations", icon: FileText },
-  { name: "统计分析", href: "/statistics", icon: BarChart3 },
-  { name: "设置", href: "/settings", icon: Settings },
-];
+import { useEffect, useMemo } from "react";
+import { useUser } from "@/lib/user-context";
+import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -33,11 +26,38 @@ interface SidebarProps {
 
 export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const {currentUser, isHR} = useUser();
+
+  // 根据用户角色动态生成导航菜单
+  const navigation = useMemo(() => {
+    if (isHR) {
+      return [
+        { name: "仪表板", href: "/", icon: Home },
+        { name: "部门管理", href: "/departments", icon: Building },
+        { name: "员工管理", href: "/employees", icon: Users },
+        { name: "KPI模板", href: "/templates", icon: ClipboardList },
+        { name: "考核管理", href: "/evaluations", icon: FileText },
+        { name: "统计分析", href: "/statistics", icon: BarChart3 },
+        { name: "设置", href: "/settings", icon: Settings },
+      ];
+    }
+    return [
+      { name: "考核管理", href: "/evaluations", icon: FileText },
+    ];
+  }, [isHR]);
 
   // 点击导航项时关闭移动端菜单
   const handleNavClick = () => {
     setIsMobileMenuOpen(false);
   };
+
+  // 监听用户角色变化
+  useEffect(() => {
+    if (!isHR && pathname !== "/evaluations") {
+      router.push("/evaluations");
+    }
+  }, [isHR, router, pathname]);
 
   // 监听屏幕尺寸变化，在桌面端自动关闭移动菜单
   useEffect(() => {
@@ -67,18 +87,27 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* 头部 - 移动端显示关闭按钮 */}
-        <div className="flex items-center justify-between p-6 lg:justify-start">
-          <h1 className="text-xl font-bold text-gray-800">KPI考核系统</h1>
-          <button
+        <div className="flex items-center justify-between px-6 py-4 lg:justify-start">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-xl font-bold text-gray-800">KPI考核系统</h1>
+            {currentUser && (
+              <div className="text-sm text-gray-500">
+                {currentUser.name} - {currentUser.department_name}
+              </div>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setIsMobileMenuOpen(false)}
             className="lg:hidden p-1 rounded-md hover:bg-gray-100"
           >
-            <X className="w-6 h-6 text-gray-600" />
-          </button>
+            <X className="text-gray-600" />
+          </Button>
         </div>
         
         {/* 导航菜单 */}
-        <nav className="mt-3">
+        <nav className="mt-2">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
