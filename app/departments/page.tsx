@@ -106,7 +106,7 @@ export default function DepartmentsPage() {
               添加部门
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-md mx-auto">
+          <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingDepartment ? "编辑部门" : "添加部门"}

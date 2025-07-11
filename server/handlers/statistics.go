@@ -40,7 +40,7 @@ func GetDashboardStats(c *gin.Context) {
 	stats.AverageScore = avgResult.AvgScore
 
 	// 获取最近的评估记录
-	models.DB.Preload("Employee").Preload("Template").Order("created_at DESC").Limit(10).Find(&stats.RecentEvaluations)
+	models.DB.Preload("Employee.Department").Preload("Template").Order("created_at DESC").Limit(10).Find(&stats.RecentEvaluations)
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": stats,
@@ -397,7 +397,7 @@ func ExportEvaluation(c *gin.Context) {
 	}
 
 	var evaluation models.KPIEvaluation
-	result := models.DB.Preload("Employee").Preload("Template").Preload("Scores.Item").First(&evaluation, evaluationId)
+	result := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores.Item").First(&evaluation, evaluationId)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "评估不存在",
@@ -425,7 +425,7 @@ func ExportDepartmentEvaluations(c *gin.Context) {
 	}
 
 	var evaluations []models.KPIEvaluation
-	result := models.DB.Preload("Employee").Preload("Template").
+	result := models.DB.Preload("Employee.Department").Preload("Template").
 		Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
 		Where("employees.department_id = ?", departmentId).
 		Find(&evaluations)
@@ -449,7 +449,7 @@ func ExportPeriodEvaluations(c *gin.Context) {
 	period := c.Param("period")
 
 	var evaluations []models.KPIEvaluation
-	result := models.DB.Preload("Employee").Preload("Template").
+	result := models.DB.Preload("Employee.Department").Preload("Template").
 		Where("period LIKE ?", period+"%").
 		Find(&evaluations)
 

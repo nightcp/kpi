@@ -138,7 +138,7 @@ func DeleteItem(c *gin.Context) {
 func GetEvaluations(c *gin.Context) {
 	var evaluations []models.KPIEvaluation
 
-	result := models.DB.Preload("Employee").Preload("Template").Preload("Scores").Find(&evaluations)
+	result := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").Find(&evaluations)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取评估列表失败",
@@ -202,7 +202,7 @@ func CreateEvaluation(c *gin.Context) {
 	tx.Commit()
 
 	// 获取完整的评估信息
-	models.DB.Preload("Employee").Preload("Template").Preload("Scores").First(&evaluation, evaluation.ID)
+	models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").First(&evaluation, evaluation.ID)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "评估创建成功",
@@ -222,7 +222,7 @@ func GetEvaluation(c *gin.Context) {
 	}
 
 	var evaluation models.KPIEvaluation
-	result := models.DB.Preload("Employee").Preload("Template").Preload("Scores.Item").First(&evaluation, evaluationId)
+	result := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores.Item").First(&evaluation, evaluationId)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "评估不存在",
@@ -348,7 +348,7 @@ func GetPendingEvaluations(c *gin.Context) {
 	var evaluations []models.KPIEvaluation
 
 	// 获取需要当前员工处理的评估
-	result := models.DB.Preload("Employee").Preload("Template").Where("employee_id = ? AND status IN ?", empId, []string{"pending", "self_evaluated"}).Find(&evaluations)
+	result := models.DB.Preload("Employee.Department").Preload("Template").Where("employee_id = ? AND status IN ?", empId, []string{"pending", "self_evaluated"}).Find(&evaluations)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取待处理评估失败",

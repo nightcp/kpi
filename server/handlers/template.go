@@ -174,7 +174,7 @@ func GetTemplateItems(c *gin.Context) {
 	}
 
 	var items []models.KPIItem
-	result := models.DB.Where("template_id = ?", templateId).Order("order").Find(&items)
+	result := models.DB.Where("template_id = ?", templateId).Order("`order`").Find(&items)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取KPI项目失败",

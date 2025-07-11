@@ -167,7 +167,7 @@ export default function EmployeesPage() {
               添加员工
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-md mx-auto">
+          <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingEmployee ? "编辑员工" : "添加员工"}

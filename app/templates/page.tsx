@@ -208,7 +208,7 @@ export default function TemplatesPage() {
               创建模板
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-md mx-auto">
+          <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingTemplate ? "编辑模板" : "创建模板"}
@@ -422,7 +422,7 @@ export default function TemplatesPage() {
                         添加项目
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-md mx-auto">
+                    <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
                       <DialogHeader>
                         <DialogTitle>
                           {editingItem ? "编辑KPI项目" : "添加KPI项目"}
