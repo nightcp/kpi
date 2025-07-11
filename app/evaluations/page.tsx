@@ -1250,7 +1250,7 @@ export default function EvaluationsPage() {
                               ) : (
                                 <div className="text-center">
                                   <div className="text-2xl font-bold text-green-600">
-                                    {score.final_score || score.manager_score || '待确定'}
+                                    {score.final_score || score.manager_score || '未评分'}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
                                     {score.final_score ? '已确认' : canPerformAction(selectedEvaluation, 'hr') ? '待HR确认' : '等待确认'}
