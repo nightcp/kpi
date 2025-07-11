@@ -284,11 +284,26 @@ export default function EvaluationsPage() {
       }
       
       // 确认完成HR审核
-      if (!confirm('确定要完成HR审核吗？完成后评估将正式结束，无法再修改。')) {
+      if (!confirm('确定要完成HR审核吗？提交后将无法再修改，评估将进入员工确认阶段。')) {
         return;
       }
     }
-    
+
+    // 员工最后确认最终得分
+    if (stage === 'confirm') {
+      // 检查是否所有项目都已确认最终得分
+      const alreadyConfirmed = scores.find(score => score.final_score);
+      if (alreadyConfirmed) {
+        alert("已确认最终得分，无法再修改。");
+        return;
+      }
+
+      // 确认最终得分
+      if (!confirm('确定要确认最终得分吗？确认后将无法再修改。')) {
+        return;
+      }
+    }
+      
     try {
       let newStatus = "";
       switch (stage) {
@@ -299,27 +314,43 @@ export default function EvaluationsPage() {
           newStatus = 'manager_evaluated';
           break;
         case 'hr':
+          newStatus = 'pending_confirm';
+          break;
+        case 'confirm':
           newStatus = 'completed';
           break;
       }
       
       // 计算并更新总分
       let totalScore = 0;
-      if (stage === 'self') {
-        // 自评完成后，总分为自评分数总和
-        totalScore = scores.reduce((acc, score) => acc + (score.self_score || 0), 0);
-      } else if (stage === 'manager') {
-        // 主管评分完成后，总分为主管评分总和
-        totalScore = scores.reduce((acc, score) => acc + (score.manager_score || 0), 0);
-      } else if (stage === 'hr') {
-        // HR审核完成后，总分为最终得分总和
-        totalScore = scores.reduce((acc, score) => acc + (score.final_score || score.manager_score || 0), 0);
+      switch (stage) {
+        case 'self':
+          // 自评完成后，总分为自评分数总和
+          totalScore = scores.reduce((acc, score) => acc + (score.self_score || 0), 0);
+          break;
+        case 'manager':
+          // 主管评分完成后，总分为主管评分总和
+          totalScore = scores.reduce((acc, score) => acc + (score.manager_score || 0), 0);
+          break;
+        case 'hr':
+        case 'confirm':
+          // HR审核或员工确认最终得分后，总分为最终得分总和
+          totalScore = scores.reduce((acc, score) => acc + (score.final_score || score.manager_score || 0), 0);
+          break;
       }
       
       await evaluationApi.update(evaluationId, { 
         status: newStatus,
         total_score: totalScore
       });
+
+      if (stage === 'confirm') {
+        // 员工确认最终得分后，更新最终得分
+        setScores(scores => scores.map(s => ({
+          ...s,
+          final_score: s.manager_score ?? s.self_score
+        })));
+      }
       
       fetchEvaluations();
       if (selectedEvaluation) {
@@ -336,7 +367,9 @@ export default function EvaluationsPage() {
       } else if (stage === 'manager') {
         alert('主管评分提交成功！评估已转入HR审核阶段。');
       } else if (stage === 'hr') {
-        alert('HR审核完成！绩效评估已正式结束，结果已生效。');
+        alert('HR审核完成！请等待员工确认最终得分。');
+      } else if (stage === 'confirm') {
+        alert('最终得分确认成功！绩效评估已正式结束。');
       }
     } catch (error) {
       console.error("更新状态失败:", error);
@@ -365,6 +398,8 @@ export default function EvaluationsPage() {
         return <Badge variant="outline" className="text-blue-600 border-blue-600"><FileCheck className="w-3 h-3 mr-1" />待主管评估</Badge>;
       case "manager_evaluated":
         return <Badge variant="outline" className="text-purple-600 border-purple-600"><Eye className="w-3 h-3 mr-1" />待HR审核</Badge>;
+      case "pending_confirm":
+        return <Badge variant="outline" className="text-pink-600 border-pink-600"><Star className="w-3 h-3 mr-1" />待确认</Badge>;
       case "completed":
         return <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="w-3 h-3 mr-1" />已完成</Badge>;
       default:
@@ -404,7 +439,7 @@ export default function EvaluationsPage() {
   };
 
   // 检查是否可以进行某个操作
-  const canPerformAction = (evaluation: KPIEvaluation, action: 'self' | 'manager' | 'hr') => {
+  const canPerformAction = (evaluation: KPIEvaluation, action: 'self' | 'manager' | 'hr' | 'confirm') => {
     if (!currentUser) return false;
     
     switch (action) {
@@ -419,6 +454,8 @@ export default function EvaluationsPage() {
                evaluation.employee_id !== currentUser.id;
       case 'hr':
         return evaluation.status === 'manager_evaluated' && isHR;
+      case 'confirm':
+        return evaluation.status === 'pending_confirm' && evaluation.employee_id === currentUser.id;
       default:
         return false;
     }
@@ -430,6 +467,7 @@ export default function EvaluationsPage() {
       'pending': { step: 1, total: 4, label: '等待自评' },
       'self_evaluated': { step: 2, total: 4, label: '等待主管评估' },
       'manager_evaluated': { step: 3, total: 4, label: '等待HR审核' },
+      'pending_confirm': { step: 4, total: 4, label: '等待确认' },
       'completed': { step: 4, total: 4, label: '已完成' }
     };
     return statusMap[status as keyof typeof statusMap] || { step: 0, total: 4, label: '未知状态' };
@@ -598,7 +636,7 @@ export default function EvaluationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {evaluations.filter(e => e.status === "pending" || e.status === "self_evaluated" || e.status === "manager_evaluated").length}
+              {evaluations.filter(e => ["pending", "self_evaluated", "manager_evaluated", "pending_confirm"].includes(e.status)).length}
             </div>
             <p className="text-xs text-muted-foreground">
               需要处理的考核
@@ -938,7 +976,7 @@ export default function EvaluationsPage() {
                            <li>• 审核员工自评与上级评分的合理性和一致性</li>
                            <li>• 检查评分是否符合公司绩效标准和政策</li>
                            <li>• 确认最终评分并可进行必要的调整</li>
-                           <li>• 完成审核后，评估将正式完成并生成绩效报告</li>
+                           <li>• 完成审核后，评估将进入员工确认阶段</li>
                          </ul>
                        </div>
                        
@@ -1286,6 +1324,11 @@ export default function EvaluationsPage() {
                  {canPerformAction(selectedEvaluation, 'hr') && (
                    <Button onClick={() => handleCompleteStage(selectedEvaluation.id, 'hr')} className="w-full sm:w-auto">
                      完成HR审核
+                   </Button>
+                 )}
+                 {canPerformAction(selectedEvaluation, 'confirm') && (
+                   <Button onClick={() => handleCompleteStage(selectedEvaluation.id, 'confirm')} className="w-full sm:w-auto">
+                     确认最终得分
                    </Button>
                  )}
                  <Button variant="outline" onClick={() => setScoreDialogOpen(false)} className="w-full sm:w-auto">

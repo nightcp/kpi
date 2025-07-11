@@ -186,6 +186,8 @@ export default function StatisticsPage() {
         return <Badge variant="outline" className="text-blue-600 border-blue-600">待主管评估</Badge>;
       case "manager_evaluated":
         return <Badge variant="outline" className="text-purple-600 border-purple-600">待HR审核</Badge>;
+      case "pending_confirm":
+        return <Badge variant="outline" className="text-pink-600 border-pink-600">待确认</Badge>;
       case "completed":
         return <Badge variant="outline" className="text-green-600 border-green-600">已完成</Badge>;
       default:

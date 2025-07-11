@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Building, FileText, TrendingUp, Clock, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react";
+import { Users, Building, FileText, TrendingUp, Clock, CheckCircle, AlertCircle, Award, Target, Eye, Plus, Star } from "lucide-react";
 import { statisticsApi, type DashboardStats } from "@/lib/api";
 import Link from "next/link";
 
@@ -51,6 +51,8 @@ export default function Dashboard() {
         return <Badge variant="outline" className="text-blue-600 border-blue-600"><FileText className="w-3 h-3 mr-1" />待主管评估</Badge>;
       case "manager_evaluated":
         return <Badge variant="outline" className="text-purple-600 border-purple-600"><Eye className="w-3 h-3 mr-1" />待HR审核</Badge>;
+      case "pending_confirm":
+        return <Badge variant="outline" className="text-pink-600 border-pink-600"><Star className="w-3 h-3 mr-1" />待确认</Badge>;
       case "completed":
         return <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="w-3 h-3 mr-1" />已完成</Badge>;
       default:

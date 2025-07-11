@@ -73,7 +73,7 @@ type KPIEvaluation struct {
 	Year         int       `json:"year"`
 	Month        *int      `json:"month,omitempty"`
 	Quarter      *int      `json:"quarter,omitempty"`
-	Status       string    `json:"status" gorm:"default:pending"` // pending, self_evaluated, manager_evaluated, completed
+	Status       string    `json:"status" gorm:"default:pending"` // pending, self_evaluated, manager_evaluated, pending_confirm, completed
 	TotalScore   float64   `json:"total_score"`
 	FinalComment string    `json:"final_comment"`
 	CreatedAt    time.Time `json:"created_at"`

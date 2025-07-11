@@ -273,6 +273,25 @@ func UpdateEvaluation(c *gin.Context) {
 		return
 	}
 
+	// 如果状态变为completed，自动计算最终得分
+	if updateData.Status == "completed" {
+		var scores []models.KPIScore
+		if err := models.DB.Where("evaluation_id = ?", evaluation.ID).Find(&scores).Error; err == nil {
+			total := 0.0
+			for _, s := range scores {
+				var final float64
+				if s.ManagerScore != nil {
+					final = *s.ManagerScore
+				} else if s.SelfScore != nil {
+					final = *s.SelfScore
+				}
+				models.DB.Model(&s).Update("final_score", final)
+				total += final
+			}
+			models.DB.Model(&evaluation).Update("total_score", total)
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "评估更新成功",
 		"data":    evaluation,
