@@ -716,8 +716,8 @@ export default function EvaluationsPage() {
       {/* 响应式头部 */}
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">考核管理</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2">管理员工绩效考核流程</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">考核管理</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">管理员工绩效考核流程</p>
         </div>
         {isHR && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

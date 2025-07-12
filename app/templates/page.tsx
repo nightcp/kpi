@@ -181,8 +181,8 @@ export default function TemplatesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">KPI模板管理</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2">创建和管理KPI考核模板</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">KPI模板管理</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">创建和管理KPI考核模板</p>
         </div>
         <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
           <DialogTrigger asChild>

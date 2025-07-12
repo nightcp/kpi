@@ -74,22 +74,22 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
     <>
       {/* 移动端遮罩层 */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+        <div className="fixed inset-0 bg-black/50 z-10 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
       )}
 
       {/* 侧边栏 */}
       <div
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-10 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none flex flex-col",
+          "fixed lg:static inset-y-0 left-0 z-20 w-64 h-screen bg-sidebar shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none flex flex-col",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* 头部 - 移动端显示关闭按钮 */}
         <div className="flex items-center justify-between pl-6 pr-2 lg:pr-6 py-4 lg:justify-start flex-shrink-0">
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-bold text-gray-800">KPI考核系统</h1>
+            <h1 className="text-xl font-bold text-sidebar-foreground">KPI考核系统</h1>
             {currentUser && (
-              <div className="text-sm text-gray-500 flex items-center gap-2">
+              <div className="text-sm text-sidebar-foreground/70 flex items-center gap-2">
                 <div>
                   {currentUser.name} - {currentUser.department?.name || '未知部门'}
                 </div>
@@ -101,9 +101,9 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden p-1 rounded-md hover:bg-gray-100"
+            className="lg:hidden p-1 rounded-md hover:bg-sidebar-accent"
           >
-            <X className="text-gray-600" />
+            <X className="text-sidebar-foreground/70" />
           </Button>
         </div>
 
@@ -119,8 +119,8 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                 className={cn(
                   "flex items-center px-6 py-3 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-sidebar-accent border-r-2 border-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >
                 <item.icon className="w-5 h-5 mr-3" />
@@ -137,12 +137,12 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 // 移动端头部组件
 export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <div className="lg:hidden bg-white shadow-sm border-b flex-shrink-0">
+    <div className="lg:hidden bg-background shadow-sm border-b border-border flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-2">
-        <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-gray-100">
-          <Menu className="w-6 h-6 text-gray-600" />
+        <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-accent">
+          <Menu className="w-6 h-6 text-muted-foreground" />
         </button>
-        <h1 className="text-lg font-semibold text-gray-800">KPI考核系统</h1>
+        <h1 className="text-lg font-semibold text-foreground">KPI考核系统</h1>
         <div className="w-10 h-10"></div> {/* 占位符，保持标题居中 */}
       </div>
     </div>

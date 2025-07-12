@@ -114,8 +114,8 @@ export default function StatisticsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">统计分析</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">统计分析</h1>
+          <p className="text-muted-foreground mt-2">
             绩效考核数据分析与报告 - {selectedYear}年
             {selectedPeriod === "monthly"
               ? `${selectedMonth}月`

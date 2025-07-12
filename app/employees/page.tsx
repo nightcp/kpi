@@ -145,8 +145,8 @@ export default function EmployeesPage() {
       {/* 响应式头部 */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">员工管理</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2">管理员工信息和组织架构</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">员工管理</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">管理员工信息和组织架构</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>

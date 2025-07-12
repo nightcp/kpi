@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react"
 import { statisticsApi, type DashboardStats } from "@/lib/api"
 import Link from "next/link"
@@ -36,8 +35,8 @@ export default function Dashboard() {
     <div className="space-y-6 lg:space-y-8">
       {/* 响应式头部 */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">仪表板</h1>
-        <p className="text-gray-600 mt-1 sm:mt-2">欢迎使用KPI绩效考核系统</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">仪表板</h1>
+        <p className="text-muted-foreground mt-1 sm:mt-2">欢迎使用KPI绩效考核系统</p>
       </div>
 
       {/* 统计卡片 */}
@@ -136,7 +135,7 @@ export default function Dashboard() {
                 {stats?.recent_evaluations && stats.recent_evaluations.length > 0 && (
                   <Link
                     href="/evaluations"
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-normal text-sm leading-none"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground font-normal text-sm leading-none"
                   >
                     <Eye className="w-4 h-4" />
                     查看全部
@@ -151,12 +150,12 @@ export default function Dashboard() {
                 {stats.recent_evaluations.slice(0, 5).map(evaluation => (
                   <div
                     key={evaluation.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg space-y-2 sm:space-y-0"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted/50 rounded-lg space-y-2 sm:space-y-0"
                   >
                     <div className="flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                         <span className="font-medium">{evaluation.employee?.name}</span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted-foreground">
                           {evaluation.employee?.department?.name} - {evaluation.employee?.position}
                         </span>
                       </div>
@@ -164,7 +163,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between sm:justify-end sm:space-x-2">
                       <div className="text-right">
                         <div className="flex items-center justify-end">
-                          <div className="text-xs text-gray-500">得分</div>
+                          <div className="text-xs text-muted-foreground">得分</div>
                           <div className="text-lg font-semibold ml-1">{evaluation.total_score}</div>
                         </div>
                       </div>
@@ -175,7 +174,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center py-8 text-gray-500">暂无评估记录</div>
+                <div className="text-center py-8 text-muted-foreground">暂无评估记录</div>
               </div>
             )}
           </CardContent>
@@ -187,48 +186,48 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <Link href="/evaluations">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between p-3 bg-blue-50/80 dark:bg-blue-950/50 rounded-lg hover:bg-blue-100/80 dark:hover:bg-blue-950/70 transition-colors cursor-pointer">
                 <div className="flex-1">
                   <p className="font-medium">考核管理</p>
-                  <p className="text-sm text-gray-600">创建和管理员工KPI评估</p>
+                  <p className="text-sm text-muted-foreground">创建和管理员工KPI评估</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                <div className="flex items-center mx-2 flex-shrink-0 text-xs font-medium text-secondary-foreground/90">
                   <Plus className="w-3 h-3 mr-1" />
                   新建
-                </Badge>
+                </div>
               </div>
             </Link>
             <Link href="/templates">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between p-3 bg-green-50/80 dark:bg-green-950/50 rounded-lg hover:bg-green-100/80 dark:hover:bg-green-950/70 transition-colors cursor-pointer">
                 <div className="flex-1">
                   <p className="font-medium">KPI模板</p>
-                  <p className="text-sm text-gray-600">创建和管理KPI考核模板</p>
+                  <p className="text-sm text-muted-foreground">创建和管理KPI考核模板</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                <div className="flex items-center mx-2 flex-shrink-0 text-xs font-medium text-secondary-foreground/90">
                   可用
-                </Badge>
+                </div>
               </div>
             </Link>
             <Link href="/statistics">
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between p-3 bg-purple-50/80 dark:bg-purple-950/50 rounded-lg hover:bg-purple-100/80 dark:hover:bg-purple-950/70 transition-colors cursor-pointer">
                 <div className="flex-1">
                   <p className="font-medium">统计分析</p>
-                  <p className="text-sm text-gray-600">查看绩效统计和分析报告</p>
+                  <p className="text-sm text-muted-foreground">查看绩效统计和分析报告</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                <div className="flex items-center mx-2 flex-shrink-0 text-xs font-medium text-secondary-foreground/90">
                   可用
-                </Badge>
+                </div>
               </div>
             </Link>
             <Link href="/employees">
-              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between p-3 bg-orange-50/80 dark:bg-orange-950/50 rounded-lg hover:bg-orange-100/80 dark:hover:bg-orange-950/70 transition-colors cursor-pointer">
                 <div className="flex-1">
                   <p className="font-medium">员工管理</p>
-                  <p className="text-sm text-gray-600">管理员工信息和组织架构</p>
+                  <p className="text-sm text-muted-foreground">管理员工信息和组织架构</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                <div className="flex items-center mx-2 flex-shrink-0 text-xs font-medium text-secondary-foreground/90">
                   可用
-                </Badge>
+                </div>
               </div>
             </Link>
           </CardContent>

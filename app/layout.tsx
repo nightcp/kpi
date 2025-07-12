@@ -7,6 +7,7 @@ import { Sidebar, MobileHeader } from "@/components/sidebar"
 import { AppProvider } from "@/lib/app-context"
 
 import { AuthProvider } from "@/lib/auth-context"
+import { ThemeProvider } from "@/lib/theme-context"
 import ProtectedRoute from "@/components/protected-route"
 import { useState } from "react"
 import "./globals.css"
@@ -40,7 +41,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
         {/* 主内容区域 */}
-        <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
+        <main className="flex-1 bg-muted/30 min-w-0 overflow-y-auto lg:h-screen">
           <div className="p-4 lg:p-6">
             <div className="max-w-7xl mx-auto">{children}</div>
           </div>
@@ -59,11 +60,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={inter.className}>
-        <AppProvider>
-          <AuthProvider>
-            <AppLayout>{children}</AppLayout>
-          </AuthProvider>
-        </AppProvider>
+        <ThemeProvider>
+          <AppProvider>
+            <AuthProvider>
+              <AppLayout>{children}</AppLayout>
+            </AuthProvider>
+          </AppProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

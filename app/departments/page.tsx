@@ -92,8 +92,8 @@ export default function DepartmentsPage() {
       {/* 响应式头部 */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">部门管理</h1>
-          <p className="text-gray-600 mt-1 sm:mt-2">管理组织架构和部门信息</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">部门管理</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">管理组织架构和部门信息</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
