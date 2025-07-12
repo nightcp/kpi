@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,7 @@ import { getPeriodValue } from "@/lib/utils"
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
   const { currentUser, isManager, isHR } = useUser()
+  const detailsRef = useRef<HTMLDivElement>(null)
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [templates, setTemplates] = useState<KPITemplate[]>([])
@@ -154,27 +155,27 @@ export default function EvaluationsPage() {
     if (score === "") {
       return { isValid: false, message: "请输入评分" }
     }
-    
+
     const numScore = parseFloat(score)
     if (isNaN(numScore)) {
       return { isValid: false, message: "请输入有效的数字" }
     }
-    
+
     if (numScore < 0) {
       return { isValid: false, message: "评分不能小于0" }
     }
-    
+
     if (numScore > maxScore) {
       return { isValid: false, message: `评分不能超过${maxScore}分` }
     }
-    
+
     return { isValid: true }
   }
 
   // 处理输入值变化
   const handleScoreChange = (value: string, maxScore: number) => {
     setTempScore(value)
-    
+
     // 实时验证并限制输入
     if (value !== "") {
       const numValue = parseFloat(value)
@@ -186,6 +187,66 @@ export default function EvaluationsPage() {
         }
       }
     }
+  }
+
+  // 找到下一个未评分的项目
+  const findNextUnscored = (currentScoreId: number, type: "self" | "manager"): number | null => {
+    const currentIndex = scores.findIndex(s => s.id === currentScoreId)
+    if (currentIndex === -1) return null
+
+    // 从当前项目的下一个开始查找
+    for (let i = currentIndex + 1; i < scores.length; i++) {
+      const score = scores[i]
+      if (type === "self" && (!score.self_score || score.self_score === 0)) {
+        return score.id
+      }
+      if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
+        return score.id
+      }
+    }
+
+    // 如果没找到，从头开始查找
+    for (let i = 0; i < currentIndex; i++) {
+      const score = scores[i]
+      if (type === "self" && (!score.self_score || score.self_score === 0)) {
+        return score.id
+      }
+      if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
+        return score.id
+      }
+    }
+
+    return null
+  }
+
+  // 滚动到指定的评分项目
+  const scrollToNextUnscored = (currentScoreId: number, type?: "self" | "manager") => {
+    let nextUnscored: number | null = currentScoreId
+    if (type) {
+      nextUnscored = findNextUnscored(currentScoreId, type)
+      if (!nextUnscored) {
+        return
+      }
+    }
+
+    // 使用 setTimeout 确保DOM已更新
+    requestAnimationFrame(() => {
+      const element = detailsRef.current?.querySelector(`[data-score-id="${nextUnscored}"]`) as HTMLElement
+      if (!element) {
+        return
+      }
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      })
+      // 添加一个视觉提示
+      element.style.backgroundColor = "#f0f9ff"
+      element.style.transition = "background-color 0.3s ease"
+      setTimeout(() => {
+        element.style.backgroundColor = ""
+      }, 2000)
+    })
   }
 
   // 保存评分
@@ -200,7 +261,7 @@ export default function EvaluationsPage() {
 
       const maxScore = currentScore.item?.max_score || 100
       const validation = validateScore(tempScore, maxScore)
-      
+
       if (!validation.isValid) {
         Alert("输入错误", validation.message || "评分输入无效")
         return
@@ -214,12 +275,14 @@ export default function EvaluationsPage() {
       }
 
       if (selectedEvaluation) {
-        fetchEvaluationScores(selectedEvaluation.id)
+        await fetchEvaluationScores(selectedEvaluation.id)
         fetchEvaluations()
       }
+
       setEditingScore(null)
       setTempScore("")
       setTempComment("")
+      scrollToNextUnscored(scoreId, type)
     } catch (error) {
       console.error("更新评分失败:", error)
       Alert("保存失败", "更新评分失败，请重试")
@@ -242,7 +305,8 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已自评
       const uncompletedItems = scores.filter(score => !score.self_score || score.self_score === 0)
       if (uncompletedItems.length > 0) {
-        Alert("自评", `请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`)
+        await Alert("自评", `请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`)
+        scrollToNextUnscored(uncompletedItems[0].id)
         return
       }
 
@@ -260,7 +324,8 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已进行主管评分
       const uncompletedItems = scores.filter(score => !score.manager_score || score.manager_score === 0)
       if (uncompletedItems.length > 0) {
-        Alert("主管评分", `请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`)
+        await Alert("主管评分", `请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`)
+        scrollToNextUnscored(uncompletedItems[0].id)
         return
       }
 
@@ -276,7 +341,8 @@ export default function EvaluationsPage() {
       // 检查是否所有项目都已确定最终得分
       const unconfirmedItems = scores.filter(score => !score.final_score && !score.manager_score)
       if (unconfirmedItems.length > 0) {
-        Alert("HR审核", `请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`)
+        await Alert("HR审核", `请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`)
+        scrollToNextUnscored(unconfirmedItems[0].id)
         return
       }
 
@@ -390,22 +456,49 @@ export default function EvaluationsPage() {
     setActiveTab("details")
   }
 
+  // 排序评估列表
+  const sortEvaluations = (evaluations: KPIEvaluation[], status?: string) => {
+    const sorts = ["pending", "pending_confirm"]
+    if (status) {
+      sorts.unshift(status)
+    }
+    return evaluations.sort((a, b) => {
+      const aIndex = sorts.indexOf(a.status)
+      const bIndex = sorts.indexOf(b.status)
+
+      // 如果都在sorts数组中，按照sorts数组的顺序排序
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex
+      }
+
+      // 如果只有一个在sorts数组中，在sorts中的排前面
+      if (aIndex !== -1 && bIndex === -1) return -1
+      if (aIndex === -1 && bIndex !== -1) return 1
+
+      // 如果都不在sorts数组中，按照id排序
+      return a.id - b.id
+    })
+  }
+
   // 根据用户角色过滤评估
   const getFilteredEvaluations = useMemo(() => {
     if (!currentUser) return []
 
     if (isHR) {
-      return evaluations // HR可以看到所有评估
+      return sortEvaluations(evaluations, "manager_evaluated") // HR可以看到所有评估
     }
-    return evaluations.filter(evaluation => {
-      if (isManager) {
-        // 主管可以看到自己的考核 + 下属的考核
-        return evaluation.employee_id === currentUser.id || evaluation.employee?.manager_id === currentUser.id
-      } else {
-        // 员工只能看到自己的评估
-        return evaluation.employee_id === currentUser.id
-      }
-    })
+    return sortEvaluations(
+      evaluations.filter(evaluation => {
+        if (isManager) {
+          // 主管可以看到自己的考核 + 下属的考核
+          return evaluation.employee_id === currentUser.id || evaluation.employee?.manager_id === currentUser.id
+        } else {
+          // 员工只能看到自己的评估
+          return evaluation.employee_id === currentUser.id
+        }
+      }),
+      isManager ? "self_evaluated" : undefined
+    )
   }, [currentUser, evaluations, isHR, isManager])
 
   // 检查是否可以进行某个操作
@@ -721,9 +814,7 @@ export default function EvaluationsPage() {
                           </TableCell>
                           <TableCell>{evaluation.employee?.department?.name}</TableCell>
                           <TableCell>{evaluation.template?.name}</TableCell>
-                          <TableCell>
-                            {getPeriodValue(evaluation)}
-                          </TableCell>
+                          <TableCell>{getPeriodValue(evaluation)}</TableCell>
                           <TableCell>
                             <div className="text-lg font-semibold">{evaluation.total_score}</div>
                           </TableCell>
@@ -771,9 +862,7 @@ export default function EvaluationsPage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-500">考核周期:</span>
-                          <span className="text-sm font-medium">
-                            {getPeriodValue(evaluation)}
-                          </span>
+                          <span className="text-sm font-medium">{getPeriodValue(evaluation)}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-500">状态:</span>
@@ -810,7 +899,7 @@ export default function EvaluationsPage() {
           {selectedEvaluation && (
             <>
               {/* 可滚动的内容区域 */}
-              <div className="flex-1 overflow-y-auto space-y-4">
+              <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6">
                 {/* 基本信息卡片 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-gray-50 p-3 rounded">
@@ -823,9 +912,7 @@ export default function EvaluationsPage() {
                   </div>
                   <div className="bg-gray-50 p-3 rounded">
                     <Label className="text-sm text-gray-500">考核周期</Label>
-                    <p className="text-sm font-medium">
-                      {getPeriodValue(selectedEvaluation)}
-                    </p>
+                    <p className="text-sm font-medium">{getPeriodValue(selectedEvaluation)}</p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded">
                     <Label className="text-sm text-gray-500">当前状态</Label>
@@ -864,289 +951,227 @@ export default function EvaluationsPage() {
                     <TabsTrigger value="summary">总结汇总</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="details" className="space-y-4">
-                  {/* 自评指导和进度信息 */}
-                  {canPerformAction(selectedEvaluation, "self") && (
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 className="font-medium text-blue-900 mb-2">📝 自评指导</h4>
-                        <ul className="text-sm text-blue-800 space-y-1">
-                          <li>• 请根据本期间的实际工作表现进行客观评分</li>
-                          <li>• 评分需要在0到满分之间，建议结合具体工作成果</li>
-                          <li>• 请在评价说明中详细描述您的工作亮点和改进计划</li>
-                          <li>• 完成所有项目评分后，点击&quot;完成自评&quot;提交</li>
-                        </ul>
-                      </div>
-
-                      {/* 评分进度 */}
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <h4 className="font-medium text-green-900 mb-2">📊 评分进度</h4>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-green-800">
-                            已完成 {scores.filter(s => s.self_score && s.self_score > 0).length} / {scores.length} 项
-                          </span>
-                          <div className="flex-1 mx-4 bg-green-200 rounded-full h-2">
-                            <div
-                              className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${
-                                  scores.length > 0
-                                    ? (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) *
-                                      100
-                                    : 0
-                                }%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium text-green-900">
-                            {scores.length > 0
-                              ? Math.round(
-                                  (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
-                                )
-                              : 0}
-                            %
-                          </span>
+                  <TabsContent value="details" className="space-y-4" ref={detailsRef}>
+                    {/* 自评指导和进度信息 */}
+                    {canPerformAction(selectedEvaluation, "self") && (
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h4 className="font-medium text-blue-900 mb-2">📝 自评指导</h4>
+                          <ul className="text-sm text-blue-800 space-y-1">
+                            <li>• 请根据本期间的实际工作表现进行客观评分</li>
+                            <li>• 评分需要在0到满分之间，建议结合具体工作成果</li>
+                            <li>• 请在评价说明中详细描述您的工作亮点和改进计划</li>
+                            <li>• 完成所有项目评分后，点击&quot;完成自评&quot;提交</li>
+                          </ul>
                         </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* 上级评分指导信息 */}
-                  {canPerformAction(selectedEvaluation, "manager") && (
-                    <div className="space-y-4">
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <h4 className="font-medium text-purple-900 mb-2">👔 上级评分指导</h4>
-                        <ul className="text-sm text-purple-800 space-y-1">
-                          <li>• 请结合员工的自评内容和实际工作表现进行评分</li>
-                          <li>• 评分应客观公正，既要认可成绩，也要指出不足</li>
-                          <li>• 在评价说明中提供具体的改进建议和发展方向</li>
-                          <li>• 完成所有项目评分后，点击&quot;完成主管评估&quot;提交</li>
-                        </ul>
-                      </div>
-
-                      {/* 评分对比和进度 */}
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                        <h4 className="font-medium text-orange-900 mb-2">📈 评分对比</h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-orange-800">员工自评总分：</span>
-                            <span className="font-semibold text-orange-900">
-                              {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)} 分
+                        {/* 评分进度 */}
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <h4 className="font-medium text-green-900 mb-2">📊 评分进度</h4>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-green-800">
+                              已完成 {scores.filter(s => s.self_score && s.self_score > 0).length} / {scores.length} 项
                             </span>
-                          </div>
-                          <div>
-                            <span className="text-orange-800">主管评分进度：</span>
-                            <span className="font-semibold text-orange-900">
-                              {scores.filter(s => s.manager_score && s.manager_score > 0).length} / {scores.length} 项
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-orange-700">主管评分完成度</span>
-                            <span className="text-xs font-medium text-orange-900">
+                            <div className="flex-1 mx-4 bg-green-200 rounded-full h-2">
+                              <div
+                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${
+                                    scores.length > 0
+                                      ? (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) *
+                                        100
+                                      : 0
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-green-900">
                               {scores.length > 0
                                 ? Math.round(
-                                    (scores.filter(s => s.manager_score && s.manager_score > 0).length /
-                                      scores.length) *
-                                      100
+                                    (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
                                   )
                                 : 0}
                               %
                             </span>
                           </div>
-                          <div className="w-full bg-orange-200 rounded-full h-2">
-                            <div
-                              className="bg-orange-600 h-2 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${
-                                  scores.length > 0
-                                    ? (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 上级评分指导信息 */}
+                    {canPerformAction(selectedEvaluation, "manager") && (
+                      <div className="space-y-4">
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                          <h4 className="font-medium text-purple-900 mb-2">👔 上级评分指导</h4>
+                          <ul className="text-sm text-purple-800 space-y-1">
+                            <li>• 请结合员工的自评内容和实际工作表现进行评分</li>
+                            <li>• 评分应客观公正，既要认可成绩，也要指出不足</li>
+                            <li>• 在评价说明中提供具体的改进建议和发展方向</li>
+                            <li>• 完成所有项目评分后，点击&quot;完成主管评估&quot;提交</li>
+                          </ul>
+                        </div>
+
+                        {/* 评分对比和进度 */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                          <h4 className="font-medium text-orange-900 mb-2">📈 评分对比</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-orange-800">员工自评总分：</span>
+                              <span className="font-semibold text-orange-900">
+                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)} 分
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-orange-800">主管评分进度：</span>
+                              <span className="font-semibold text-orange-900">
+                                {scores.filter(s => s.manager_score && s.manager_score > 0).length} / {scores.length} 项
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-orange-700">主管评分完成度</span>
+                              <span className="text-xs font-medium text-orange-900">
+                                {scores.length > 0
+                                  ? Math.round(
+                                      (scores.filter(s => s.manager_score && s.manager_score > 0).length /
                                         scores.length) *
-                                      100
-                                    : 0
-                                }%`,
-                              }}
-                            />
+                                        100
+                                    )
+                                  : 0}
+                                %
+                              </span>
+                            </div>
+                            <div className="w-full bg-orange-200 rounded-full h-2">
+                              <div
+                                className="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${
+                                    scores.length > 0
+                                      ? (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                                          scores.length) *
+                                        100
+                                      : 0
+                                  }%`,
+                                }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* HR审核指导信息 */}
-                  {canPerformAction(selectedEvaluation, "hr") && (
-                    <div className="space-y-4">
-                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                        <h4 className="font-medium text-indigo-900 mb-2">🔍 HR审核指导</h4>
-                        <ul className="text-sm text-indigo-800 space-y-1">
-                          <li>• 审核员工自评与上级评分的合理性和一致性</li>
-                          <li>• 检查评分是否符合公司绩效标准和政策</li>
-                          <li>• 确认最终评分并可进行必要的调整</li>
-                          <li>• 完成审核后，评估将进入员工确认阶段</li>
-                        </ul>
-                      </div>
-
-                      {/* HR审核总结 */}
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h4 className="font-medium text-gray-900 mb-3">📊 评分汇总分析</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                          <div className="bg-white p-3 rounded border">
-                            <div className="text-gray-600">员工自评总分</div>
-                            <div className="text-2xl font-bold text-blue-600">
-                              {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              平均分：
-                              {scores.length > 0
-                                ? (
-                                    scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
-                                  ).toFixed(1)
-                                : 0}
-                            </div>
-                          </div>
-                          <div className="bg-white p-3 rounded border">
-                            <div className="text-gray-600">主管评分总分</div>
-                            <div className="text-2xl font-bold text-purple-600">
-                              {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              平均分：
-                              {scores.length > 0
-                                ? (
-                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
-                                  ).toFixed(1)
-                                : 0}
-                            </div>
-                          </div>
-                          <div className="bg-white p-3 rounded border">
-                            <div className="text-gray-600">评分差异分析</div>
-                            <div className="text-2xl font-bold text-orange-600">
-                              {Math.abs(
-                                scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                                  scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">自评与主管评分差值</div>
-                          </div>
+                    {/* HR审核指导信息 */}
+                    {canPerformAction(selectedEvaluation, "hr") && (
+                      <div className="space-y-4">
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                          <h4 className="font-medium text-indigo-900 mb-2">🔍 HR审核指导</h4>
+                          <ul className="text-sm text-indigo-800 space-y-1">
+                            <li>• 审核员工自评与上级评分的合理性和一致性</li>
+                            <li>• 检查评分是否符合公司绩效标准和政策</li>
+                            <li>• 确认最终评分并可进行必要的调整</li>
+                            <li>• 完成审核后，评估将进入员工确认阶段</li>
+                          </ul>
                         </div>
 
-                        {/* 差异分析提示 */}
-                        {Math.abs(
-                          scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                            scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
-                        ) > 10 && (
-                          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                            <div className="text-sm text-yellow-800">
-                              ⚠️ <strong>注意：</strong>
-                              员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {scores.map(score => (
-                    <Card key={score.id} className="border">
-                      <CardContent className="p-4">
-                        <div className="space-y-4">
-                          {/* 项目信息 */}
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-lg">{score.item?.name}</h4>
-                              <p className="text-sm text-muted-foreground">{score.item?.description}</p>
-                              <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
-                            </div>
-                            <div className="text-center sm:text-right">
+                        {/* HR审核总结 */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 mb-3">📊 评分汇总分析</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div className="bg-white p-3 rounded border">
+                              <div className="text-gray-600">员工自评总分</div>
                               <div className="text-2xl font-bold text-blue-600">
-                                {score.final_score || score.manager_score || score.self_score || 0}
+                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
                               </div>
-                              <div className="text-sm text-muted-foreground">当前得分</div>
+                              <div className="text-xs text-gray-500">
+                                平均分：
+                                {scores.length > 0
+                                  ? (
+                                      scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
+                                    ).toFixed(1)
+                                  : 0}
+                              </div>
+                            </div>
+                            <div className="bg-white p-3 rounded border">
+                              <div className="text-gray-600">主管评分总分</div>
+                              <div className="text-2xl font-bold text-purple-600">
+                                {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                平均分：
+                                {scores.length > 0
+                                  ? (
+                                      scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
+                                    ).toFixed(1)
+                                  : 0}
+                              </div>
+                            </div>
+                            <div className="bg-white p-3 rounded border">
+                              <div className="text-gray-600">评分差异分析</div>
+                              <div className="text-2xl font-bold text-orange-600">
+                                {Math.abs(
+                                  scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
+                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">自评与主管评分差值</div>
                             </div>
                           </div>
 
-                          {/* 评分区域 */}
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            {/* 自评区域 */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center h-6">
-                                自评分数
-                                {canPerformAction(selectedEvaluation, "self") && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-2 h-6 w-6 p-0"
-                                    onClick={() => handleStartEdit(score.id, score.self_score, score.self_comment)}
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                  </Button>
-                                )}
-                              </Label>
+                          {/* 差异分析提示 */}
+                          {Math.abs(
+                            scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
+                              scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                          ) > 10 && (
+                            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                              <div className="text-sm text-yellow-800">
+                                ⚠️ <strong>注意：</strong>
+                                员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                              {editingScore === score.id && canPerformAction(selectedEvaluation, "self") ? (
-                                <div className="space-y-2">
-                                  <div className="space-y-1">
-                                    <Input
-                                      type="number"
-                                      value={tempScore}
-                                      onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
-                                      min={0}
-                                      max={score.item?.max_score}
-                                      step="0.1"
-                                      placeholder="评分"
-                                    />
-                                    <div className="text-xs text-gray-500">
-                                      评分范围：0 - {score.item?.max_score || 100}分
-                                    </div>
-                                  </div>
-                                  <Textarea
-                                    value={tempComment}
-                                    onChange={e => setTempComment(e.target.value)}
-                                    placeholder="评价说明"
-                                    rows={3}
-                                  />
-                                  <div className="flex space-x-2">
-                                    <Button size="sm" onClick={() => handleSaveScore(score.id, "self")}>
-                                      <Save className="w-3 h-3 mr-1" />
-                                      保存
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                      <X className="w-3 h-3 mr-1" />
-                                      取消
-                                    </Button>
-                                  </div>
+                    {scores.map(score => (
+                      <Card key={score.id} role="score-item" data-score-id={score.id} className="border">
+                        <CardContent className="px-4 py-2">
+                          <div className="space-y-4">
+                            {/* 项目信息 */}
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-lg">{score.item?.name}</h4>
+                                <p className="text-sm text-muted-foreground">{score.item?.description}</p>
+                                <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
+                              </div>
+                              <div className="text-center sm:text-right">
+                                <div className="text-2xl font-bold text-blue-600">
+                                  {score.final_score || score.manager_score || score.self_score || 0}
                                 </div>
-                              ) : (
-                                <div>
-                                  <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
-                                  <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
-                                    {score.self_comment || "暂无说明"}
-                                  </div>
-                                </div>
-                              )}
+                                <div className="text-sm text-muted-foreground">当前得分</div>
+                              </div>
                             </div>
 
-                            {/* 主管评分区域 */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center h-6">
-                                主管评分
-                                {canPerformAction(selectedEvaluation, "manager") && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-2 h-6 w-6 p-0"
-                                    onClick={() =>
-                                      handleStartEdit(score.id, score.manager_score, score.manager_comment)
-                                    }
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                  </Button>
-                                )}
-                              </Label>
+                            {/* 评分区域 */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                              {/* 自评区域 */}
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center h-6">
+                                  自评分数
+                                  {canPerformAction(selectedEvaluation, "self") && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="ml-2 h-6 w-6 p-0"
+                                      onClick={() => handleStartEdit(score.id, score.self_score, score.self_comment)}
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </Label>
 
-                              {editingScore === score.id && canPerformAction(selectedEvaluation, "manager") ? (
-                                <div className="space-y-2">
+                                {editingScore === score.id && canPerformAction(selectedEvaluation, "self") ? (
                                   <div className="space-y-2">
                                     <div className="space-y-1">
                                       <Input
@@ -1162,191 +1187,266 @@ export default function EvaluationsPage() {
                                         评分范围：0 - {score.item?.max_score || 100}分
                                       </div>
                                     </div>
-                                    {/* 评分参考标准 */}
-                                    <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                                      <div className="font-medium mb-1">评分参考：</div>
-                                      <div className="space-y-1">
-                                        <div>
-                                          优秀 ({Math.round((score.item?.max_score || 0) * 0.9)}-{score.item?.max_score}
-                                          分)：超额完成目标，表现突出
-                                        </div>
-                                        <div>
-                                          良好 ({Math.round((score.item?.max_score || 0) * 0.7)}-
-                                          {Math.round((score.item?.max_score || 0) * 0.89)}分)：较好完成目标，有一定亮点
-                                        </div>
-                                        <div>
-                                          合格 ({Math.round((score.item?.max_score || 0) * 0.6)}-
-                                          {Math.round((score.item?.max_score || 0) * 0.69)}分)：基本完成目标，符合要求
-                                        </div>
-                                        <div>
-                                          需改进 (0-{Math.round((score.item?.max_score || 0) * 0.59)}
-                                          分)：未达成目标，需要改进
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 text-blue-600">员工自评：{score.self_score || 0}分</div>
+                                    <Textarea
+                                      value={tempComment}
+                                      onChange={e => setTempComment(e.target.value)}
+                                      placeholder="评价说明"
+                                      rows={3}
+                                    />
+                                    <div className="flex space-x-2">
+                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "self")}>
+                                        <Save className="w-3 h-3 mr-1" />
+                                        保存
+                                      </Button>
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                                        <X className="w-3 h-3 mr-1" />
+                                        取消
+                                      </Button>
                                     </div>
                                   </div>
-                                  <Textarea
-                                    value={tempComment}
-                                    onChange={e => setTempComment(e.target.value)}
-                                    placeholder="评价说明（请结合员工自评内容，提供具体的改进建议和发展方向）"
-                                    rows={4}
-                                  />
-                                  <div className="flex space-x-2">
-                                    <Button size="sm" onClick={() => handleSaveScore(score.id, "manager")}>
-                                      <Save className="w-3 h-3 mr-1" />
-                                      保存
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                      <X className="w-3 h-3 mr-1" />
-                                      取消
-                                    </Button>
+                                ) : (
+                                  <div>
+                                    <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
+                                    <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
+                                      {score.self_comment || "暂无说明"}
+                                    </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <div>
-                                  <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
-                                  <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
-                                    {score.manager_comment || "暂无说明"}
+                                )}
+                              </div>
+
+                              {/* 主管评分区域 */}
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center h-6">
+                                  主管评分
+                                  {canPerformAction(selectedEvaluation, "manager") && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="ml-2 h-6 w-6 p-0"
+                                      onClick={() =>
+                                        handleStartEdit(score.id, score.manager_score, score.manager_comment)
+                                      }
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </Label>
+
+                                {editingScore === score.id && canPerformAction(selectedEvaluation, "manager") ? (
+                                  <div className="space-y-2">
+                                    <div className="space-y-2">
+                                      <div className="space-y-1">
+                                        <Input
+                                          type="number"
+                                          value={tempScore}
+                                          onChange={e =>
+                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
+                                          }
+                                          min={0}
+                                          max={score.item?.max_score}
+                                          step="0.1"
+                                          placeholder="评分"
+                                        />
+                                        <div className="text-xs text-gray-500">
+                                          评分范围：0 - {score.item?.max_score || 100}分
+                                        </div>
+                                      </div>
+                                      {/* 评分参考标准 */}
+                                      <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                        <div className="font-medium mb-1">评分参考：</div>
+                                        <div className="space-y-1">
+                                          <div>
+                                            优秀 ({Math.round((score.item?.max_score || 0) * 0.9)}-
+                                            {score.item?.max_score}
+                                            分)：超额完成目标，表现突出
+                                          </div>
+                                          <div>
+                                            良好 ({Math.round((score.item?.max_score || 0) * 0.7)}-
+                                            {Math.round((score.item?.max_score || 0) * 0.89)}
+                                            分)：较好完成目标，有一定亮点
+                                          </div>
+                                          <div>
+                                            合格 ({Math.round((score.item?.max_score || 0) * 0.6)}-
+                                            {Math.round((score.item?.max_score || 0) * 0.69)}分)：基本完成目标，符合要求
+                                          </div>
+                                          <div>
+                                            需改进 (0-{Math.round((score.item?.max_score || 0) * 0.59)}
+                                            分)：未达成目标，需要改进
+                                          </div>
+                                        </div>
+                                        <div className="mt-2 text-blue-600">员工自评：{score.self_score || 0}分</div>
+                                      </div>
+                                    </div>
+                                    <Textarea
+                                      value={tempComment}
+                                      onChange={e => setTempComment(e.target.value)}
+                                      placeholder="评价说明（请结合员工自评内容，提供具体的改进建议和发展方向）"
+                                      rows={4}
+                                    />
+                                    <div className="flex space-x-2">
+                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "manager")}>
+                                        <Save className="w-3 h-3 mr-1" />
+                                        保存
+                                      </Button>
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                                        <X className="w-3 h-3 mr-1" />
+                                        取消
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
+                                ) : (
+                                  <div>
+                                    <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
+                                    <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
+                                      {score.manager_comment || "暂无说明"}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 最终得分区域 */}
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center h-6">
+                                  最终得分
+                                  {canPerformAction(selectedEvaluation, "hr") && !score.final_score && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="ml-2 h-6 w-6 p-0"
+                                      onClick={() =>
+                                        handleStartEdit(score.id, score.manager_score, score.manager_comment)
+                                      }
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </Label>
+
+                                {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
+                                  <div className="space-y-2">
+                                    <div className="space-y-2">
+                                      <div className="space-y-1">
+                                        <Input
+                                          type="number"
+                                          value={tempScore}
+                                          onChange={e =>
+                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
+                                          }
+                                          min={0}
+                                          max={score.item?.max_score}
+                                          step="0.1"
+                                          placeholder="最终评分"
+                                        />
+                                        <div className="text-xs text-gray-500">
+                                          评分范围：0 - {score.item?.max_score || 100}分
+                                        </div>
+                                      </div>
+                                      {/* HR最终评分参考 */}
+                                      <div className="text-xs text-gray-500 bg-indigo-50 p-2 rounded border border-indigo-200">
+                                        <div className="font-medium mb-1">最终评分参考：</div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>员工自评：{score.self_score || 0}分</div>
+                                          <div>主管评分：{score.manager_score || 0}分</div>
+                                        </div>
+                                        <div className="mt-2 text-indigo-700">
+                                          💡 建议：通常采用主管评分作为最终得分，如有争议可适当调整
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <Textarea
+                                      value={tempComment}
+                                      onChange={e => setTempComment(e.target.value)}
+                                      placeholder="HR审核备注（可选）"
+                                      rows={2}
+                                    />
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          // HR确认最终得分
+                                          handleSaveScore(score.id, "manager") // 临时使用manager类型，实际应该是final
+                                        }}
+                                      >
+                                        <Save className="w-3 h-3 mr-1" />
+                                        确认最终得分
+                                      </Button>
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                                        <X className="w-3 h-3 mr-1" />
+                                        取消
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    {score.final_score || score.manager_score ? (
+                                      <div className="text-2xl font-bold text-green-600">
+                                        {score.final_score || score.manager_score}
+                                      </div>
+                                    ) : (
+                                      <div className="text-lg font-bold text-green-600">未评分</div>
+                                    )}
+                                    <div className="text-sm text-muted-foreground mt-1">
+                                      {score.final_score
+                                        ? "已确认"
+                                        : canPerformAction(selectedEvaluation, "hr")
+                                        ? "待HR确认"
+                                        : "等待确认"}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </TabsContent>
+
+                  <TabsContent value="summary" className="space-y-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-center space-y-4">
+                          <div>
+                            <h3 className="text-2xl font-bold">总分统计</h3>
+                            <div className="text-4xl font-bold text-blue-600 mt-2">
+                              {scores.reduce(
+                                (acc, score) =>
+                                  acc + (score.final_score || score.manager_score || score.self_score || 0),
+                                0
                               )}
                             </div>
+                            <p className="text-muted-foreground">
+                              满分 {scores.reduce((acc, score) => acc + (score.item?.max_score || 0), 0)} 分
+                            </p>
+                          </div>
 
-                            {/* 最终得分区域 */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium flex items-center h-6">
-                                最终得分
-                                {canPerformAction(selectedEvaluation, "hr") && !score.final_score && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-2 h-6 w-6 p-0"
-                                    onClick={() => handleStartEdit(score.id, score.manager_score, "")}
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                  </Button>
-                                )}
-                              </Label>
-
-                              {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
-                                <div className="space-y-2">
-                                  <div className="space-y-2">
-                                    <div className="space-y-1">
-                                      <Input
-                                        type="number"
-                                        value={tempScore}
-                                        onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
-                                        min={0}
-                                        max={score.item?.max_score}
-                                        step="0.1"
-                                        placeholder="最终评分"
-                                      />
-                                      <div className="text-xs text-gray-500">
-                                        评分范围：0 - {score.item?.max_score || 100}分
-                                      </div>
-                                    </div>
-                                    {/* HR最终评分参考 */}
-                                    <div className="text-xs text-gray-500 bg-indigo-50 p-2 rounded border border-indigo-200">
-                                      <div className="font-medium mb-1">最终评分参考：</div>
-                                      <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <div>员工自评：{score.self_score || 0}分</div>
-                                        <div>主管评分：{score.manager_score || 0}分</div>
-                                      </div>
-                                      <div className="mt-2 text-indigo-700">
-                                        💡 建议：通常采用主管评分作为最终得分，如有争议可适当调整
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <Textarea
-                                    value={tempComment}
-                                    onChange={e => setTempComment(e.target.value)}
-                                    placeholder="HR审核备注（可选）"
-                                    rows={2}
-                                  />
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      size="sm"
-                                      onClick={() => {
-                                        // HR确认最终得分
-                                        handleSaveScore(score.id, "manager") // 临时使用manager类型，实际应该是final
-                                      }}
-                                    >
-                                      <Save className="w-3 h-3 mr-1" />
-                                      确认最终得分
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                      <X className="w-3 h-3 mr-1" />
-                                      取消
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="text-center">
-                                  <div className="text-2xl font-bold text-green-600">
-                                    {score.final_score || score.manager_score || "未评分"}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {score.final_score
-                                      ? "已确认"
-                                      : canPerformAction(selectedEvaluation, "hr")
-                                      ? "待HR确认"
-                                      : "等待确认"}
-                                  </div>
-                                </div>
-                              )}
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">自评总分</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">主管评分</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {scores.reduce((acc, score) => acc + (score.final_score || 0), 0)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">最终得分</div>
                             </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </TabsContent>
-
-                <TabsContent value="summary" className="space-y-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="text-center space-y-4">
-                        <div>
-                          <h3 className="text-2xl font-bold">总分统计</h3>
-                          <div className="text-4xl font-bold text-blue-600 mt-2">
-                            {scores.reduce(
-                              (acc, score) => acc + (score.final_score || score.manager_score || score.self_score || 0),
-                              0
-                            )}
-                          </div>
-                          <p className="text-muted-foreground">
-                            满分 {scores.reduce((acc, score) => acc + (score.item?.max_score || 0), 0)} 分
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div>
-                            <div className="text-lg font-semibold">
-                              {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
-                            </div>
-                            <div className="text-sm text-muted-foreground">自评总分</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-semibold">
-                              {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
-                            </div>
-                            <div className="text-sm text-muted-foreground">主管评分</div>
-                          </div>
-                          <div>
-                            <div className="text-lg font-semibold">
-                              {scores.reduce((acc, score) => acc + (score.final_score || 0), 0)}
-                            </div>
-                            <div className="text-sm text-muted-foreground">最终得分</div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
                   </TabsContent>
                 </Tabs>
               </div>
-              
+
               {/* 固定的流程控制按钮区域 */}
               <div className="flex-shrink-0 border-t pt-4">
                 <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0">
@@ -1368,7 +1468,10 @@ export default function EvaluationsPage() {
                     </Button>
                   )}
                   {canPerformAction(selectedEvaluation, "hr") && (
-                    <Button onClick={() => handleCompleteStage(selectedEvaluation.id, "hr")} className="w-full sm:w-auto">
+                    <Button
+                      onClick={() => handleCompleteStage(selectedEvaluation.id, "hr")}
+                      className="w-full sm:w-auto"
+                    >
                       完成HR审核
                     </Button>
                   )}
