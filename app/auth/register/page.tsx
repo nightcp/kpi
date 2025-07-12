@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { authApi, type Department } from "@/lib/api"
+import { authApi, RegisterRequest, type Department } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 
@@ -24,7 +24,7 @@ export default function RegisterPage() {
   const { Alert } = useAppContext()
   const [loading, setLoading] = useState(false)
   const [departments, setDepartments] = useState<Department[]>([])
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterRequest>({
     name: "",
     email: "",
     password: "",

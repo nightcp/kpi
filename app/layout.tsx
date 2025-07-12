@@ -5,7 +5,7 @@ import { Inter } from "next/font/google"
 import { usePathname } from "next/navigation"
 import { Sidebar, MobileHeader } from "@/components/sidebar"
 import { AppProvider } from "@/lib/app-context"
-import { UserProvider } from "@/lib/user-context"
+
 import { AuthProvider } from "@/lib/auth-context"
 import ProtectedRoute from "@/components/protected-route"
 import { useState } from "react"
@@ -36,22 +36,20 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // 主要应用程序布局（需要认证）
   return (
     <ProtectedRoute requireAuth={true}>
-      <UserProvider>
-        <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
-          {/* 移动端头部 */}
-          <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+      <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+        {/* 移动端头部 */}
+        <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
 
-          {/* 侧边栏 */}
-          <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+        {/* 侧边栏 */}
+        <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-          {/* 主内容区域 */}
-          <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
-            <div className="p-4 lg:p-6">
-              <div className="max-w-7xl mx-auto">{children}</div>
-            </div>
-          </main>
-        </div>
-      </UserProvider>
+        {/* 主内容区域 */}
+        <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
+          <div className="p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </div>
+        </main>
+      </div>
     </ProtectedRoute>
   )
 }

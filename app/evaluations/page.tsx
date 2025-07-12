@@ -38,14 +38,14 @@ import {
   type KPITemplate,
   type EvaluationComment,
 } from "@/lib/api"
-import { useUser } from "@/lib/user-context"
+import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
 import { EmployeeSelector } from "@/components/employee-selector"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
-  const { currentUser, isManager, isHR } = useUser()
+  const { user: currentUser, isManager, isHR } = useAuth()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])

@@ -1,22 +1,20 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { authApi, type AuthUser } from "@/lib/api"
+import { authApi, LoginRequest, RegisterRequest, type AuthUser } from "@/lib/api"
 
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (data: {
-    name: string
-    email: string
-    password: string
-    position: string
-    department_id: number
-  }) => Promise<void>
+  login: (data: LoginRequest) => Promise<void>
+  register: (data: RegisterRequest) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
   refreshUser: () => Promise<void>
+  // 角色判断
+  isManager: boolean
+  isHR: boolean
+  isEmployee: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -57,9 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (data: LoginRequest) => {
     try {
-      const response = await authApi.login({ email, password })
+      const response = await authApi.login(data)
       authApi.setAuth(response.token, response.user)
       setUser(response.user)
     } catch (error) {
@@ -110,6 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     isAuthenticated: !!user,
     refreshUser,
+    // 角色判断
+    isManager: user?.role === "manager",
+    isHR: user?.role === "hr",
+    isEmployee: user?.role === "employee",
   }
 
   return (

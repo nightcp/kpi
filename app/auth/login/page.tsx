@@ -31,7 +31,10 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login(formData.email, formData.password)
+      await login({
+        email: formData.email,
+        password: formData.password,
+      })
       await Alert("登录成功", "欢迎回来！")
       router.push("/")
     } catch (error: unknown) {

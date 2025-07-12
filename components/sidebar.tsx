@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X } from "lucide-react"
 import { useEffect, useMemo } from "react"
-import { useUser } from "@/lib/user-context"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
@@ -18,7 +18,7 @@ interface SidebarProps {
 export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentUser, isHR } = useUser()
+  const { user: currentUser, isHR } = useAuth()
 
   // 根据用户角色生成角色徽章
   const getRoleBadge = (role: string) => {
@@ -91,7 +91,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             {currentUser && (
               <div className="text-sm text-gray-500 flex items-center gap-2">
                 <div>
-                  {currentUser.name} - {currentUser.department_name}
+                  {currentUser.name} - {currentUser.department?.name || '未知部门'}
                 </div>
                 <div>{getRoleBadge(currentUser.role)}</div>
               </div>
