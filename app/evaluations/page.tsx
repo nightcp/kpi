@@ -751,68 +751,68 @@ export default function EvaluationsPage() {
 
       {/* 评分详情对话框 */}
       <Dialog open={scoreDialogOpen} onOpenChange={setScoreDialogOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="w-[95vw] sm:max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>考核详情 - {selectedEvaluation?.employee?.name}</DialogTitle>
           </DialogHeader>
           {selectedEvaluation && (
-            <div className="space-y-4">
-              {/* 基本信息卡片 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gray-50 p-3 rounded">
-                  <Label className="text-sm text-gray-500">员工姓名</Label>
-                  <p className="text-sm font-medium">{selectedEvaluation.employee?.name}</p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <Label className="text-sm text-gray-500">考核模板</Label>
-                  <p className="text-sm font-medium">{selectedEvaluation.template?.name}</p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <Label className="text-sm text-gray-500">考核周期</Label>
-                  <p className="text-sm font-medium">
-                    {getPeriodLabel(selectedEvaluation.period)} {selectedEvaluation.year}
-                    {selectedEvaluation.month && `年${selectedEvaluation.month}月`}
-                    {selectedEvaluation.quarter && `年Q${selectedEvaluation.quarter}`}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <Label className="text-sm text-gray-500">当前状态</Label>
-                  <div className="mt-1 space-y-2">
-                    {getStatusBadge(selectedEvaluation.status)}
-                    {/* 状态进度条 */}
-                    <div className="text-xs text-gray-500">
-                      <div className="flex justify-between items-center mb-1">
-                        <span>流程进度</span>
-                        <span>
-                          {getStatusProgress(selectedEvaluation.status).step}/
-                          {getStatusProgress(selectedEvaluation.status).total}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div
-                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${
-                              (getStatusProgress(selectedEvaluation.status).step /
-                                getStatusProgress(selectedEvaluation.status).total) *
-                              100
-                            }%`,
-                          }}
-                        />
+            <>
+              {/* 可滚动的内容区域 */}
+              <div className="flex-1 overflow-y-auto space-y-4">
+                {/* 基本信息卡片 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-3 rounded">
+                    <Label className="text-sm text-gray-500">员工姓名</Label>
+                    <p className="text-sm font-medium">{selectedEvaluation.employee?.name}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <Label className="text-sm text-gray-500">考核模板</Label>
+                    <p className="text-sm font-medium">{selectedEvaluation.template?.name}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <Label className="text-sm text-gray-500">考核周期</Label>
+                    <p className="text-sm font-medium">
+                      {getPeriodValue(selectedEvaluation)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <Label className="text-sm text-gray-500">当前状态</Label>
+                    <div className="mt-1 space-y-2">
+                      {getStatusBadge(selectedEvaluation.status)}
+                      {/* 状态进度条 */}
+                      <div className="text-xs text-gray-500">
+                        <div className="flex justify-between items-center mb-1">
+                          <span>流程进度</span>
+                          <span>
+                            {getStatusProgress(selectedEvaluation.status).step}/
+                            {getStatusProgress(selectedEvaluation.status).total}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${
+                                (getStatusProgress(selectedEvaluation.status).step /
+                                  getStatusProgress(selectedEvaluation.status).total) *
+                                100
+                              }%`,
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* 标签页 */}
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="details">评分详情</TabsTrigger>
-                  <TabsTrigger value="summary">总结汇总</TabsTrigger>
-                </TabsList>
+                {/* 标签页 */}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="details">评分详情</TabsTrigger>
+                    <TabsTrigger value="summary">总结汇总</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="details" className="space-y-4 max-h-[50vh] overflow-y-auto">
+                  <TabsContent value="details" className="space-y-4">
                   {/* 自评指导和进度信息 */}
                   {canPerformAction(selectedEvaluation, "self") && (
                     <div className="space-y-4">
@@ -1273,46 +1273,49 @@ export default function EvaluationsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </TabsContent>
-              </Tabs>
-
-              {/* 流程控制按钮 */}
-              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0 border-t pt-4">
-                {canPerformAction(selectedEvaluation, "self") && (
-                  <Button
-                    onClick={() => handleCompleteStage(selectedEvaluation.id, "self")}
-                    className="w-full sm:w-auto"
-                    disabled={isSubmittingSelfEvaluation}
-                  >
-                    {isSubmittingSelfEvaluation ? "提交中..." : "完成自评"}
-                  </Button>
-                )}
-                {canPerformAction(selectedEvaluation, "manager") && (
-                  <Button
-                    onClick={() => handleCompleteStage(selectedEvaluation.id, "manager")}
-                    className="w-full sm:w-auto"
-                  >
-                    完成主管评估
-                  </Button>
-                )}
-                {canPerformAction(selectedEvaluation, "hr") && (
-                  <Button onClick={() => handleCompleteStage(selectedEvaluation.id, "hr")} className="w-full sm:w-auto">
-                    完成HR审核
-                  </Button>
-                )}
-                {canPerformAction(selectedEvaluation, "confirm") && (
-                  <Button
-                    onClick={() => handleCompleteStage(selectedEvaluation.id, "confirm")}
-                    className="w-full sm:w-auto"
-                  >
-                    确认最终得分
-                  </Button>
-                )}
-                <Button variant="outline" onClick={() => setScoreDialogOpen(false)} className="w-full sm:w-auto">
-                  关闭
-                </Button>
+                  </TabsContent>
+                </Tabs>
               </div>
-            </div>
+              
+              {/* 固定的流程控制按钮区域 */}
+              <div className="flex-shrink-0 border-t pt-4">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0">
+                  {canPerformAction(selectedEvaluation, "self") && (
+                    <Button
+                      onClick={() => handleCompleteStage(selectedEvaluation.id, "self")}
+                      className="w-full sm:w-auto"
+                      disabled={isSubmittingSelfEvaluation}
+                    >
+                      {isSubmittingSelfEvaluation ? "提交中..." : "完成自评"}
+                    </Button>
+                  )}
+                  {canPerformAction(selectedEvaluation, "manager") && (
+                    <Button
+                      onClick={() => handleCompleteStage(selectedEvaluation.id, "manager")}
+                      className="w-full sm:w-auto"
+                    >
+                      完成主管评估
+                    </Button>
+                  )}
+                  {canPerformAction(selectedEvaluation, "hr") && (
+                    <Button onClick={() => handleCompleteStage(selectedEvaluation.id, "hr")} className="w-full sm:w-auto">
+                      完成HR审核
+                    </Button>
+                  )}
+                  {canPerformAction(selectedEvaluation, "confirm") && (
+                    <Button
+                      onClick={() => handleCompleteStage(selectedEvaluation.id, "confirm")}
+                      className="w-full sm:w-auto"
+                    >
+                      确认最终得分
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setScoreDialogOpen(false)} className="w-full sm:w-auto">
+                    关闭
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
