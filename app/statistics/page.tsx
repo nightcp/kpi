@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -36,8 +35,10 @@ import {
 } from "lucide-react";
 import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api";
 import { getPeriodLabel } from "@/lib/utils";
+import { useAppContext } from "@/lib/app-context";
 
 export default function StatisticsPage() {
+  const { getStatusBadge } = useAppContext();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,24 +75,6 @@ export default function StatisticsPage() {
   useEffect(() => {
     fetchStatisticsData();
   }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter, fetchStatisticsData]);
-
-  // 获取状态标签
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-600">待自评</Badge>;
-      case "self_evaluated":
-        return <Badge variant="outline" className="text-blue-600 border-blue-600">待主管评估</Badge>;
-      case "manager_evaluated":
-        return <Badge variant="outline" className="text-purple-600 border-purple-600">待HR审核</Badge>;
-      case "pending_confirm":
-        return <Badge variant="outline" className="text-pink-600 border-pink-600">待确认</Badge>;
-      case "completed":
-        return <Badge variant="outline" className="text-green-600 border-green-600">已完成</Badge>;
-      default:
-        return <Badge variant="outline">未知状态</Badge>;
-    }
-  };
 
   // 导出报告
   const handleExport = async (type: string) => {
