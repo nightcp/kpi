@@ -19,18 +19,14 @@ const metadata: Metadata = {
   description: "基于NextJS和React的KPI绩效考核管理系统",
 }
 
-function AppLayout({ children }: { children: React.ReactNode }) {
+const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const isAuthPage = pathname.startsWith("/auth")
 
   if (isAuthPage) {
     // 认证页面布局（不需要侧边栏）
-    return (
-      <ProtectedRoute requireAuth={false}>
-        {children}
-      </ProtectedRoute>
-    )
+    return <ProtectedRoute requireAuth={false}>{children}</ProtectedRoute>
   }
 
   // 主要应用程序布局（需要认证）

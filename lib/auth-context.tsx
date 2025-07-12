@@ -6,14 +6,15 @@ import { authApi, LoginRequest, RegisterRequest, type AuthUser } from "@/lib/api
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
+  isAuthenticated: boolean
   login: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
   logout: () => void
-  isAuthenticated: boolean
   refreshUser: () => Promise<void>
+
   // 角色判断
-  isManager: boolean
   isHR: boolean
+  isManager: boolean
   isEmployee: boolean
 }
 
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const token = authApi.getToken()
         const savedUser = authApi.getUser()
-        
+
         if (token && savedUser) {
           setUser(savedUser)
           // 验证token是否仍然有效
@@ -103,22 +104,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
+    isAuthenticated: !!user,
     login,
     register,
     logout,
-    isAuthenticated: !!user,
     refreshUser,
+
     // 角色判断
-    isManager: user?.role === "manager",
     isHR: user?.role === "hr",
+    isManager: user?.role === "manager",
     isEmployee: user?.role === "employee",
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
@@ -127,4 +125,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
-} 
+}

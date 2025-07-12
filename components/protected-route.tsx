@@ -10,15 +10,26 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export default function ProtectedRoute({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = "/auth/login" 
+export default function ProtectedRoute({
+  children,
+  requireAuth = true,
+  redirectTo = "/auth/login",
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
+  const { user, loading, isHR, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
+  // 监听认证状态
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    window.addEventListener("auth_unauthorized", logout)
+    return () => {
+      window.removeEventListener("auth_unauthorized", logout)
+    }
+  }, [logout])
+
+  // 监听用户状态
   useEffect(() => {
     if (loading) return
 
@@ -30,10 +41,10 @@ export default function ProtectedRoute({
 
     // 如果不需要认证且用户已登录，且当前在认证页面，重定向到首页
     if (!requireAuth && user && pathname.startsWith("/auth")) {
-      router.push("/")
+      router.push(isHR ? "/" : "/evaluations")
       return
     }
-  }, [user, loading, requireAuth, router, redirectTo, pathname])
+  }, [user, loading, requireAuth, router, redirectTo, pathname, isHR])
 
   // 显示加载状态
   if (loading) {
@@ -58,4 +69,4 @@ export default function ProtectedRoute({
   }
 
   return <>{children}</>
-} 
+}

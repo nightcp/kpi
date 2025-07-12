@@ -3,7 +3,7 @@ import axios from "axios"
 // 创建axios实例
 const api = axios.create({
   baseURL: "http://localhost:8080/api",
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -26,15 +26,13 @@ api.interceptors.response.use(
   response => response.data,
   error => {
     console.error("API Error:", error)
-    
-    // 如果是401错误，清除token并跳转到登录页
+
+    // 处理401错误，触发认证状态更新
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token")
-      localStorage.removeItem("user_info")
-      // 在客户端路由中处理跳转
-      window.location.href = "/login"
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth_unauthorized"))
+      }
     }
-    
     return Promise.reject(error)
   }
 )
@@ -396,43 +394,42 @@ export const commentApi = {
 export const authApi = {
   // 用户登录
   login: (data: LoginRequest): Promise<LoginResponse> => api.post("/auth/login", data),
-  
+
   // 用户注册
   register: (data: RegisterRequest): Promise<LoginResponse> => api.post("/auth/register", data),
-  
+
   // 获取当前用户信息
   getCurrentUser: (): Promise<{ data: AuthUser }> => api.get("/me"),
-  
+
   // 刷新token
   refreshToken: (): Promise<{ token: string }> => api.post("/auth/refresh"),
-  
+
   // 获取部门列表（公开接口，用于注册）
   getDepartments: (): Promise<{ data: Department[] }> => api.get("/auth/departments"),
-  
+
   // 登出（清除本地token）
   logout: () => {
     localStorage.removeItem("auth_token")
     localStorage.removeItem("user_info")
-    window.location.href = "/login"
   },
-  
+
   // 检查是否已认证
   isAuthenticated: (): boolean => {
     const token = localStorage.getItem("auth_token")
     return !!token
   },
-  
+
   // 获取当前用户token
   getToken: (): string | null => {
     return localStorage.getItem("auth_token")
   },
-  
+
   // 设置用户token和信息
   setAuth: (token: string, user: AuthUser) => {
     localStorage.setItem("auth_token", token)
     localStorage.setItem("user_info", JSON.stringify(user))
   },
-  
+
   // 获取用户信息
   getUser: (): AuthUser | null => {
     const userInfo = localStorage.getItem("user_info")

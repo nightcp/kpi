@@ -1,16 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,7 +12,6 @@ import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 
 export default function RegisterPage() {
-  const router = useRouter()
   const { register } = useAuth()
   const { Alert } = useAppContext()
   const [loading, setLoading] = useState(false)
@@ -49,28 +41,27 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.department_id) {
       await Alert("提示", "请选择部门")
       return
     }
-    
+
     setLoading(true)
 
     try {
       await register(formData)
       await Alert("注册成功", "欢迎加入我们的团队！")
-      router.push("/")
     } catch (error: unknown) {
       let errorMessage = "注册失败，请重试"
-      
+
       if (error && typeof error === "object" && "response" in error) {
         const response = (error as { response?: { data?: { error?: string } } }).response
         if (response?.data?.error) {
           errorMessage = response.data.error
         }
       }
-      
+
       await Alert("注册失败", errorMessage)
     } finally {
       setLoading(false)
@@ -91,7 +82,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-[400px] py-10">
+      <div className="w-full max-w-sm py-10">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">绩效管理系统</h1>
           <p className="text-gray-600 mt-2">创建新账户</p>
@@ -100,9 +91,7 @@ export default function RegisterPage() {
         <Card>
           <CardHeader>
             <CardTitle>注册账户</CardTitle>
-            <CardDescription>
-              请填写以下信息创建您的账户
-            </CardDescription>
+            <CardDescription>请填写以下信息创建您的账户</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
@@ -189,4 +178,4 @@ export default function RegisterPage() {
       </div>
     </div>
   )
-} 
+}
