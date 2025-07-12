@@ -5,24 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Settings,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  LogOut,
-} from "lucide-react"
+import { Settings, RefreshCw, CheckCircle, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { settingsApi } from "@/lib/api"
+import { toast } from "sonner"
 
 export default function SettingsPage() {
   const { logout } = useAuth()
   const { Confirm } = useAppContext()
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: string; content: string }>({ type: "", content: "" })
 
   // 初始化设置状态
   useEffect(() => {
@@ -33,7 +26,7 @@ export default function SettingsPage() {
         setAllowRegistration(response.data.allow_registration)
       } catch (error) {
         console.error("获取设置失败:", error)
-        setMessage({ type: "error", content: "获取设置失败" })
+        toast.error("获取设置失败")
       } finally {
         setLoading(false)
       }
@@ -48,11 +41,10 @@ export default function SettingsPage() {
       const response = await settingsApi.update({
         allow_registration: allowRegistration,
       })
-      setMessage({ type: "success", content: response.message || "设置保存成功！" })
-      setTimeout(() => setMessage({ type: "", content: "" }), 3000)
+      toast.success(response.message || "设置保存成功！")
     } catch (error) {
       console.error("保存设置失败:", error)
-      setMessage({ type: "error", content: "保存设置失败，请重试。" })
+      toast.error("保存设置失败，请重试。")
     } finally {
       setLoading(false)
     }
@@ -85,14 +77,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 消息提示 */}
-      {message.content && (
-        <Alert className={message.type === "success" ? "border-green-500" : "border-red-500"}>
-          {message.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-          <AlertDescription>{message.content}</AlertDescription>
-        </Alert>
-      )}
-
       {/* 系统设置 */}
       <Card>
         <CardHeader>
@@ -111,19 +95,15 @@ export default function SettingsPage() {
                 开启后，新用户可以自行注册账户；关闭后，只能由管理员创建账户。
               </p>
             </div>
-            <Switch
-              id="allow_registration"
-              checked={allowRegistration}
-              onCheckedChange={setAllowRegistration}
-            />
+            <Switch id="allow_registration" checked={allowRegistration} onCheckedChange={setAllowRegistration} />
           </div>
 
           <div className="p-4 bg-blue-50 rounded-lg">
             <h3 className="text-sm font-medium text-blue-900 mb-2">功能说明</h3>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• 开启注册：用户可以通过注册页面创建新账户</li>
-              <li>• 关闭注册：注册页面将显示"暂不开放注册"的提示</li>
-              <li>• 退出登录：点击右上角的"退出登录"按钮安全退出系统</li>
+              <li>• 关闭注册：注册页面将显示&quot;暂不开放注册&quot;的提示</li>
+              <li>• 退出登录：点击右上角的&quot;退出登录&quot;按钮安全退出系统</li>
             </ul>
           </div>
         </CardContent>

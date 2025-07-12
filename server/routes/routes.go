@@ -26,6 +26,13 @@ func SetupRoutes(r *gin.RouterGroup) {
 		})
 	})
 
+	// 系统设置（部分需要HR权限）
+	settingsRoutes := r.Group("/settings")
+	{
+		settingsRoutes.GET("", handlers.GetSystemSettings)                                   // 所有用户可以读取设置
+		settingsRoutes.PUT("", handlers.RoleMiddleware("hr"), handlers.UpdateSystemSettings) // 只有HR可以修改设置
+	}
+
 	// 需要认证的路由
 	protected := r.Group("/")
 	protected.Use(handlers.AuthMiddleware())
@@ -125,13 +132,6 @@ func SetupRoutes(r *gin.RouterGroup) {
 		downloadRoutes.Use(handlers.RoleMiddleware("hr", "manager"))
 		{
 			downloadRoutes.GET("/exports/:filename", handlers.DownloadFile)
-		}
-
-		// 系统设置（HR权限）
-		settingsRoutes := protected.Group("/settings")
-		{
-			settingsRoutes.GET("", handlers.GetSystemSettings) // 所有用户可以读取设置
-			settingsRoutes.PUT("", handlers.RoleMiddleware("hr"), handlers.UpdateSystemSettings) // 只有HR可以修改设置
 		}
 	}
 }

@@ -11,13 +11,16 @@ import { authApi, RegisterRequest, type Department, settingsApi } from "@/lib/ap
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { toast } from "sonner"
-import { UserX } from "lucide-react"
+import { Loader2, UserX } from "lucide-react"
+import Loading from "@/components/loading"
 
 export default function RegisterPage() {
   const { register } = useAuth()
   const { Alert } = useAppContext()
   const [loading, setLoading] = useState(false)
+  const [departmentLoading, setDepartmentLoading] = useState(false)
   const [departments, setDepartments] = useState<Department[]>([])
+  const [allowLoading, setAllowLoading] = useState(true)
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [formData, setFormData] = useState<RegisterRequest>({
     name: "",
@@ -37,6 +40,8 @@ export default function RegisterPage() {
         console.error("获取注册设置失败:", error)
         // 如果获取失败，默认允许注册
         setAllowRegistration(true)
+      } finally {
+        setAllowLoading(false)
       }
     }
     checkRegistrationSettings()
@@ -44,6 +49,10 @@ export default function RegisterPage() {
 
   // 加载部门列表
   useEffect(() => {
+    if (allowLoading) return
+    if (!allowRegistration) return
+
+    setDepartmentLoading(true)
     const fetchDepartments = async () => {
       try {
         const response = await authApi.getDepartments()
@@ -52,12 +61,12 @@ export default function RegisterPage() {
       } catch (error) {
         console.error("获取部门列表失败:", error)
         await Alert("错误", "获取部门列表失败")
+      } finally {
+        setDepartmentLoading(false)
       }
     }
-    if (allowRegistration) {
-      fetchDepartments()
-    }
-  }, [Alert, allowRegistration])
+    fetchDepartments()
+  }, [Alert, allowLoading, allowRegistration])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,14 +109,16 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, department_id: parseInt(value) }))
   }
 
+  if (allowLoading) {
+    return <Loading />
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm py-10">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">绩效管理系统</h1>
-          <p className="text-gray-600 mt-2">
-            {allowRegistration ? "创建新账户" : "用户注册"}
-          </p>
+          <p className="text-gray-600 mt-2">{allowRegistration ? "创建新账户" : "用户注册"}</p>
         </div>
 
         <Card>
@@ -117,10 +128,7 @@ export default function RegisterPage() {
               {allowRegistration ? "注册账户" : "注册暂不开放"}
             </CardTitle>
             <CardDescription>
-              {allowRegistration 
-                ? "请填写以下信息创建您的账户"
-                : "系统管理员已关闭用户注册功能"
-              }
+              {allowRegistration ? "请填写以下信息创建您的账户" : "系统管理员已关闭用户注册功能"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,18 +186,24 @@ export default function RegisterPage() {
                   </div>
                   <div className="grid gap-3">
                     <Label htmlFor="department">部门</Label>
-                    <Select value={formData.department_id.toString()} onValueChange={handleDepartmentChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择部门" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map(dept => (
-                          <SelectItem key={dept.id} value={dept.id.toString()}>
-                            {dept.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {departmentLoading ? (
+                      <div className="h-9 flex items-center">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </div>
+                    ) : (
+                      <Select value={formData.department_id.toString()} onValueChange={handleDepartmentChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="请选择部门" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map(dept => (
+                            <SelectItem key={dept.id} value={dept.id.toString()}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div className="flex flex-col gap-3">
                     <Button type="submit" className="w-full" disabled={loading}>
@@ -205,18 +219,12 @@ export default function RegisterPage() {
                 </div>
               </form>
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center pt-8">
                 <div className="space-y-4">
-                  <div className="text-gray-600">
-                    当前系统暂不开放用户注册功能。
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    如需创建账户，请联系系统管理员。
-                  </div>
+                  <div className="text-gray-600">当前系统暂不开放用户注册功能。</div>
+                  <div className="text-sm text-gray-500">如需创建账户，请联系系统管理员。</div>
                   <Button asChild className="w-full">
-                    <Link href="/auth/login">
-                      返回登录
-                    </Link>
+                    <Link href="/auth/login">返回登录</Link>
                   </Button>
                 </div>
               </div>

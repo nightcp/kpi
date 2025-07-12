@@ -40,7 +40,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         { name: "KPI模板", href: "/templates", icon: ClipboardList },
         { name: "考核管理", href: "/evaluations", icon: FileText },
         { name: "统计分析", href: "/statistics", icon: BarChart3 },
-        { name: "设置", href: "/settings", icon: Settings },
+        { name: "系统设置", href: "/settings", icon: Settings },
       ]
     }
     return [{ name: "考核管理", href: "/evaluations", icon: FileText }]

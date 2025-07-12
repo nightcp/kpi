@@ -91,7 +91,7 @@ func Register(c *gin.Context) {
 	var allowRegistrationSetting models.SystemSetting
 	if err := models.DB.Where("key = ?", "allow_registration").First(&allowRegistrationSetting).Error; err == nil {
 		if allowRegistrationSetting.Value != "true" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "系统当前不允许用户注册"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "系统当前未开放注册"})
 			return
 		}
 	}
@@ -210,9 +210,59 @@ func GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
 
+// 刷新token
+func RefreshToken(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "缺少认证token"})
+		return
+	}
+
+	// 移除Bearer前缀
+	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+		tokenString = tokenString[7:]
+	}
+
+	// 验证token（即使过期也要能解析）
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil && !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的token"})
+		return
+	}
+
+	// 检查用户是否仍然存在
+	var user models.Employee
+	if err := models.DB.First(&user, claims.UserID).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	// 生成新的token
+	newToken, err := generateToken(&user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token生成失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": newToken,
+	})
+}
+
 // JWT认证中间件
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// 标记为已认证
+		if c.GetBool("is_authenticated") {
+			c.Next()
+			return
+		}
+		c.Set("is_authenticated", true)
+
 		// 从请求头获取token
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
@@ -259,6 +309,9 @@ func AuthMiddleware() gin.HandlerFunc {
 // 角色权限中间件
 func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// 先执行认证中间件
+		AuthMiddleware()(c)
+
 		userRole, exists := c.Get("user_role")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "用户未登录"})
@@ -277,47 +330,4 @@ func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
 		c.JSON(http.StatusForbidden, gin.H{"error": "权限不足"})
 		c.Abort()
 	}
-}
-
-// 刷新token
-func RefreshToken(c *gin.Context) {
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "缺少认证token"})
-		return
-	}
-
-	// 移除Bearer前缀
-	if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
-		tokenString = tokenString[7:]
-	}
-
-	// 验证token（即使过期也要能解析）
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
-	})
-
-	if err != nil && !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的token"})
-		return
-	}
-
-	// 检查用户是否仍然存在
-	var user models.Employee
-	if err := models.DB.First(&user, claims.UserID).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
-		return
-	}
-
-	// 生成新的token
-	newToken, err := generateToken(&user)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token生成失败"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"token": newToken,
-	})
 }
