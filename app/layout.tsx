@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <AppProvider>
           <UserProvider>
-            <div className="min-h-screen flex flex-col lg:flex-row">
+            <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
               {/* 移动端头部 */}
               <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
 
@@ -38,8 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
               {/* 主内容区域 */}
-              <main className="flex-1 p-4 lg:p-6 bg-gray-50 min-w-0">
-                <div className="max-w-7xl mx-auto">{children}</div>
+              <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
+                <div className="p-4 lg:p-6">
+                  <div className="max-w-7xl mx-auto">{children}</div>
+                </div>
               </main>
 
               {/* 用户切换组件 */}

@@ -80,12 +80,12 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
       {/* 侧边栏 */}
       <div
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none",
+          "fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none flex flex-col",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* 头部 - 移动端显示关闭按钮 */}
-        <div className="flex items-center justify-between px-6 py-4 lg:justify-start">
+        <div className="flex items-center justify-between pl-6 pr-2 lg:pr-6 py-4 lg:justify-start flex-shrink-0">
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-bold text-gray-800">KPI考核系统</h1>
             {currentUser && (
@@ -107,8 +107,8 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
           </Button>
         </div>
 
-        {/* 导航菜单 */}
-        <nav className="mt-2">
+        {/* 导航菜单 - 可滚动区域 */}
+        <nav className="flex-1 overflow-y-auto py-1">
           {navigation.map(item => {
             const isActive = pathname === item.href
             return (
@@ -137,13 +137,13 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 // 移动端头部组件
 export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <div className="lg:hidden bg-white shadow-sm border-b">
+    <div className="lg:hidden bg-white shadow-sm border-b flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-2">
         <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-gray-100">
           <Menu className="w-6 h-6 text-gray-600" />
         </button>
         <h1 className="text-lg font-semibold text-gray-800">KPI考核系统</h1>
-        <div className="w-10"></div> {/* 占位符，保持标题居中 */}
+        <div className="w-10 h-10"></div> {/* 占位符，保持标题居中 */}
       </div>
     </div>
   )
