@@ -462,15 +462,21 @@ export default function EvaluationsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="year">年份</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    min="2020"
-                    max="2030"
-                    required
-                  />
+                  <Select value={formData.year.toString()} onValueChange={(value) => setFormData({ ...formData, year: parseInt(value) })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择年份" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const year = new Date().getFullYear() - i;
+                        return (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}年
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {formData.period === "monthly" && (
                   <div className="flex flex-col gap-2">
