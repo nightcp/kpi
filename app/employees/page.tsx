@@ -62,7 +62,7 @@ export default function EmployeesPage() {
       const departmentEmployees = employees.filter(
         emp =>
           emp.department_id === parseInt(formData.department_id) &&
-          emp.role === "manager" &&
+          (emp.role === "manager" || emp.role === "hr") &&
           emp.id !== editingEmployee?.id
       )
       setManagers(departmentEmployees)
@@ -230,6 +230,7 @@ export default function EmployeesPage() {
                       <SelectValue placeholder="选择上级" />
                     </SelectTrigger>
                     <SelectContent>
+                      {managers.length === 0 && <SelectItem value="none" disabled>无上级</SelectItem>}
                       {managers.map(manager => (
                         <SelectItem key={manager.id} value={manager.id.toString()}>
                           {manager.name}
