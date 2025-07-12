@@ -23,7 +23,7 @@ import {
 } from "@/lib/api"
 import { useUser } from "@/lib/user-context"
 import { useAppContext } from "@/lib/app-context"
-import { getPeriodLabel } from "@/lib/utils"
+import { getPeriodValue } from "@/lib/utils"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -666,9 +666,7 @@ export default function EvaluationsPage() {
                           <TableCell>{evaluation.employee?.department?.name}</TableCell>
                           <TableCell>{evaluation.template?.name}</TableCell>
                           <TableCell>
-                            {getPeriodLabel(evaluation.period)} {evaluation.year}
-                            {evaluation.month && `年${evaluation.month}月`}
-                            {evaluation.quarter && `年Q${evaluation.quarter}`}
+                            {getPeriodValue(evaluation)}
                           </TableCell>
                           <TableCell>
                             <div className="text-lg font-semibold">{evaluation.total_score}</div>
@@ -718,9 +716,7 @@ export default function EvaluationsPage() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-500">考核周期:</span>
                           <span className="text-sm font-medium">
-                            {getPeriodLabel(evaluation.period)} {evaluation.year}
-                            {evaluation.month && `年${evaluation.month}月`}
-                            {evaluation.quarter && `年Q${evaluation.quarter}`}
+                            {getPeriodValue(evaluation)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">

@@ -34,7 +34,7 @@ import {
   Download,
 } from "lucide-react"
 import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api"
-import { getPeriodLabel } from "@/lib/utils"
+import { getPeriodValue } from "@/lib/utils"
 import { useAppContext } from "@/lib/app-context"
 
 export default function StatisticsPage() {
@@ -448,9 +448,7 @@ export default function StatisticsPage() {
                     <TableCell>{evaluation.department}</TableCell>
                     <TableCell>{evaluation.template}</TableCell>
                     <TableCell>
-                      {getPeriodLabel(evaluation.period)} {evaluation.year}
-                      {evaluation.month && `年${evaluation.month}月`}
-                      {evaluation.quarter && `年Q${evaluation.quarter}`}
+                      {getPeriodValue(evaluation)}
                     </TableCell>
                     <TableCell>
                       <div className="text-lg font-semibold">{evaluation.score}</div>
