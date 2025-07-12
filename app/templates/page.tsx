@@ -248,7 +248,7 @@ export default function TemplatesPage() {
       </div>
 
       <Tabs className="w-full" value={templateTabValue} onValueChange={setTemplateTabValue}>
-        <TabsList className="gap-1">
+        <TabsList className="gap-1 mb-2">
           <TabsTrigger value="templates">模板列表</TabsTrigger>
           {selectedTemplate && (
             <TabsTrigger value="items">KPI项目 {selectedTemplate && `(${selectedTemplate.name})`}</TabsTrigger>
@@ -269,97 +269,46 @@ export default function TemplatesPage() {
               ) : templates.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">暂无模板数据</div>
               ) : (
-                <>
-                  {/* 桌面端表格显示 */}
-                  <div className="hidden lg:block">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>模板名称</TableHead>
-                          <TableHead>描述</TableHead>
-                          <TableHead>考核周期</TableHead>
-                          <TableHead>状态</TableHead>
-                          <TableHead>创建时间</TableHead>
-                          <TableHead className="text-right">操作</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {templates.map(template => (
-                          <TableRow key={template.id}>
-                            <TableCell className="font-medium">{template.name}</TableCell>
-                            <TableCell>{template.description}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{getPeriodLabel(template.period)}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={template.is_active ? "default" : "secondary"}>
-                                {template.is_active ? "活跃" : "停用"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-right space-x-2">
-                              <Button variant="outline" size="sm" onClick={() => handleSelectTemplate(template)}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template)}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleDeleteTemplate(template.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* 移动端卡片显示 */}
-                  <div className="lg:hidden space-y-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>模板名称</TableHead>
+                      <TableHead>描述</TableHead>
+                      <TableHead>考核周期</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead>创建时间</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {templates.map(template => (
-                      <Card key={template.id} className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-lg text-gray-900">{template.name}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{template.description}</p>
-                            </div>
-                            <div className="flex space-x-1 ml-2">
-                              <Button variant="outline" size="sm" onClick={() => handleSelectTemplate(template)}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template)}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleDeleteTemplate(template.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">考核周期:</span>
-                              <Badge variant="outline">{getPeriodLabel(template.period)}</Badge>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">状态:</span>
-                              <Badge variant={template.is_active ? "default" : "secondary"}>
-                                {template.is_active ? "活跃" : "停用"}
-                              </Badge>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">创建时间:</span>
-                              <span className="text-sm font-medium">
-                                {new Date(template.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <TableRow key={template.id}>
+                        <TableCell className="font-medium">{template.name}</TableCell>
+                        <TableCell>{template.description}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getPeriodLabel(template.period)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={template.is_active ? "default" : "secondary"}>
+                            {template.is_active ? "活跃" : "停用"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => handleSelectTemplate(template)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleEditTemplate(template)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteTemplate(template.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                </>
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>
@@ -374,11 +323,13 @@ export default function TemplatesPage() {
                     <Settings className="w-5 h-5 mr-2" />
                     KPI项目配置
                   </div>
-                  <Button className="w-full sm:w-auto" onClick={() => {
-                    setEditingItem(null)
-                    setItemFormData(defaultItemFormData)
-                    setItemDialogOpen(true)
-                  }}>
+                  <Button
+                    onClick={() => {
+                      setEditingItem(null)
+                      setItemFormData(defaultItemFormData)
+                      setItemDialogOpen(true)
+                    }}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     添加项目
                   </Button>
@@ -444,93 +395,50 @@ export default function TemplatesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg flex flex-col gap-2">
-                  <p className="text-sm text-blue-700">
-                    当前模板: <span className="font-semibold">{selectedTemplate.name}</span>
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    总项目数: <span className="font-semibold">{items.length}</span>
-                  </p>
-                  <p className="text-sm text-blue-700">
-                  总分: <span className="font-semibold">{items.reduce((sum, item) => sum + item.max_score, 0)}分</span>
-                  </p>
+                <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                  <h3 className="text-sm font-medium mb-2 text-foreground">模板说明</h3>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• 当前模板: <span className="font-semibold">{selectedTemplate.name}</span></li>
+                    <li>• 总项目数: <span className="font-semibold">{items.length}</span></li>
+                    <li>• 总分: <span className="font-semibold">{items.reduce((sum, item) => sum + item.max_score, 0)}分</span></li>
+                  </ul>
                 </div>
                 {items.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">暂无KPI项目，请点击&quot;添加项目&quot;创建</div>
                 ) : (
-                  <>
-                    {/* 桌面端表格显示 */}
-                    <div className="hidden lg:block">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>排序</TableHead>
-                            <TableHead>项目名称</TableHead>
-                            <TableHead>描述</TableHead>
-                            <TableHead>满分</TableHead>
-                            <TableHead className="text-right">操作</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {items.map(item => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <Badge variant="outline">{item.order}</Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">{item.name}</TableCell>
-                              <TableCell>{item.description}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{item.max_score}分</Badge>
-                              </TableCell>
-                              <TableCell className="text-right space-x-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditItem(item)}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => handleDeleteItem(item.id)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-
-                    {/* 移动端卡片显示 */}
-                    <div className="lg:hidden space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>排序</TableHead>
+                        <TableHead>项目名称</TableHead>
+                        <TableHead>描述</TableHead>
+                        <TableHead>满分</TableHead>
+                        <TableHead className="text-right">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {items.map(item => (
-                        <Card key={item.id} className="border border-gray-200">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                              </div>
-                              <div className="flex space-x-1 ml-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditItem(item)}>
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => handleDeleteItem(item.id)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-500">排序:</span>
-                                <Badge variant="outline">{item.order}</Badge>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-500">满分:</span>
-                                <Badge variant="secondary">{item.max_score}分</Badge>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <Badge variant="outline">{item.order}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{item.max_score}分</Badge>
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditItem(item)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteItem(item.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </div>
-                  </>
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>

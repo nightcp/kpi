@@ -270,101 +270,45 @@ export default function EmployeesPage() {
           ) : employees.length === 0 ? (
             <div className="text-center py-8 text-gray-500">暂无员工数据</div>
           ) : (
-            <>
-              {/* 桌面端表格显示 */}
-              <div className="hidden lg:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>姓名</TableHead>
-                      <TableHead>邮箱</TableHead>
-                      <TableHead>职位</TableHead>
-                      <TableHead>部门</TableHead>
-                      <TableHead>直属上级</TableHead>
-                      <TableHead>角色</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employees.map(employee => (
-                      <TableRow key={employee.id}>
-                        <TableCell className="font-medium">{employee.name}</TableCell>
-                        <TableCell>{employee.email}</TableCell>
-                        <TableCell>{employee.position}</TableCell>
-                        <TableCell>{employee.department?.name}</TableCell>
-                        <TableCell>{employee.manager?.name || "-"}</TableCell>
-                        <TableCell>{getRoleBadge(employee.role)}</TableCell>
-                        <TableCell>
-                          <Badge variant={employee.is_active ? "default" : "secondary"}>
-                            {employee.is_active ? "活跃" : "停用"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* 移动端卡片显示 */}
-              <div className="lg:hidden space-y-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>姓名</TableHead>
+                  <TableHead>邮箱</TableHead>
+                  <TableHead>职位</TableHead>
+                  <TableHead>部门</TableHead>
+                  <TableHead>直属上级</TableHead>
+                  <TableHead>角色</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {employees.map(employee => (
-                  <Card key={employee.id} className="border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-gray-900">{employee.name}</h3>
-                          <p className="text-sm text-gray-600">{employee.position}</p>
-                        </div>
-                        <div className="flex space-x-1 ml-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">邮箱:</span>
-                          <span className="text-sm font-medium">{employee.email}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">部门:</span>
-                          <span className="text-sm font-medium">{employee.department?.name}</span>
-                        </div>
-                        {employee.manager && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">直属上级:</span>
-                            <span className="text-sm font-medium">{employee.manager.name}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">角色:</span>
-                          {getRoleBadge(employee.role)}
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">状态:</span>
-                          <Badge variant={employee.is_active ? "default" : "secondary"}>
-                            {employee.is_active ? "活跃" : "停用"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TableRow key={employee.id}>
+                    <TableCell className="font-medium">{employee.name}</TableCell>
+                    <TableCell>{employee.email}</TableCell>
+                    <TableCell>{employee.position}</TableCell>
+                    <TableCell>{employee.department?.name}</TableCell>
+                    <TableCell>{employee.manager?.name || "-"}</TableCell>
+                    <TableCell>{getRoleBadge(employee.role)}</TableCell>
+                    <TableCell>
+                      <Badge variant={employee.is_active ? "default" : "secondary"}>
+                        {employee.is_active ? "活跃" : "停用"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </>
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

@@ -926,110 +926,51 @@ export default function EvaluationsPage() {
               <div className="text-gray-500">加载中...</div>
             </div>
           )}
-          <>
-            {/* 桌面端表格显示 */}
-            <div className="hidden lg:block">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>员工</TableHead>
-                      <TableHead>部门</TableHead>
-                      <TableHead>考核模板</TableHead>
-                      <TableHead>周期</TableHead>
-                      <TableHead>总分</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredEvaluations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                          暂无考核数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredEvaluations.map(evaluation => (
-                        <TableRow key={evaluation.id}>
-                          <TableCell className="font-medium">
-                            {evaluation.employee?.name}
-                            <div className="text-sm text-muted-foreground">{evaluation.employee?.position}</div>
-                          </TableCell>
-                          <TableCell>{evaluation.employee?.department?.name}</TableCell>
-                          <TableCell>{evaluation.template?.name}</TableCell>
-                          <TableCell>{getPeriodValue(evaluation)}</TableCell>
-                          <TableCell>
-                            <div className="text-lg font-semibold">{evaluation.total_score}</div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Button variant="outline" size="sm" onClick={() => handleViewDetails(evaluation)}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* 移动端卡片显示 */}
-            <div className="lg:hidden space-y-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>员工</TableHead>
+                <TableHead>部门</TableHead>
+                <TableHead>考核模板</TableHead>
+                <TableHead>周期</TableHead>
+                <TableHead>总分</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead className="text-right">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {getFilteredEvaluations.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">暂无考核数据</div>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    暂无考核数据
+                  </TableCell>
+                </TableRow>
               ) : (
                 getFilteredEvaluations.map(evaluation => (
-                  <Card key={evaluation.id} className="border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-gray-900">{evaluation.employee?.name}</h3>
-                          <p className="text-sm text-gray-600">{evaluation.employee?.position}</p>
-                          <p className="text-sm text-gray-500">{evaluation.employee?.department?.name}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xl font-bold">{evaluation.total_score}</div>
-                          <div className="text-xs text-gray-500">总分</div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">考核模板:</span>
-                          <span className="text-sm font-medium">{evaluation.template?.name}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">考核周期:</span>
-                          <span className="text-sm font-medium">{getPeriodValue(evaluation)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">状态:</span>
-                          {getStatusBadge(evaluation.status)}
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetails(evaluation)}
-                          className="w-full"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          查看详情
+                  <TableRow key={evaluation.id}>
+                    <TableCell className="font-medium">
+                      {evaluation.employee?.name}
+                      <div className="text-sm text-muted-foreground">{evaluation.employee?.position}</div>
+                    </TableCell>
+                    <TableCell>{evaluation.employee?.department?.name}</TableCell>
+                    <TableCell>{evaluation.template?.name}</TableCell>
+                    <TableCell>{getPeriodValue(evaluation)}</TableCell>
+                    <TableCell>
+                      <div className="text-lg font-semibold">{evaluation.total_score}</div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => handleViewDetails(evaluation)}>
+                          <Eye className="w-4 h-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </div>
-          </>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

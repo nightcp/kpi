@@ -155,79 +155,37 @@ export default function DepartmentsPage() {
           ) : departments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">暂无部门数据</div>
           ) : (
-            <>
-              {/* 桌面端表格显示 */}
-              <div className="hidden lg:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>部门名称</TableHead>
-                      <TableHead>描述</TableHead>
-                      <TableHead>员工数量</TableHead>
-                      <TableHead>创建时间</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {departments.map(department => (
-                      <TableRow key={department.id}>
-                        <TableCell className="font-medium">{department.name}</TableCell>
-                        <TableCell>{department.description}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{department.employees?.length || 0} 人</Badge>
-                        </TableCell>
-                        <TableCell>{new Date(department.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(department)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(department.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* 移动端卡片显示 */}
-              <div className="lg:hidden space-y-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>部门名称</TableHead>
+                  <TableHead>描述</TableHead>
+                  <TableHead>员工数量</TableHead>
+                  <TableHead>创建时间</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {departments.map(department => (
-                  <Card key={department.id} className="border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-gray-900">{department.name}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{department.description}</p>
-                        </div>
-                        <div className="flex space-x-1 ml-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(department)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(department.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">员工数量:</span>
-                          <Badge variant="secondary">{department.employees?.length || 0} 人</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-500">创建时间:</span>
-                          <span className="text-sm font-medium">
-                            {new Date(department.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TableRow key={department.id}>
+                    <TableCell className="font-medium">{department.name}</TableCell>
+                    <TableCell>{department.description}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{department.employees?.length || 0} 人</Badge>
+                    </TableCell>
+                    <TableCell>{new Date(department.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(department)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(department.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </>
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
