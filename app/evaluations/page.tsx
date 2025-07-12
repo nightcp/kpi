@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Eye, Award, CheckCircle, Clock, Star, Edit2, Save, X } from "lucide-react"
@@ -24,6 +25,7 @@ import {
 import { useUser } from "@/lib/user-context"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
+import { EmployeeSelector } from "@/components/employee-selector"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -44,7 +46,7 @@ export default function EvaluationsPage() {
   const [loading, setLoading] = useState(false) // 新增：通用加载状态
   const [error, setError] = useState<string | null>(null) // 新增：错误状态
   const [formData, setFormData] = useState({
-    employee_id: "",
+    employee_ids: [] as string[],
     template_id: "",
     period: "monthly",
     year: new Date().getFullYear(),
@@ -52,17 +54,9 @@ export default function EvaluationsPage() {
     quarter: Math.floor(new Date().getMonth() / 3) + 1,
   })
 
-  // 员工列表（按部门分类）
-  const employeeList = useMemo(() => {
-    return employees.reduce((acc: Record<string, Employee[]>, employee: Employee) => {
-      const department = employee.department?.name || "未分配"
-      if (!acc[department]) {
-        acc[department] = []
-      }
-      acc[department].push(employee)
-      return acc
-    }, {} as Record<string, Employee[]>)
-  }, [employees])
+
+
+
 
   // 获取评估列表
   const fetchEvaluations = async () => {
@@ -120,31 +114,53 @@ export default function EvaluationsPage() {
   // 创建新评估
   const handleCreateEvaluation = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 验证是否至少选择了一个员工
+    if (formData.employee_ids.length === 0) {
+      Alert("验证失败", "请至少选择一个员工进行考核")
+      return
+    }
+    
+    // 验证是否选择了模板
+    if (!formData.template_id) {
+      Alert("验证失败", "请选择考核模板")
+      return
+    }
+    
     try {
-      await evaluationApi.create({
-        employee_id: parseInt(formData.employee_id),
-        template_id: parseInt(formData.template_id),
-        period: formData.period,
-        year: formData.year,
-        month: formData.period === "monthly" ? formData.month : undefined,
-        quarter: formData.period === "quarterly" ? formData.quarter : undefined,
-        status: "pending",
-        total_score: 0,
-        final_comment: "",
-      })
+      // 为每个选中的员工创建评估
+      const promises = formData.employee_ids.map(employeeId =>
+        evaluationApi.create({
+          employee_id: parseInt(employeeId),
+          template_id: parseInt(formData.template_id),
+          period: formData.period,
+          year: formData.year,
+          month: formData.period === "monthly" ? formData.month : undefined,
+          quarter: formData.period === "quarterly" ? formData.quarter : undefined,
+          status: "pending",
+          total_score: 0,
+          final_comment: "",
+        })
+      )
+
+      await Promise.all(promises)
 
       fetchEvaluations()
       setDialogOpen(false)
       setFormData({
-        employee_id: "",
+        employee_ids: [],
         template_id: "",
         period: "monthly",
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1,
         quarter: Math.floor(new Date().getMonth() / 3) + 1,
       })
+      
+      // 成功提示
+      Alert("创建成功", `已为 ${formData.employee_ids.length} 个员工创建考核`)
     } catch (error) {
       console.error("创建评估失败:", error)
+      Alert("创建失败", "创建考核失败，请重试")
     }
   }
 
@@ -590,29 +606,14 @@ export default function EvaluationsPage() {
                 <DialogTitle>创建新考核</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateEvaluation} className="space-y-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="employee">员工</Label>
-                  <Select
-                    value={formData.employee_id}
-                    onValueChange={value => setFormData({ ...formData, employee_id: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择员工" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(employeeList).map(([department, employees]) => (
-                        <SelectGroup key={department}>
-                          <SelectLabel>{department}</SelectLabel>
-                          {employees.map(employee => (
-                            <SelectItem key={employee.id} value={employee.id.toString()}>
-                              {employee.name} - {employee.position}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <EmployeeSelector
+                  employees={employees}
+                  selectedEmployeeIds={formData.employee_ids}
+                  onSelectionChange={(employeeIds) => setFormData(prev => ({ ...prev, employee_ids: employeeIds }))}
+                  label="员工"
+                  placeholder="选择员工..."
+                  maxDisplayTags={5}
+                />
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="template">考核模板</Label>
                   <Select
