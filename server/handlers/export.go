@@ -15,6 +15,30 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// 格式化周期显示
+func formatPeriodDisplay(period string, year int, month *int, quarter *int) string {
+	switch period {
+	case "yearly":
+		return fmt.Sprintf("年度 %d", year)
+	case "quarterly":
+		if quarter != nil {
+			return fmt.Sprintf("季度 %d年第%d季度", year, *quarter)
+		}
+		return fmt.Sprintf("年度 %d", year)
+	case "monthly":
+		if month != nil {
+			return fmt.Sprintf("月度 %d年%d月", year, *month)
+		}
+		return fmt.Sprintf("年度 %d", year)
+	default:
+		// 兼容历史数据格式，period可能是年份字符串
+		if yearInt, err := strconv.Atoi(period); err == nil {
+			return fmt.Sprintf("年度 %d", yearInt)
+		}
+		return fmt.Sprintf("年度 %d", year)
+	}
+}
+
 // 导出响应结构
 type ExportResponse struct {
 	FileURL  string `json:"file_url"`
@@ -82,7 +106,9 @@ func ExportEvaluationToExcel(c *gin.Context) {
 	f.SetCellValue(sheetName, "A"+strconv.Itoa(row), "考核模板:")
 	f.SetCellValue(sheetName, "B"+strconv.Itoa(row), evaluation.Template.Name)
 	f.SetCellValue(sheetName, "D"+strconv.Itoa(row), "考核周期:")
-	f.SetCellValue(sheetName, "E"+strconv.Itoa(row), evaluation.Period)
+	// 使用格式化的周期显示
+	periodDisplay := formatPeriodDisplay(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter)
+	f.SetCellValue(sheetName, "E"+strconv.Itoa(row), periodDisplay)
 
 	row++
 	f.SetCellValue(sheetName, "A"+strconv.Itoa(row), "总分:")
@@ -184,9 +210,10 @@ func ExportEvaluationToExcel(c *gin.Context) {
 	}
 
 	// 生成文件名
+	periodForFileName := formatPeriodDisplay(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter)
 	fileName := fmt.Sprintf("评估报告-%s-%s-%d.xlsx",
 		evaluation.Employee.Name,
-		evaluation.Period,
+		periodForFileName,
 		time.Now().Unix())
 	filePath := filepath.Join(exportDir, fileName)
 
@@ -410,16 +437,14 @@ func ExportPeriodToExcel(c *gin.Context) {
 	var evaluations []models.KPIEvaluation
 	query := models.DB.Preload("Employee.Department").Preload("Template")
 
-	// 根据周期类型筛选
+	// 根据周期类型筛选（与统计页面查询逻辑保持一致）
 	if period == "monthly" && month != "" {
-		query = query.Where("year = ? AND month = ?", year, month)
+		query = query.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
 	} else if period == "quarterly" && quarter != "" {
-		q, _ := strconv.Atoi(quarter)
-		startMonth := (q-1)*3 + 1
-		endMonth := q * 3
-		query = query.Where("year = ? AND month BETWEEN ? AND ?", year, startMonth, endMonth)
+		query = query.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
 	} else if period == "yearly" {
-		query = query.Where("year = ?", year)
+		// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+		query = query.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
 	}
 
 	result := query.Find(&evaluations)
@@ -441,17 +466,21 @@ func ExportPeriodToExcel(c *gin.Context) {
 	sheetName := "周期评估统计"
 	f.SetSheetName("Sheet1", sheetName)
 
-	// 构建标题
-	var title string
+	// 构建标题和文件名标识
+	var title, fileNamePeriod string
 	switch period {
 	case "monthly":
 		title = fmt.Sprintf("%s年%s月 评估统计报告", year, month)
+		fileNamePeriod = fmt.Sprintf("%s年%s月", year, month)
 	case "quarterly":
 		title = fmt.Sprintf("%s年第%s季度 评估统计报告", year, quarter)
+		fileNamePeriod = fmt.Sprintf("%s年Q%s", year, quarter)
 	case "yearly":
 		title = fmt.Sprintf("%s年度 评估统计报告", year)
+		fileNamePeriod = fmt.Sprintf("%s年度", year)
 	default:
 		title = "评估统计报告"
+		fileNamePeriod = year
 	}
 
 	// 设置标题
@@ -508,7 +537,9 @@ func ExportPeriodToExcel(c *gin.Context) {
 		f.SetCellValue(sheetName, "B"+strconv.Itoa(row), evaluation.Employee.Name)
 		f.SetCellValue(sheetName, "C"+strconv.Itoa(row), evaluation.Employee.Department.Name)
 		f.SetCellValue(sheetName, "D"+strconv.Itoa(row), evaluation.Template.Name)
-		f.SetCellValue(sheetName, "E"+strconv.Itoa(row), evaluation.Period)
+		// 使用格式化的周期显示
+		periodDisplay := formatPeriodDisplay(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter)
+		f.SetCellValue(sheetName, "E"+strconv.Itoa(row), periodDisplay)
 		f.SetCellValue(sheetName, "F"+strconv.Itoa(row), evaluation.TotalScore)
 		f.SetCellValue(sheetName, "G"+strconv.Itoa(row), getStatusText(evaluation.Status))
 		f.SetCellValue(sheetName, "H"+strconv.Itoa(row), evaluation.CreatedAt.Format("2006-01-02 15:04:05"))
@@ -550,9 +581,8 @@ func ExportPeriodToExcel(c *gin.Context) {
 	}
 
 	// 生成文件名
-	fileName := fmt.Sprintf("周期评估统计-%s-%s-%d.xlsx",
-		period,
-		year,
+	fileName := fmt.Sprintf("周期评估统计-%s-%d.xlsx",
+		fileNamePeriod,
 		time.Now().Unix())
 	filePath := filepath.Join(exportDir, fileName)
 

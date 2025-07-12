@@ -140,21 +140,6 @@ export default function StatisticsPage() {
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2">
-          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-            <SelectTrigger className="w-auto">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 5 }, (_, i) => {
-                const year = new Date().getFullYear() - i;
-                return (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}年
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
           <Select value={selectedPeriod} onValueChange={(value) => {
             setSelectedPeriod(value);
             // 重置月份和季度选择
@@ -168,6 +153,21 @@ export default function StatisticsPage() {
               <SelectItem value="yearly">年度</SelectItem>
               <SelectItem value="quarterly">季度</SelectItem>
               <SelectItem value="monthly">月度</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+            <SelectTrigger className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 10 }, (_, i) => {
+                const year = new Date().getFullYear() - i;
+                return (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}年
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           {selectedPeriod === 'monthly' && (
