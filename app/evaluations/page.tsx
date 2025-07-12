@@ -37,7 +37,7 @@ export default function EvaluationsPage() {
   const [scores, setScores] = useState<KPIScore[]>([])
   const [activeTab, setActiveTab] = useState("details") // 新增：标签页状态
   const [editingScore, setEditingScore] = useState<number | null>(null) // 新增：正在编辑的评分ID
-  const [tempScore, setTempScore] = useState<number>(0) // 新增：临时评分
+  const [tempScore, setTempScore] = useState<string>("") // 新增：临时评分
   const [tempComment, setTempComment] = useState<string>("") // 新增：临时评论
   const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false) // 新增：自评提交状态
   const [loading, setLoading] = useState(false) // 新增：通用加载状态
@@ -138,24 +138,79 @@ export default function EvaluationsPage() {
   // 开始编辑评分
   const handleStartEdit = (scoreId: number, currentScore?: number, currentComment?: string) => {
     setEditingScore(scoreId)
-    setTempScore(currentScore || 0)
+    setTempScore(currentScore ? currentScore.toString() : "")
     setTempComment(currentComment || "")
   }
 
   // 取消编辑评分
   const handleCancelEdit = () => {
     setEditingScore(null)
-    setTempScore(0)
+    setTempScore("")
     setTempComment("")
+  }
+
+  // 验证评分范围
+  const validateScore = (score: string, maxScore: number): { isValid: boolean; message?: string } => {
+    if (score === "") {
+      return { isValid: false, message: "请输入评分" }
+    }
+    
+    const numScore = parseFloat(score)
+    if (isNaN(numScore)) {
+      return { isValid: false, message: "请输入有效的数字" }
+    }
+    
+    if (numScore < 0) {
+      return { isValid: false, message: "评分不能小于0" }
+    }
+    
+    if (numScore > maxScore) {
+      return { isValid: false, message: `评分不能超过${maxScore}分` }
+    }
+    
+    return { isValid: true }
+  }
+
+  // 处理输入值变化
+  const handleScoreChange = (value: string, maxScore: number) => {
+    setTempScore(value)
+    
+    // 实时验证并限制输入
+    if (value !== "") {
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue)) {
+        if (numValue < 0) {
+          setTempScore("0")
+        } else if (numValue > maxScore) {
+          setTempScore(maxScore.toString())
+        }
+      }
+    }
   }
 
   // 保存评分
   const handleSaveScore = async (scoreId: number, type: "self" | "manager") => {
     try {
+      // 获取当前编辑的评分项目
+      const currentScore = scores.find(s => s.id === scoreId)
+      if (!currentScore) {
+        Alert("保存失败", "评分项目不存在")
+        return
+      }
+
+      const maxScore = currentScore.item?.max_score || 100
+      const validation = validateScore(tempScore, maxScore)
+      
+      if (!validation.isValid) {
+        Alert("输入错误", validation.message || "评分输入无效")
+        return
+      }
+
+      const scoreValue = parseFloat(tempScore)
       if (type === "self") {
-        await scoreApi.updateSelf(scoreId, { self_score: tempScore, self_comment: tempComment })
+        await scoreApi.updateSelf(scoreId, { self_score: scoreValue, self_comment: tempComment })
       } else if (type === "manager") {
-        await scoreApi.updateManager(scoreId, { manager_score: tempScore, manager_comment: tempComment })
+        await scoreApi.updateManager(scoreId, { manager_score: scoreValue, manager_comment: tempComment })
       }
 
       if (selectedEvaluation) {
@@ -163,10 +218,11 @@ export default function EvaluationsPage() {
         fetchEvaluations()
       }
       setEditingScore(null)
-      setTempScore(0)
+      setTempScore("")
       setTempComment("")
     } catch (error) {
       console.error("更新评分失败:", error)
+      Alert("保存失败", "更新评分失败，请重试")
     }
   }
 
@@ -1030,14 +1086,20 @@ export default function EvaluationsPage() {
 
                               {editingScore === score.id && canPerformAction(selectedEvaluation, "self") ? (
                                 <div className="space-y-2">
-                                  <Input
-                                    type="number"
-                                    value={tempScore}
-                                    onChange={e => setTempScore(Number(e.target.value))}
-                                    min={0}
-                                    max={score.item?.max_score}
-                                    placeholder="评分"
-                                  />
+                                  <div className="space-y-1">
+                                    <Input
+                                      type="number"
+                                      value={tempScore}
+                                      onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
+                                      min={0}
+                                      max={score.item?.max_score}
+                                      step="0.1"
+                                      placeholder="评分"
+                                    />
+                                    <div className="text-xs text-gray-500">
+                                      评分范围：0 - {score.item?.max_score || 100}分
+                                    </div>
+                                  </div>
                                   <Textarea
                                     value={tempComment}
                                     onChange={e => setTempComment(e.target.value)}
@@ -1086,14 +1148,20 @@ export default function EvaluationsPage() {
                               {editingScore === score.id && canPerformAction(selectedEvaluation, "manager") ? (
                                 <div className="space-y-2">
                                   <div className="space-y-2">
-                                    <Input
-                                      type="number"
-                                      value={tempScore}
-                                      onChange={e => setTempScore(Number(e.target.value))}
-                                      min={0}
-                                      max={score.item?.max_score}
-                                      placeholder="评分"
-                                    />
+                                    <div className="space-y-1">
+                                      <Input
+                                        type="number"
+                                        value={tempScore}
+                                        onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
+                                        min={0}
+                                        max={score.item?.max_score}
+                                        step="0.1"
+                                        placeholder="评分"
+                                      />
+                                      <div className="text-xs text-gray-500">
+                                        评分范围：0 - {score.item?.max_score || 100}分
+                                      </div>
+                                    </div>
                                     {/* 评分参考标准 */}
                                     <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
                                       <div className="font-medium mb-1">评分参考：</div>
@@ -1164,14 +1232,20 @@ export default function EvaluationsPage() {
                               {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
                                 <div className="space-y-2">
                                   <div className="space-y-2">
-                                    <Input
-                                      type="number"
-                                      value={tempScore}
-                                      onChange={e => setTempScore(Number(e.target.value))}
-                                      min={0}
-                                      max={score.item?.max_score}
-                                      placeholder="最终评分"
-                                    />
+                                    <div className="space-y-1">
+                                      <Input
+                                        type="number"
+                                        value={tempScore}
+                                        onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
+                                        min={0}
+                                        max={score.item?.max_score}
+                                        step="0.1"
+                                        placeholder="最终评分"
+                                      />
+                                      <div className="text-xs text-gray-500">
+                                        评分范围：0 - {score.item?.max_score || 100}分
+                                      </div>
+                                    </div>
                                     {/* HR最终评分参考 */}
                                     <div className="text-xs text-gray-500 bg-indigo-50 p-2 rounded border border-indigo-200">
                                       <div className="font-medium mb-1">最终评分参考：</div>
