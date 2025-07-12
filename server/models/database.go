@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -69,15 +70,22 @@ func CreateTestData() {
 		DB.Create(&dept)
 	}
 
+	// 生成默认密码哈希
+	defaultPassword := "123456"
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal("密码哈希生成失败:", err)
+	}
+
 	// 创建员工
 	employees := []Employee{
-		{Name: "张三", Email: "zhangsan@company.com", Position: "技术总监", DepartmentID: 1, Role: "manager"},
-		{Name: "李四", Email: "lisi@company.com", Position: "高级开发工程师", DepartmentID: 1, ManagerID: getUintPtr(1), Role: "employee"},
-		{Name: "王五", Email: "wangwu@company.com", Position: "前端开发工程师", DepartmentID: 1, ManagerID: getUintPtr(1), Role: "employee"},
-		{Name: "赵六", Email: "zhaoliu@company.com", Position: "市场总监", DepartmentID: 2, Role: "manager"},
-		{Name: "钱七", Email: "qianqi@company.com", Position: "市场专员", DepartmentID: 2, ManagerID: getUintPtr(4), Role: "employee"},
-		{Name: "孙八", Email: "sunba@company.com", Position: "HR经理", DepartmentID: 3, Role: "hr"},
-		{Name: "周九", Email: "zhoujiu@company.com", Position: "财务经理", DepartmentID: 4, Role: "manager"},
+		{Name: "张三", Email: "zhangsan@company.com", Password: string(hashedPassword), Position: "技术总监", DepartmentID: 1, Role: "manager"},
+		{Name: "李四", Email: "lisi@company.com", Password: string(hashedPassword), Position: "高级开发工程师", DepartmentID: 1, ManagerID: getUintPtr(1), Role: "employee"},
+		{Name: "王五", Email: "wangwu@company.com", Password: string(hashedPassword), Position: "前端开发工程师", DepartmentID: 1, ManagerID: getUintPtr(1), Role: "employee"},
+		{Name: "赵六", Email: "zhaoliu@company.com", Password: string(hashedPassword), Position: "市场总监", DepartmentID: 2, Role: "manager"},
+		{Name: "钱七", Email: "qianqi@company.com", Password: string(hashedPassword), Position: "市场专员", DepartmentID: 2, ManagerID: getUintPtr(4), Role: "employee"},
+		{Name: "孙八", Email: "sunba@company.com", Password: string(hashedPassword), Position: "HR经理", DepartmentID: 3, Role: "hr"},
+		{Name: "周九", Email: "zhoujiu@company.com", Password: string(hashedPassword), Position: "财务经理", DepartmentID: 4, Role: "manager"},
 	}
 
 	for _, emp := range employees {

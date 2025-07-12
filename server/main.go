@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"dootask-kpi-server/middleware"
+	"dootask-kpi-server/handlers"
 	"dootask-kpi-server/models"
 	"dootask-kpi-server/routes"
 
@@ -37,7 +37,7 @@ func main() {
 	}))
 
 	// 基础中间件
-	r.Use(middleware.BaseMiddleware())
+	r.Use(handlers.BaseMiddleware())
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {

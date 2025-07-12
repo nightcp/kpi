@@ -21,6 +21,7 @@ type Employee struct {
 	ID           uint      `json:"id" gorm:"primaryKey"`
 	Name         string    `json:"name" gorm:"not null"`
 	Email        string    `json:"email" gorm:"unique;not null"`
+	Password     string    `json:"-" gorm:"not null"` // 密码，JSON中不返回
 	Position     string    `json:"position"`
 	DepartmentID uint      `json:"department_id"`
 	ManagerID    *uint     `json:"manager_id"`                   // 直属上级ID，可以为空
