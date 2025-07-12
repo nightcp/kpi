@@ -9,11 +9,32 @@ const api = axios.create({
   },
 })
 
+// 添加请求拦截器，自动附加token
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem("auth_token")
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  error => Promise.reject(error)
+)
+
 // 响应拦截器
 api.interceptors.response.use(
   response => response.data,
   error => {
     console.error("API Error:", error)
+    
+    // 如果是401错误，清除token并跳转到登录页
+    if (error.response?.status === 401) {
+      localStorage.removeItem("auth_token")
+      localStorage.removeItem("user_info")
+      // 在客户端路由中处理跳转
+      window.location.href = "/login"
+    }
+    
     return Promise.reject(error)
   }
 )
@@ -207,6 +228,39 @@ export interface Message {
   content: string
 }
 
+// 认证相关接口类型
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  name: string
+  email: string
+  password: string
+  position: string
+  department_id: number
+}
+
+export interface LoginResponse {
+  token: string
+  user: Employee
+}
+
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  position: string
+  department_id: number
+  manager_id?: number
+  role: string
+  is_active: boolean
+  created_at: string
+  department?: { name: string }
+  manager?: { name: string }
+}
+
 // 部门API
 export const departmentApi = {
   getAll: (): Promise<{ data: Department[]; total: number }> => api.get("/departments"),
@@ -336,6 +390,54 @@ export const commentApi = {
   ): Promise<{ data: EvaluationComment }> => api.put(`/evaluations/${evaluationId}/comments/${commentId}`, data),
   delete: (evaluationId: number, commentId: number): Promise<void> =>
     api.delete(`/evaluations/${evaluationId}/comments/${commentId}`),
+}
+
+// 认证API
+export const authApi = {
+  // 用户登录
+  login: (data: LoginRequest): Promise<LoginResponse> => api.post("/auth/login", data),
+  
+  // 用户注册
+  register: (data: RegisterRequest): Promise<LoginResponse> => api.post("/auth/register", data),
+  
+  // 获取当前用户信息
+  getCurrentUser: (): Promise<{ data: AuthUser }> => api.get("/me"),
+  
+  // 刷新token
+  refreshToken: (): Promise<{ token: string }> => api.post("/auth/refresh"),
+  
+  // 获取部门列表（公开接口，用于注册）
+  getDepartments: (): Promise<{ data: Department[] }> => api.get("/auth/departments"),
+  
+  // 登出（清除本地token）
+  logout: () => {
+    localStorage.removeItem("auth_token")
+    localStorage.removeItem("user_info")
+    window.location.href = "/login"
+  },
+  
+  // 检查是否已认证
+  isAuthenticated: (): boolean => {
+    const token = localStorage.getItem("auth_token")
+    return !!token
+  },
+  
+  // 获取当前用户token
+  getToken: (): string | null => {
+    return localStorage.getItem("auth_token")
+  },
+  
+  // 设置用户token和信息
+  setAuth: (token: string, user: AuthUser) => {
+    localStorage.setItem("auth_token", token)
+    localStorage.setItem("user_info", JSON.stringify(user))
+  },
+  
+  // 获取用户信息
+  getUser: (): AuthUser | null => {
+    const userInfo = localStorage.getItem("user_info")
+    return userInfo ? JSON.parse(userInfo) : null
+  },
 }
 
 export default api

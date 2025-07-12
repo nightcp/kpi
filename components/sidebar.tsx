@@ -80,7 +80,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
       {/* 侧边栏 */}
       <div
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none flex flex-col",
+          "fixed lg:static inset-y-0 left-0 z-10 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:transform-none flex flex-col",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

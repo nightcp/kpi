@@ -2,10 +2,12 @@
 
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { usePathname } from "next/navigation"
 import { Sidebar, MobileHeader } from "@/components/sidebar"
 import { AppProvider } from "@/lib/app-context"
 import { UserProvider } from "@/lib/user-context"
-import { UserSwitcher } from "@/components/user-switcher"
+import { AuthProvider } from "@/lib/auth-context"
+import ProtectedRoute from "@/components/protected-route"
 import { useState } from "react"
 import "./globals.css"
 
@@ -17,9 +19,44 @@ const metadata: Metadata = {
   description: "基于NextJS和React的KPI绩效考核管理系统",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const isAuthPage = pathname.startsWith("/auth")
 
+  if (isAuthPage) {
+    // 认证页面布局（不需要侧边栏）
+    return (
+      <ProtectedRoute requireAuth={false}>
+        {children}
+      </ProtectedRoute>
+    )
+  }
+
+  // 主要应用程序布局（需要认证）
+  return (
+    <ProtectedRoute requireAuth={true}>
+      <UserProvider>
+        <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+          {/* 移动端头部 */}
+          <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
+
+          {/* 侧边栏 */}
+          <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+
+          {/* 主内容区域 */}
+          <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
+            <div className="p-4 lg:p-6">
+              <div className="max-w-7xl mx-auto">{children}</div>
+            </div>
+          </main>
+        </div>
+      </UserProvider>
+    </ProtectedRoute>
+  )
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
       <head>
@@ -29,25 +66,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         <AppProvider>
-          <UserProvider>
-            <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
-              {/* 移动端头部 */}
-              <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
-
-              {/* 侧边栏 */}
-              <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
-
-              {/* 主内容区域 */}
-              <main className="flex-1 bg-gray-50 min-w-0 overflow-y-auto lg:h-screen">
-                <div className="p-4 lg:p-6">
-                  <div className="max-w-7xl mx-auto">{children}</div>
-                </div>
-              </main>
-
-              {/* 用户切换组件 */}
-              <UserSwitcher />
-            </div>
-          </UserProvider>
+          <AuthProvider>
+            <AppLayout>{children}</AppLayout>
+          </AuthProvider>
         </AppProvider>
       </body>
     </html>
