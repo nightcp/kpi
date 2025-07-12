@@ -292,11 +292,9 @@ export default function EvaluationsPage() {
         inline: "nearest",
       })
       // 添加一个视觉提示
-      element.style.backgroundColor = "#f0f9ff"
-      element.style.transition = "background-color 0.3s ease"
-      setTimeout(() => {
-        element.style.backgroundColor = ""
-      }, 2000)
+      element.style.transition = "box-shadow 1s ease"
+      setTimeout(() => element.style.boxShadow = "rgb(255 87 34 / 50%) 0px 0px 10px 0px", 500)
+      setTimeout(() => element.style.boxShadow = "", 3000)
     })
   }
 
@@ -923,7 +921,7 @@ export default function EvaluationsPage() {
         <CardContent>
           {loading && (
             <div className="text-center py-8">
-              <div className="text-gray-500">加载中...</div>
+              <div className="text-muted-foreground">加载中...</div>
             </div>
           )}
           <Table>
@@ -941,7 +939,7 @@ export default function EvaluationsPage() {
             <TableBody>
               {getFilteredEvaluations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     暂无考核数据
                   </TableCell>
                 </TableRow>
@@ -986,51 +984,62 @@ export default function EvaluationsPage() {
               <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6">
                 {/* 基本信息卡片 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <Label className="text-sm text-gray-500">员工姓名</Label>
+                  <div className="bg-muted/50 p-3 rounded">
+                    <Label className="text-sm text-muted-foreground">员工姓名</Label>
                     <p className="text-sm font-medium">{selectedEvaluation.employee?.name}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <Label className="text-sm text-gray-500">考核模板</Label>
+                  <div className="bg-muted/50 p-3 rounded">
+                    <Label className="text-sm text-muted-foreground">考核模板</Label>
                     <p className="text-sm font-medium">{selectedEvaluation.template?.name}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <Label className="text-sm text-gray-500">考核周期</Label>
+                  <div className="bg-muted/50 p-3 rounded">
+                    <Label className="text-sm text-muted-foreground">考核周期</Label>
                     <p className="text-sm font-medium">{getPeriodValue(selectedEvaluation)}</p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <Label className="text-sm text-gray-500">当前状态</Label>
-                    <div className="mt-1 space-y-2">
-                      {getStatusBadge(selectedEvaluation.status)}
-                      {/* 状态进度条 */}
-                      <div className="text-xs text-gray-500">
-                        <div className="flex justify-between items-center mb-1">
-                          <span>流程进度</span>
-                          <span>
-                            {getStatusProgress(selectedEvaluation.status).step}/
-                            {getStatusProgress(selectedEvaluation.status).total}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                          <div
-                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                            style={{
-                              width: `${
-                                (getStatusProgress(selectedEvaluation.status).step /
-                                  getStatusProgress(selectedEvaluation.status).total) *
-                                100
-                              }%`,
-                            }}
-                          />
-                        </div>
+                  <div className="bg-muted/50 p-3 rounded flex flex-col gap-2">
+                    {/* 当前状态 */}
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm text-muted-foreground">当前状态</Label>
+                      <div className="mt-1.5 space-y-2">
+                        {getStatusBadge(selectedEvaluation.status)}
                       </div>
                     </div>
+                    {/* 状态进度条 */}
+                    <div className="flex justify-between items-end">
+                      <Label className="text-sm text-muted-foreground">流程进度</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {getStatusProgress(selectedEvaluation.status).step} / {getStatusProgress(selectedEvaluation.status).total}
+                      </span>
+                    </div>
+                    {(() => {
+                      const percent = getStatusProgress(selectedEvaluation.status).step / getStatusProgress(selectedEvaluation.status).total * 100
+                      let colorClass = "bg-gray-300"
+                      if (percent >= 100) {
+                        colorClass = "bg-green-600"
+                      } else if (percent >= 75) {
+                        colorClass = "bg-blue-500"
+                      } else if (percent >= 50) {
+                        colorClass = "bg-yellow-400"
+                      } else if (percent >= 25) {
+                        colorClass = "bg-orange-400"
+                      } else {
+                        colorClass = "bg-red-400"
+                      }
+                      return (
+                        <div className="w-full h-2 rounded-full bg-muted relative overflow-hidden">
+                          <div
+                            className={`${colorClass} h-2 rounded-full transition-all duration-300`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
 
                 {/* 标签页 */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-2 mb-2">
                     <TabsTrigger value="details">评分详情</TabsTrigger>
                     <TabsTrigger value="summary">总结汇总</TabsTrigger>
                   </TabsList>
@@ -1039,9 +1048,9 @@ export default function EvaluationsPage() {
                     {/* 自评指导和进度信息 */}
                     {canPerformAction(selectedEvaluation, "self") && (
                       <div className="space-y-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <h4 className="font-medium text-blue-900 mb-2">📝 自评指导</h4>
-                          <ul className="text-sm text-blue-800 space-y-1">
+                        <div className="bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">📝 自评指导</h4>
+                          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                             <li>• 请根据本期间的实际工作表现进行客观评分</li>
                             <li>• 评分需要在0到满分之间，建议结合具体工作成果</li>
                             <li>• 请在评价说明中详细描述您的工作亮点和改进计划</li>
@@ -1050,15 +1059,15 @@ export default function EvaluationsPage() {
                         </div>
 
                         {/* 评分进度 */}
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                          <h4 className="font-medium text-green-900 mb-2">📊 评分进度</h4>
+                        <div className="bg-green-50/80 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                          <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">📊 评分进度</h4>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-green-800">
+                            <span className="text-sm text-green-800 dark:text-green-200">
                               已完成 {scores.filter(s => s.self_score && s.self_score > 0).length} / {scores.length} 项
                             </span>
-                            <div className="flex-1 mx-4 bg-green-200 rounded-full h-2">
+                            <div className="flex-1 mx-4 bg-green-200 dark:bg-green-800 rounded-full h-2">
                               <div
-                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                className="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
                                 style={{
                                   width: `${
                                     scores.length > 0
@@ -1069,7 +1078,7 @@ export default function EvaluationsPage() {
                                 }}
                               />
                             </div>
-                            <span className="text-sm font-medium text-green-900">
+                            <span className="text-sm font-medium text-green-900 dark:text-green-100">
                               {scores.length > 0
                                 ? Math.round(
                                     (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
@@ -1085,9 +1094,9 @@ export default function EvaluationsPage() {
                     {/* 上级评分指导信息 */}
                     {canPerformAction(selectedEvaluation, "manager") && (
                       <div className="space-y-4">
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                          <h4 className="font-medium text-purple-900 mb-2">👔 上级评分指导</h4>
-                          <ul className="text-sm text-purple-800 space-y-1">
+                        <div className="bg-purple-50/80 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                          <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">👔 上级评分指导</h4>
+                          <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-1">
                             <li>• 请结合员工的自评内容和实际工作表现进行评分</li>
                             <li>• 评分应客观公正，既要认可成绩，也要指出不足</li>
                             <li>• 在评价说明中提供具体的改进建议和发展方向</li>
@@ -1096,26 +1105,26 @@ export default function EvaluationsPage() {
                         </div>
 
                         {/* 评分对比和进度 */}
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                          <h4 className="font-medium text-orange-900 mb-2">📈 评分对比</h4>
+                        <div className="bg-orange-50/80 dark:bg-orange-950/50 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                          <h4 className="font-medium text-orange-900 dark:text-orange-100 mb-2">📈 评分对比</h4>
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <span className="text-orange-800">员工自评总分：</span>
-                              <span className="font-semibold text-orange-900">
+                              <span className="text-orange-800 dark:text-orange-200">员工自评总分：</span>
+                              <span className="font-semibold text-orange-900 dark:text-orange-100">
                                 {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)} 分
                               </span>
                             </div>
                             <div>
-                              <span className="text-orange-800">主管评分进度：</span>
-                              <span className="font-semibold text-orange-900">
+                              <span className="text-orange-800 dark:text-orange-200">主管评分进度：</span>
+                              <span className="font-semibold text-orange-900 dark:text-orange-100">
                                 {scores.filter(s => s.manager_score && s.manager_score > 0).length} / {scores.length} 项
                               </span>
                             </div>
                           </div>
                           <div className="mt-3">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-orange-700">主管评分完成度</span>
-                              <span className="text-xs font-medium text-orange-900">
+                              <span className="text-xs text-orange-700 dark:text-orange-300">主管评分完成度</span>
+                              <span className="text-xs font-medium text-orange-900 dark:text-orange-100">
                                 {scores.length > 0
                                   ? Math.round(
                                       (scores.filter(s => s.manager_score && s.manager_score > 0).length /
@@ -1126,9 +1135,9 @@ export default function EvaluationsPage() {
                                 %
                               </span>
                             </div>
-                            <div className="w-full bg-orange-200 rounded-full h-2">
+                            <div className="w-full bg-orange-200 dark:bg-orange-800 rounded-full h-2">
                               <div
-                                className="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                                className="bg-orange-600 dark:bg-orange-400 h-2 rounded-full transition-all duration-300"
                                 style={{
                                   width: `${
                                     scores.length > 0
@@ -1148,9 +1157,9 @@ export default function EvaluationsPage() {
                     {/* HR审核指导信息 */}
                     {canPerformAction(selectedEvaluation, "hr") && (
                       <div className="space-y-4">
-                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                          <h4 className="font-medium text-indigo-900 mb-2">🔍 HR审核指导</h4>
-                          <ul className="text-sm text-indigo-800 space-y-1">
+                        <div className="bg-indigo-50/80 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
+                          <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-2">🔍 HR审核指导</h4>
+                          <ul className="text-sm text-indigo-800 dark:text-indigo-200 space-y-1">
                             <li>• 审核员工自评与上级评分的合理性和一致性</li>
                             <li>• 检查评分是否符合公司绩效标准和政策</li>
                             <li>• 确认最终评分并可进行必要的调整</li>
@@ -1159,15 +1168,15 @@ export default function EvaluationsPage() {
                         </div>
 
                         {/* HR审核总结 */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-medium text-gray-900 mb-3">📊 评分汇总分析</h4>
+                        <div className="bg-muted/50 border rounded-lg p-4">
+                          <h4 className="font-medium text-foreground mb-3">📊 评分汇总分析</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div className="bg-white p-3 rounded border">
-                              <div className="text-gray-600">员工自评总分</div>
-                              <div className="text-2xl font-bold text-blue-600">
+                            <div className="bg-card p-3 rounded border">
+                              <div className="text-muted-foreground">员工自评总分</div>
+                              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
                                   ? (
@@ -1176,12 +1185,12 @@ export default function EvaluationsPage() {
                                   : 0}
                               </div>
                             </div>
-                            <div className="bg-white p-3 rounded border">
-                              <div className="text-gray-600">主管评分总分</div>
-                              <div className="text-2xl font-bold text-purple-600">
+                            <div className="bg-card p-3 rounded border">
+                              <div className="text-muted-foreground">主管评分总分</div>
+                              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
                                   ? (
@@ -1190,15 +1199,15 @@ export default function EvaluationsPage() {
                                   : 0}
                               </div>
                             </div>
-                            <div className="bg-white p-3 rounded border">
-                              <div className="text-gray-600">评分差异分析</div>
-                              <div className="text-2xl font-bold text-orange-600">
+                            <div className="bg-card p-3 rounded border">
+                              <div className="text-muted-foreground">评分差异分析</div>
+                              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {Math.abs(
                                   scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
                                     scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                                 )}
                               </div>
-                              <div className="text-xs text-gray-500">自评与主管评分差值</div>
+                              <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
                             </div>
                           </div>
 
@@ -1207,8 +1216,8 @@ export default function EvaluationsPage() {
                             scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
                               scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                           ) > 10 && (
-                            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                              <div className="text-sm text-yellow-800">
+                            <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
+                              <div className="text-sm text-yellow-800 dark:text-yellow-200">
                                 ⚠️ <strong>注意：</strong>
                                 员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
                               </div>
@@ -1229,7 +1238,7 @@ export default function EvaluationsPage() {
                                 <p className="text-sm text-muted-foreground">{score.item?.description}</p>
                                 <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
                               </div>
-                              <div className="text-center sm:text-right">
+                              <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
                                   {score.final_score || score.manager_score || score.self_score || 0}
                                 </div>
@@ -1267,7 +1276,7 @@ export default function EvaluationsPage() {
                                         step="0.1"
                                         placeholder="评分"
                                       />
-                                      <div className="text-xs text-gray-500">
+                                      <div className="text-xs text-muted-foreground">
                                         评分范围：0 - {score.item?.max_score || 100}分
                                       </div>
                                     </div>
@@ -1291,7 +1300,7 @@ export default function EvaluationsPage() {
                                 ) : (
                                   <div>
                                     <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
-                                    <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
+                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                       {score.self_comment || "暂无说明"}
                                     </div>
                                   </div>
@@ -1336,7 +1345,7 @@ export default function EvaluationsPage() {
                                         </div>
                                       </div>
                                       {/* 评分参考标准 */}
-                                      <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                      <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                                         <div className="font-medium mb-1">评分参考：</div>
                                         <div className="space-y-1">
                                           <div>
@@ -1381,7 +1390,7 @@ export default function EvaluationsPage() {
                                 ) : (
                                   <div>
                                     <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
-                                    <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded mt-1">
+                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                       {score.manager_comment || "暂无说明"}
                                     </div>
                                   </div>
@@ -1426,13 +1435,13 @@ export default function EvaluationsPage() {
                                         </div>
                                       </div>
                                       {/* HR最终评分参考 */}
-                                      <div className="text-xs text-gray-500 bg-indigo-50 p-2 rounded border border-indigo-200">
+                                      <div className="text-xs text-muted-foreground bg-indigo-50/80 dark:bg-indigo-950/50 p-2 rounded border border-indigo-200 dark:border-indigo-800">
                                         <div className="font-medium mb-1">最终评分参考：</div>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                           <div>员工自评：{score.self_score || 0}分</div>
                                           <div>主管评分：{score.manager_score || 0}分</div>
                                         </div>
-                                        <div className="mt-2 text-indigo-700">
+                                        <div className="mt-2 text-indigo-700 dark:text-indigo-300">
                                           💡 建议：通常采用主管评分作为最终得分，如有争议可适当调整
                                         </div>
                                       </div>
@@ -1547,7 +1556,7 @@ export default function EvaluationsPage() {
                       <CardContent>
                         {/* 添加评论表单 */}
                         {isAddingComment && (
-                          <div className="space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                          <div className="space-y-4 mb-4 p-4 bg-muted/50 rounded-lg">
                             <div className="flex flex-col gap-2">
                               <Label htmlFor="newComment">评论内容</Label>
                               <Textarea
@@ -1555,7 +1564,7 @@ export default function EvaluationsPage() {
                                 placeholder="请输入您的评论..."
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
-                                className="mt-1 min-h-[100px] bg-white"
+                                                                  className="mt-1 min-h-[100px] bg-background"
                               />
                             </div>
                             <div className="flex items-center space-x-2">
@@ -1595,12 +1604,12 @@ export default function EvaluationsPage() {
 
                         {/* 评论列表 */}
                         {isLoadingComments ? (
-                          <div className="text-center py-8 text-gray-500">
+                          <div className="text-center py-8 text-muted-foreground">
                             <p className="text-sm">加载评论中...</p>
                           </div>
                         ) : comments.length === 0 ? (
-                          <div className="text-center py-8 text-gray-500">
-                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <div className="text-center py-8 text-muted-foreground">
+                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted/50" />
                             <p className="text-sm">暂无评论</p>
                             <p className="text-xs mt-1">点击&quot;添加评论&quot;按钮来记录您的想法</p>
                           </div>
@@ -1612,11 +1621,11 @@ export default function EvaluationsPage() {
                                   <div className="flex-1">
                                     <div className="flex items-center mb-2">
                                       <span className="font-medium text-sm">{comment.user?.name || "未知用户"}</span>
-                                      <span className="text-xs text-gray-500 ml-2">{comment.user?.position}</span>
-                                      <span className="text-xs text-gray-400 ml-2">
+                                      <span className="text-xs text-muted-foreground ml-2">{comment.user?.position}</span>
+                                      <span className="text-xs text-muted-foreground/70 ml-2">
                                         {new Date(comment.created_at).toLocaleString()}
                                       </span>
-                                      <div className="flex items-center ml-2 text-xs text-gray-500">
+                                      <div className="flex items-center ml-2 text-xs text-muted-foreground">
                                         {comment.is_private ? (
                                           <>
                                             <Lock className="w-3 h-3 mr-1" />
@@ -1664,7 +1673,7 @@ export default function EvaluationsPage() {
                                         </div>
                                       </div>
                                     ) : (
-                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                                      <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
                                     )}
                                   </div>
 

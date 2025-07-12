@@ -51,11 +51,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm py-10">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">绩效管理系统</h1>
-          <p className="text-gray-600 mt-2">欢迎回来</p>
+          <h1 className="text-2xl font-bold text-foreground">绩效管理系统</h1>
+          <p className="text-muted-foreground mt-2">欢迎回来</p>
         </div>
 
         <Card>
@@ -98,7 +98,7 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 还没有账户？{" "}
-                <Link href="/auth/register" className="underline underline-offset-4 hover:text-blue-600">
+                <Link href="/auth/register" className="underline underline-offset-4 hover:text-primary">
                   立即注册
                 </Link>
               </div>

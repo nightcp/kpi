@@ -114,11 +114,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm py-10">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">绩效管理系统</h1>
-          <p className="text-gray-600 mt-2">{allowRegistration ? "创建新账户" : "用户注册"}</p>
+          <h1 className="text-2xl font-bold text-foreground">绩效管理系统</h1>
+          <p className="text-muted-foreground mt-2">{allowRegistration ? "创建新账户" : "用户注册"}</p>
         </div>
 
         <Card>
@@ -213,7 +213,7 @@ export default function RegisterPage() {
                 </div>
                 <div className="mt-4 text-center text-sm">
                   已有账户？{" "}
-                  <Link href="/auth/login" className="underline underline-offset-4 hover:text-blue-600">
+                  <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
                     立即登录
                   </Link>
                 </div>
@@ -221,9 +221,9 @@ export default function RegisterPage() {
             ) : (
               <div className="text-center pt-8">
                 <div className="space-y-4">
-                  <div className="text-gray-600">当前系统暂不开放用户注册功能。</div>
-                  <div className="text-sm text-gray-500">如需创建账户，请联系系统管理员。</div>
-                  <Button asChild className="w-full">
+                  <div className="text-muted-foreground">当前系统暂不开放用户注册功能。</div>
+                  <div className="text-sm text-muted-foreground">如需创建账户，请联系系统管理员。</div>
+                  <Button asChild className="w-full mt-4">
                     <Link href="/auth/login">返回登录</Link>
                   </Button>
                 </div>
