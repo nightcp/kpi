@@ -13,6 +13,30 @@ import (
 
 // 统计分析
 
+// 最近评估结构
+type RecentEvaluation struct {
+	ID         uint           `json:"id"`
+	Employee   RecentEmployee `json:"employee"`
+	TotalScore float64        `json:"total_score"`
+	Status     string         `json:"status"`
+	Period     string         `json:"period"`
+	Year       int            `json:"year"`
+	Month      *int           `json:"month"`
+	Quarter    *int           `json:"quarter"`
+}
+
+// 最近员工结构
+type RecentEmployee struct {
+	Name       string           `json:"name"`
+	Position   string           `json:"position"`
+	Department RecentDepartment `json:"department"`
+}
+
+// 最近部门结构
+type RecentDepartment struct {
+	Name string `json:"name"`
+}
+
 // 获取仪表板统计数据
 func GetDashboardStats(c *gin.Context) {
 	// 获取查询参数
@@ -20,20 +44,6 @@ func GetDashboardStats(c *gin.Context) {
 	period := c.DefaultQuery("period", "")
 	month := c.DefaultQuery("month", "")
 	quarter := c.DefaultQuery("quarter", "")
-
-	// 最近评估结构
-	type RecentEvaluation struct {
-		ID         uint    `json:"id"`
-		Employee   string  `json:"employee"`
-		Department string  `json:"department"`
-		Template   string  `json:"template"`
-		Score      float64 `json:"score"`
-		Status     string  `json:"status"`
-		Period     string  `json:"period"`
-		Year       int     `json:"year"`
-		Month      *int    `json:"month"`
-		Quarter    *int    `json:"quarter"`
-	}
 
 	var stats struct {
 		TotalEmployees       int64              `json:"total_employees"`
@@ -118,11 +128,15 @@ func GetDashboardStats(c *gin.Context) {
 	// 构建RecentEvaluation结构体
 	for _, eval := range recentEvals {
 		stats.RecentEvaluations = append(stats.RecentEvaluations, RecentEvaluation{
-			ID:         eval.ID,
-			Employee:   eval.Employee.Name,
-			Department: eval.Employee.Department.Name,
-			Template:   eval.Template.Name,
-			Score:      eval.TotalScore,
+			ID: eval.ID,
+			Employee: RecentEmployee{
+				Name:     eval.Employee.Name,
+				Position: eval.Employee.Position,
+				Department: RecentDepartment{
+					Name: eval.Employee.Department.Name,
+				},
+			},
+			TotalScore: eval.TotalScore,
 			Status:     eval.Status,
 			Period:     eval.Period,
 			Year:       eval.Year,
