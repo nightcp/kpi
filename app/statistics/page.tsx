@@ -244,7 +244,7 @@ export default function StatisticsPage() {
 
       {/* 数据分析图表 */}
       <Tabs defaultValue="departments" className="space-y-4">
-        <TabsList>
+        <TabsList className="gap-1">
           <TabsTrigger value="departments">部门分析</TabsTrigger>
           <TabsTrigger value="trends">趋势分析</TabsTrigger>
           <TabsTrigger value="distribution">分数分布</TabsTrigger>
@@ -396,6 +396,11 @@ export default function StatisticsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
+                    {(statisticsData?.topPerformers?.length || 0) === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-4">暂无数据</TableCell>
+                      </TableRow>
+                    )}
                     {(statisticsData?.topPerformers || []).map((performer, index) => (
                       <TableRow key={performer.name}>
                         <TableCell>
@@ -442,6 +447,11 @@ export default function StatisticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {(statisticsData?.recentEvaluations?.length || 0) === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">暂无数据</TableCell>
+                  </TableRow>
+                )}
                 {(statisticsData?.recentEvaluations || []).map(evaluation => (
                   <TableRow key={evaluation.id}>
                     <TableCell className="font-medium">{evaluation.employee}</TableCell>

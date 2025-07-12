@@ -15,6 +15,20 @@ import { templateApi, itemApi, type KPITemplate, type KPIItem } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodLabel } from "@/lib/utils"
 
+const defaultTemplateFormData = {
+  name: "",
+  description: "",
+  period: "monthly",
+  is_active: true,
+}
+
+const defaultItemFormData = {
+  name: "",
+  description: "",
+  max_score: 0,
+  order: 1,
+}
+
 export default function TemplatesPage() {
   const { Confirm } = useAppContext()
   const [templates, setTemplates] = useState<KPITemplate[]>([])
@@ -26,18 +40,8 @@ export default function TemplatesPage() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<KPITemplate | null>(null)
   const [editingItem, setEditingItem] = useState<KPIItem | null>(null)
-  const [templateFormData, setTemplateFormData] = useState({
-    name: "",
-    description: "",
-    period: "monthly",
-    is_active: true,
-  })
-  const [itemFormData, setItemFormData] = useState({
-    name: "",
-    description: "",
-    max_score: 0,
-    order: 1,
-  })
+  const [templateFormData, setTemplateFormData] = useState(defaultTemplateFormData)
+  const [itemFormData, setItemFormData] = useState(defaultItemFormData)
 
   // 获取模板列表
   const fetchTemplates = async () => {
@@ -78,7 +82,7 @@ export default function TemplatesPage() {
       fetchTemplates()
       setTemplateDialogOpen(false)
       setEditingTemplate(null)
-      setTemplateFormData({ name: "", description: "", period: "monthly", is_active: true })
+      setTemplateFormData(defaultTemplateFormData)
     } catch (error) {
       console.error("保存模板失败:", error)
     }
@@ -104,7 +108,7 @@ export default function TemplatesPage() {
       fetchTemplateItems(selectedTemplate.id)
       setItemDialogOpen(false)
       setEditingItem(null)
-      setItemFormData({ name: "", description: "", max_score: 0, order: 1 })
+      setItemFormData(defaultItemFormData)
     } catch (error) {
       console.error("保存KPI项目失败:", error)
     }
@@ -244,7 +248,7 @@ export default function TemplatesPage() {
       </div>
 
       <Tabs className="w-full" value={templateTabValue} onValueChange={setTemplateTabValue}>
-        <TabsList>
+        <TabsList className="gap-1">
           <TabsTrigger value="templates">模板列表</TabsTrigger>
           {selectedTemplate && (
             <TabsTrigger value="items">KPI项目 {selectedTemplate && `(${selectedTemplate.name})`}</TabsTrigger>
@@ -370,13 +374,15 @@ export default function TemplatesPage() {
                     <Settings className="w-5 h-5 mr-2" />
                     KPI项目配置
                   </div>
+                  <Button className="w-full sm:w-auto" onClick={() => {
+                    setEditingItem(null)
+                    setItemFormData(defaultItemFormData)
+                    setItemDialogOpen(true)
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    添加项目
+                  </Button>
                   <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="w-full sm:w-auto">
-                        <Plus className="w-4 h-4 mr-2" />
-                        添加项目
-                      </Button>
-                    </DialogTrigger>
                     <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
                       <DialogHeader>
                         <DialogTitle>{editingItem ? "编辑KPI项目" : "添加KPI项目"}</DialogTitle>
@@ -438,9 +444,15 @@ export default function TemplatesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg flex flex-col gap-2">
                   <p className="text-sm text-blue-700">
                     当前模板: <span className="font-semibold">{selectedTemplate.name}</span>
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    总项目数: <span className="font-semibold">{items.length}</span>
+                  </p>
+                  <p className="text-sm text-blue-700">
+                  总分: <span className="font-semibold">{items.reduce((sum, item) => sum + item.max_score, 0)}分</span>
                   </p>
                 </div>
                 {items.length === 0 ? (
