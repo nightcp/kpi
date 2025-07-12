@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Eye, Award, CheckCircle, Clock, Star, Edit2, Save, X } from "lucide-react"
@@ -51,6 +51,18 @@ export default function EvaluationsPage() {
     month: new Date().getMonth() + 1,
     quarter: Math.floor(new Date().getMonth() / 3) + 1,
   })
+
+  // 员工列表（按部门分类）
+  const employeeList = useMemo(() => {
+    return employees.reduce((acc: Record<string, Employee[]>, employee: Employee) => {
+      const department = employee.department?.name || "未分配"
+      if (!acc[department]) {
+        acc[department] = []
+      }
+      acc[department].push(employee)
+      return acc
+    }, {} as Record<string, Employee[]>)
+  }, [employees])
 
   // 获取评估列表
   const fetchEvaluations = async () => {
@@ -588,10 +600,15 @@ export default function EvaluationsPage() {
                       <SelectValue placeholder="选择员工" />
                     </SelectTrigger>
                     <SelectContent>
-                      {employees.map(employee => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.name} - {employee.position}
-                        </SelectItem>
+                      {Object.entries(employeeList).map(([department, employees]) => (
+                        <SelectGroup key={department}>
+                          <SelectLabel>{department}</SelectLabel>
+                          {employees.map(employee => (
+                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                              {employee.name} - {employee.position}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>
