@@ -12,8 +12,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
@@ -22,6 +20,12 @@ import {
   Area,
   AreaChart,
 } from "recharts"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
 import {
   TrendingUp,
   Users,
@@ -46,6 +50,28 @@ export default function StatisticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("monthly")
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1)
+
+  // 图表配置 - 使用CSS变量以支持主题切换
+  const chartConfig = {
+    total: {
+      label: "总数",
+    },
+    completed: {
+      label: "已完成", 
+    },
+    pending: {
+      label: "待处理",
+    },
+    avg_score: {
+      label: "平均分",
+    },
+    evaluations: {
+      label: "考核数量",
+    },
+    completion_rate: {
+      label: "完成率 %",
+    },
+  } satisfies ChartConfig
 
   // 获取统计数据
   const fetchStatisticsData = useCallback(async () => {
@@ -260,19 +286,17 @@ export default function StatisticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statisticsData?.departmentStats || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="total" fill="#3b82f6" name="总数" />
-                    <Bar dataKey="completed" fill="#22c55e" name="已完成" />
-                    <Bar dataKey="pending" fill="#f59e0b" name="待处理" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-80 w-full">
+                <BarChart data={statisticsData?.departmentStats || []}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="total" fill="var(--chart-1)" />
+                  <Bar dataKey="completed" fill="var(--chart-2)" />
+                  <Bar dataKey="pending" fill="var(--chart-3)" />
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -281,17 +305,15 @@ export default function StatisticsPage() {
               <CardTitle>部门平均分对比</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statisticsData?.departmentStats || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Bar dataKey="avg_score" fill="#8b5cf6" name="平均分" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-64 w-full">
+                <BarChart data={statisticsData?.departmentStats || []}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="avg_score" fill="var(--chart-4)" />
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>
@@ -305,19 +327,17 @@ export default function StatisticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={statisticsData?.monthlyTrends || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Line yAxisId="left" type="monotone" dataKey="evaluations" stroke="#3b82f6" name="考核数量" />
-                    <Line yAxisId="right" type="monotone" dataKey="avg_score" stroke="#22c55e" name="平均分" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-80 w-full">
+                <LineChart data={statisticsData?.monthlyTrends || []}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line yAxisId="left" type="monotone" dataKey="evaluations" stroke="var(--chart-1)" strokeWidth={2} />
+                  <Line yAxisId="right" type="monotone" dataKey="avg_score" stroke="var(--chart-4)" strokeWidth={2} />
+                </LineChart>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -326,17 +346,15 @@ export default function StatisticsPage() {
               <CardTitle>完成率趋势</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={statisticsData?.monthlyTrends || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="completion_rate" stroke="#8b5cf6" fill="#8b5cf6" name="完成率 %" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={chartConfig} className="h-64 w-full">
+                <AreaChart data={statisticsData?.monthlyTrends || []}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="completion_rate" stroke="var(--chart-5)" fill="var(--chart-5)" fillOpacity={0.6} />
+                </AreaChart>
+              </ChartContainer>
             </CardContent>
           </Card>
         </TabsContent>
@@ -350,27 +368,39 @@ export default function StatisticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
+              {/* 检查是否有有效数据 */}
+              {(statisticsData?.scoreDistribution || []).every(item => item.count === 0) ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="text-center">
+                    <PieChartIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">暂无分数分布数据</p>
+                    <p className="text-sm text-muted-foreground mt-2">当前时期内没有完成的考核记录</p>
+                  </div>
+                </div>
+              ) : (
+                <ChartContainer config={chartConfig} className="h-80 w-full">
                   <PieChart>
                     <Pie
-                      data={statisticsData?.scoreDistribution || []}
+                      data={(statisticsData?.scoreDistribution || []).map(item => ({
+                        ...item,
+                        name: item.range + "分",
+                      }))}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ range, count }) => `${range}: ${count}人`}
+                      label={({ range, count }) => count > 0 ? `${range}分: ${count}人` : null}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill="var(--chart-1)"
                       dataKey="count"
                     >
                       {(statisticsData?.scoreDistribution || []).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <ChartTooltip content={<ChartTooltipContent/>} />
                   </PieChart>
-                </ResponsiveContainer>
-              </div>
+                </ChartContainer>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
