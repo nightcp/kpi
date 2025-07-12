@@ -1,35 +1,35 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react";
-import { statisticsApi, type DashboardStats } from "@/lib/api";
-import Link from "next/link";
-import { useAppContext } from "@/lib/app-context";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react"
+import { statisticsApi, type DashboardStats } from "@/lib/api"
+import Link from "next/link"
+import { useAppContext } from "@/lib/app-context"
 
 export default function Dashboard() {
-  const { getStatusBadge } = useAppContext();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { getStatusBadge } = useAppContext()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
 
   // 获取仪表板统计数据
   const fetchDashboardStats = async () => {
     try {
-      const response = await statisticsApi.getDashboard();
-      setStats(response.data);
+      const response = await statisticsApi.getDashboard()
+      setStats(response.data)
     } catch (error) {
-      console.error("获取统计数据失败:", error);
+      console.error("获取统计数据失败:", error)
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+    fetchDashboardStats()
+  }, [])
 
   if (loading) {
-    return <div className="p-8 text-center">加载中...</div>;
+    return <div className="p-8 text-center">加载中...</div>
   }
 
   return (
@@ -118,8 +118,8 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats?.total_evaluations ? 
-                Math.round((stats.completed_evaluations / stats.total_evaluations) * 100) : 0}%
+              {stats?.total_evaluations ? Math.round((stats.completed_evaluations / stats.total_evaluations) * 100) : 0}
+              %
             </div>
             <p className="text-xs text-muted-foreground">考核完成率</p>
           </CardContent>
@@ -134,7 +134,10 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>最近评估</div>
                 {stats?.recent_evaluations && stats.recent_evaluations.length > 0 && (
-                  <Link href="/evaluations" className="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-normal text-sm leading-none">
+                  <Link
+                    href="/evaluations"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-normal text-sm leading-none"
+                  >
                     <Eye className="w-4 h-4" />
                     查看全部
                   </Link>
@@ -145,12 +148,17 @@ export default function Dashboard() {
           <CardContent className="flex-1 flex flex-col gap-2">
             {stats?.recent_evaluations && stats.recent_evaluations.length > 0 ? (
               <div className="space-y-3">
-                {stats.recent_evaluations.slice(0, 5).map((evaluation) => (
-                  <div key={evaluation.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg space-y-2 sm:space-y-0">
+                {stats.recent_evaluations.slice(0, 5).map(evaluation => (
+                  <div
+                    key={evaluation.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg space-y-2 sm:space-y-0"
+                  >
                     <div className="flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                         <span className="font-medium">{evaluation.employee?.name}</span>
-                        <span className="text-sm text-gray-500">{evaluation.employee?.department?.name} - {evaluation.employee?.position}</span>
+                        <span className="text-sm text-gray-500">
+                          {evaluation.employee?.department?.name} - {evaluation.employee?.position}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between sm:justify-end sm:space-x-2">
@@ -160,18 +168,14 @@ export default function Dashboard() {
                           <div className="text-lg font-semibold ml-1">{evaluation.total_score}</div>
                         </div>
                       </div>
-                      <div className="sm:ml-2">
-                        {getStatusBadge(evaluation.status)}
-                      </div>
+                      <div className="sm:ml-2">{getStatusBadge(evaluation.status)}</div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-center py-8 text-gray-500">
-                  暂无评估记录
-                </div>
+                <div className="text-center py-8 text-gray-500">暂无评估记录</div>
               </div>
             )}
           </CardContent>
@@ -200,7 +204,9 @@ export default function Dashboard() {
                   <p className="font-medium">KPI模板</p>
                   <p className="text-sm text-gray-600">创建和管理KPI考核模板</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                  可用
+                </Badge>
               </div>
             </Link>
             <Link href="/statistics">
@@ -209,7 +215,9 @@ export default function Dashboard() {
                   <p className="font-medium">统计分析</p>
                   <p className="text-sm text-gray-600">查看绩效统计和分析报告</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                  可用
+                </Badge>
               </div>
             </Link>
             <Link href="/employees">
@@ -218,12 +226,14 @@ export default function Dashboard() {
                   <p className="font-medium">员工管理</p>
                   <p className="text-sm text-gray-600">管理员工信息和组织架构</p>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0">可用</Badge>
+                <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                  可用
+                </Badge>
               </div>
             </Link>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

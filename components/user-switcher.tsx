@@ -1,65 +1,67 @@
-"use client";
+"use client"
 
-import { User, Bell, UserCheck, Shield } from "lucide-react";
-import { useUser, TEST_USERS } from "@/lib/user-context";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { User, Bell, UserCheck, Shield } from "lucide-react"
+import { useUser, TEST_USERS } from "@/lib/user-context"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 export function UserSwitcher() {
-  const { currentUser, switchUser, isManager, isHR, isEmployee } = useUser();
-  const [selectUserOpen, setSelectUserOpen] = useState(false);
-  
-  if (!currentUser) return null;
+  const { currentUser, switchUser, isManager, isHR, isEmployee } = useUser()
+  const [selectUserOpen, setSelectUserOpen] = useState(false)
+
+  if (!currentUser) return null
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'hr':
-        return <Shield className="h-4 w-4" />;
-      case 'manager':
-        return <UserCheck className="h-4 w-4" />;
-      case 'employee':
-        return <User className="h-4 w-4" />;
+      case "hr":
+        return <Shield className="h-4 w-4" />
+      case "manager":
+        return <UserCheck className="h-4 w-4" />
+      case "employee":
+        return <User className="h-4 w-4" />
       default:
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4" />
     }
-  };
+  }
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'hr':
-        return <Badge variant="destructive">HR</Badge>;
-      case 'manager':
-        return <Badge variant="default">主管</Badge>;
-      case 'employee':
-        return <Badge variant="secondary">员工</Badge>;
+      case "hr":
+        return <Badge variant="destructive">HR</Badge>
+      case "manager":
+        return <Badge variant="default">主管</Badge>
+      case "employee":
+        return <Badge variant="secondary">员工</Badge>
       default:
-        return <Badge variant="outline">未知</Badge>;
+        return <Badge variant="outline">未知</Badge>
     }
-  };
+  }
 
   const getRolePermissions = () => {
-    const permissions = [];
+    const permissions = []
     if (isHR) {
-      permissions.push("创建考核", "最终审核", "所有数据");
+      permissions.push("创建考核", "最终审核", "所有数据")
     }
     if (isManager) {
-      permissions.push("上级评分", "自己的考核", "下属考核");
+      permissions.push("上级评分", "自己的考核", "下属考核")
     }
     if (isEmployee) {
-      permissions.push("自评", "自己的考核", "确认最终得分");
+      permissions.push("自评", "自己的考核", "确认最终得分")
     }
-    return permissions;
-  };
+    return permissions
+  }
 
   return (
-    <div className={cn(
-      'fixed top-4 right-0 z-50 transition-all duration-300 opacity-0 hover:opacity-100 translate-x-[99%] hover:translate-x-0',
-      selectUserOpen && 'opacity-100 translate-x-0'
-    )}>
+    <div
+      className={cn(
+        "fixed top-4 right-0 z-50 transition-all duration-300 opacity-0 hover:opacity-100 translate-x-[99%] hover:translate-x-0",
+        selectUserOpen && "opacity-100 translate-x-0"
+      )}
+    >
       <Card className="w-80 shadow-lg border-2 border-orange-200 bg-orange-50 mr-4">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -87,7 +89,7 @@ export function UserSwitcher() {
           <div className="text-xs text-gray-600">
             <div className="font-medium mb-1">当前权限：</div>
             <div className="flex flex-wrap gap-1">
-              {getRolePermissions().map((permission) => (
+              {getRolePermissions().map(permission => (
                 <Badge key={permission} variant="outline" className="text-xs">
                   {permission}
                 </Badge>
@@ -101,13 +103,13 @@ export function UserSwitcher() {
             <Select
               onOpenChange={setSelectUserOpen}
               value={currentUser.id.toString()}
-              onValueChange={(value) => switchUser(parseInt(value))}
+              onValueChange={value => switchUser(parseInt(value))}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="选择用户" />
               </SelectTrigger>
               <SelectContent>
-                {TEST_USERS.map((user) => (
+                {TEST_USERS.map(user => (
                   <SelectItem key={user.id} value={user.id.toString()}>
                     <div className="flex items-center gap-2">
                       {getRoleIcon(user.role)}
@@ -123,33 +125,18 @@ export function UserSwitcher() {
 
           {/* 快捷切换按钮 */}
           <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => switchUser(6)}
-              className="flex-1 text-xs"
-            >
+            <Button size="sm" variant="outline" onClick={() => switchUser(6)} className="flex-1 text-xs">
               HR
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => switchUser(1)}
-              className="flex-1 text-xs"
-            >
+            <Button size="sm" variant="outline" onClick={() => switchUser(1)} className="flex-1 text-xs">
               主管
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => switchUser(2)}
-              className="flex-1 text-xs"
-            >
+            <Button size="sm" variant="outline" onClick={() => switchUser(2)} className="flex-1 text-xs">
               员工
             </Button>
           </div>
         </CardContent>
       </Card>
     </div>
-  );
-} 
+  )
+}

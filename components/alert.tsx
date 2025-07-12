@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,76 +10,72 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
 
 export interface AlertProps extends AlertLayoutProps {
-  title?: string;
-  message?: string;
+  title?: string
+  message?: string
 }
 
 export interface AlertItemProps extends AlertProps {
-  type?: "alert" | "confirm";
-  onConfirm?: () => void;
-  onClose?: () => void;
+  type?: "alert" | "confirm"
+  onConfirm?: () => void
+  onClose?: () => void
 }
 
 export interface AlertLayoutRef {
-  setAlert: (alert: AlertItemProps) => void;
+  setAlert: (alert: AlertItemProps) => void
 }
 
 export interface AlertLayoutProps {
-  confirmText?: string;
-  cancelText?: string;
+  confirmText?: string
+  cancelText?: string
 }
 
 const AlertLayout = forwardRef<AlertLayoutRef, AlertLayoutProps>(
   ({ confirmText = "确定", cancelText = "取消" }, ref) => {
-    const [waits, setWaits] = useState<AlertItemProps[]>([]);
-    const [currentAlert, setCurrentAlert] = useState<AlertItemProps | null>(
-      null
-    );
+    const [waits, setWaits] = useState<AlertItemProps[]>([])
+    const [currentAlert, setCurrentAlert] = useState<AlertItemProps | null>(null)
 
     useImperativeHandle(ref, () => ({
-      setAlert: (alert) => {
-        setWaits((waits) => [...waits, alert]);
+      setAlert: alert => {
+        setWaits(waits => [...waits, alert])
       },
-    }));
+    }))
 
     useEffect(() => {
       if (currentAlert) {
-        return;
+        return
       }
-      const current = waits.shift();
+      const current = waits.shift()
       if (current) {
-        setCurrentAlert(current);
+        setCurrentAlert(current)
       }
-    }, [waits, currentAlert]);
+    }, [waits, currentAlert])
 
     if (!currentAlert) {
-      return null;
+      return null
     }
 
     return (
       <AlertDialog
         open={!!currentAlert}
         onOpenChange={() => {
-          currentAlert.onClose?.();
-          setCurrentAlert(null);
+          currentAlert.onClose?.()
+          setCurrentAlert(null)
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{currentAlert.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {currentAlert.message}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{currentAlert.message}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {currentAlert.type === "confirm" && (
               <AlertDialogCancel
                 onClick={() => {
-                  currentAlert.onClose?.();
-                  setCurrentAlert(null);
+                  currentAlert.onClose?.()
+                  setCurrentAlert(null)
                 }}
               >
                 {currentAlert.cancelText || cancelText}
@@ -87,8 +83,8 @@ const AlertLayout = forwardRef<AlertLayoutRef, AlertLayoutProps>(
             )}
             <AlertDialogAction
               onClick={() => {
-                currentAlert.onConfirm?.();
-                setCurrentAlert(null);
+                currentAlert.onConfirm?.()
+                setCurrentAlert(null)
               }}
             >
               {currentAlert.confirmText || confirmText}
@@ -96,10 +92,10 @@ const AlertLayout = forwardRef<AlertLayoutRef, AlertLayoutProps>(
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    );
+    )
   }
-);
+)
 
-AlertLayout.displayName = "AlertLayout";
+AlertLayout.displayName = "AlertLayout"
 
-export default AlertLayout;
+export default AlertLayout

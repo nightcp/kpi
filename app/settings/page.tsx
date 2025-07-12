@@ -1,32 +1,32 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Settings, 
-  Shield, 
-  Database, 
-  Bell, 
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Settings,
+  Shield,
+  Database,
+  Bell,
   Key,
   Download,
   Upload,
   Trash2,
   RefreshCw,
   CheckCircle,
-  AlertCircle
-} from "lucide-react";
-import { type SystemSettings, type Message } from "@/lib/api";
-import { useAppContext } from "@/lib/app-context";
+  AlertCircle,
+} from "lucide-react"
+import { type SystemSettings, type Message } from "@/lib/api"
+import { useAppContext } from "@/lib/app-context"
 
 export default function SettingsPage() {
-  const { Confirm } = useAppContext();
+  const { Confirm } = useAppContext()
   const [settings, setSettings] = useState<SystemSettings>({
     // 系统设置
     system_name: "DooTask KPI 绩效管理系统",
@@ -36,7 +36,7 @@ export default function SettingsPage() {
     timezone: "Asia/Shanghai",
     language: "zh-CN",
     date_format: "YYYY-MM-DD",
-    
+
     // 评估设置
     evaluation_auto_create: true,
     evaluation_reminder_days: 3,
@@ -45,13 +45,13 @@ export default function SettingsPage() {
     require_manager_approval: true,
     require_hr_approval: true,
     allow_evaluation_comments: true,
-    
+
     // 通知设置
     notification_enabled: true,
     email_notifications: true,
     system_notifications: true,
     reminder_notifications: true,
-    
+
     // 安全设置
     password_min_length: 8,
     password_require_uppercase: true,
@@ -60,31 +60,31 @@ export default function SettingsPage() {
     password_require_symbols: false,
     session_timeout: 30,
     max_login_attempts: 5,
-    
+
     // 数据设置
     data_retention_months: 24,
     backup_enabled: true,
     backup_frequency: "daily",
-    export_format: "xlsx"
-  });
+    export_format: "xlsx",
+  })
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<Message>({ type: '', content: '' });
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<Message>({ type: "", content: "" })
 
   // 保存设置
   const handleSaveSettings = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       // 模拟保存设置
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage({ type: 'success', content: '设置保存成功！' });
-      setTimeout(() => setMessage({ type: '', content: '' }), 3000);
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setMessage({ type: "success", content: "设置保存成功！" })
+      setTimeout(() => setMessage({ type: "", content: "" }), 3000)
     } catch {
-      setMessage({ type: 'error', content: '保存设置失败，请重试。' });
+      setMessage({ type: "error", content: "保存设置失败，请重试。" })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 重置设置
   const handleResetSettings = async () => {
@@ -119,75 +119,75 @@ export default function SettingsPage() {
         data_retention_months: 24,
         backup_enabled: true,
         backup_frequency: "daily",
-        export_format: "xlsx"
-      });
-      setMessage({ type: 'success', content: '设置已重置为默认值。' });
+        export_format: "xlsx",
+      })
+      setMessage({ type: "success", content: "设置已重置为默认值。" })
     }
-  };
+  }
 
   // 导出配置
   const handleExportConfig = () => {
-    const configData = JSON.stringify(settings, null, 2);
-    const blob = new Blob([configData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'kpi-system-config.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setMessage({ type: 'success', content: '配置文件已导出。' });
-  };
+    const configData = JSON.stringify(settings, null, 2)
+    const blob = new Blob([configData], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "kpi-system-config.json"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setMessage({ type: "success", content: "配置文件已导出。" })
+  }
 
   // 导入配置
   const handleImportConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      const reader = new FileReader()
+      reader.onload = e => {
         try {
-          const importedSettings = JSON.parse(e.target?.result as string);
-          setSettings({ ...settings, ...importedSettings });
-          setMessage({ type: 'success', content: '配置文件导入成功。' });
+          const importedSettings = JSON.parse(e.target?.result as string)
+          setSettings({ ...settings, ...importedSettings })
+          setMessage({ type: "success", content: "配置文件导入成功。" })
         } catch {
-          setMessage({ type: 'error', content: '配置文件格式错误。' });
+          setMessage({ type: "error", content: "配置文件格式错误。" })
         }
-      };
-      reader.readAsText(file);
+      }
+      reader.readAsText(file)
     }
-  };
+  }
 
   // 数据库备份
   const handleBackupDatabase = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       // 模拟备份操作
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setMessage({ type: 'success', content: '数据库备份完成。' });
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      setMessage({ type: "success", content: "数据库备份完成。" })
     } catch {
-      setMessage({ type: 'error', content: '备份失败，请重试。' });
+      setMessage({ type: "error", content: "备份失败，请重试。" })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 清理数据
   const handleCleanupData = async () => {
     const result = await Confirm("清理数据", "确定要清理过期数据吗？此操作无法撤销。")
     if (result) {
-      setLoading(true);
+      setLoading(true)
       try {
         // 模拟清理操作
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setMessage({ type: 'success', content: '数据清理完成。' });
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        setMessage({ type: "success", content: "数据清理完成。" })
       } catch {
-        setMessage({ type: 'error', content: '数据清理失败。' });
+        setMessage({ type: "error", content: "数据清理失败。" })
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -210,11 +210,8 @@ export default function SettingsPage() {
 
       {/* 消息提示 */}
       {message.content && (
-        <Alert className={message.type === 'success' ? 'border-green-500' : 'border-red-500'}>
-          {message.type === 'success' ? 
-            <CheckCircle className="h-4 w-4" /> : 
-            <AlertCircle className="h-4 w-4" />
-          }
+        <Alert className={message.type === "success" ? "border-green-500" : "border-red-500"}>
+          {message.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
           <AlertDescription>{message.content}</AlertDescription>
         </Alert>
       )}
@@ -244,23 +241,19 @@ export default function SettingsPage() {
                   <Input
                     id="system_name"
                     value={settings.system_name}
-                    onChange={(e) => setSettings({ ...settings, system_name: e.target.value })}
+                    onChange={e => setSettings({ ...settings, system_name: e.target.value })}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="system_version">系统版本</Label>
-                  <Input
-                    id="system_version"
-                    value={settings.system_version}
-                    disabled
-                  />
+                  <Input id="system_version" value={settings.system_version} disabled />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="company_name">公司名称</Label>
                   <Input
                     id="company_name"
                     value={settings.company_name}
-                    onChange={(e) => setSettings({ ...settings, company_name: e.target.value })}
+                    onChange={e => setSettings({ ...settings, company_name: e.target.value })}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -268,13 +261,16 @@ export default function SettingsPage() {
                   <Input
                     id="company_logo"
                     value={settings.company_logo}
-                    onChange={(e) => setSettings({ ...settings, company_logo: e.target.value })}
+                    onChange={e => setSettings({ ...settings, company_logo: e.target.value })}
                     placeholder="https://example.com/logo.png"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="timezone">时区</Label>
-                  <Select value={settings.timezone} onValueChange={(value) => setSettings({ ...settings, timezone: value })}>
+                  <Select
+                    value={settings.timezone}
+                    onValueChange={value => setSettings({ ...settings, timezone: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -288,7 +284,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="language">语言</Label>
-                  <Select value={settings.language} onValueChange={(value) => setSettings({ ...settings, language: value })}>
+                  <Select
+                    value={settings.language}
+                    onValueChange={value => setSettings({ ...settings, language: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -321,7 +320,7 @@ export default function SettingsPage() {
                   <Switch
                     id="evaluation_auto_create"
                     checked={settings.evaluation_auto_create}
-                    onCheckedChange={(checked) => setSettings({ ...settings, evaluation_auto_create: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, evaluation_auto_create: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -329,7 +328,7 @@ export default function SettingsPage() {
                   <Switch
                     id="allow_self_evaluation"
                     checked={settings.allow_self_evaluation}
-                    onCheckedChange={(checked) => setSettings({ ...settings, allow_self_evaluation: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, allow_self_evaluation: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -337,7 +336,7 @@ export default function SettingsPage() {
                   <Switch
                     id="require_manager_approval"
                     checked={settings.require_manager_approval}
-                    onCheckedChange={(checked) => setSettings({ ...settings, require_manager_approval: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, require_manager_approval: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -345,7 +344,7 @@ export default function SettingsPage() {
                   <Switch
                     id="require_hr_approval"
                     checked={settings.require_hr_approval}
-                    onCheckedChange={(checked) => setSettings({ ...settings, require_hr_approval: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, require_hr_approval: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -353,7 +352,7 @@ export default function SettingsPage() {
                   <Switch
                     id="allow_evaluation_comments"
                     checked={settings.allow_evaluation_comments}
-                    onCheckedChange={(checked) => setSettings({ ...settings, allow_evaluation_comments: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, allow_evaluation_comments: checked })}
                   />
                 </div>
               </div>
@@ -364,7 +363,7 @@ export default function SettingsPage() {
                     id="evaluation_reminder_days"
                     type="number"
                     value={settings.evaluation_reminder_days}
-                    onChange={(e) => setSettings({ ...settings, evaluation_reminder_days: parseInt(e.target.value) })}
+                    onChange={e => setSettings({ ...settings, evaluation_reminder_days: parseInt(e.target.value) })}
                     min="1"
                     max="30"
                   />
@@ -375,7 +374,7 @@ export default function SettingsPage() {
                     id="evaluation_timeout_days"
                     type="number"
                     value={settings.evaluation_timeout_days}
-                    onChange={(e) => setSettings({ ...settings, evaluation_timeout_days: parseInt(e.target.value) })}
+                    onChange={e => setSettings({ ...settings, evaluation_timeout_days: parseInt(e.target.value) })}
                     min="1"
                     max="90"
                   />
@@ -401,7 +400,7 @@ export default function SettingsPage() {
                   <Switch
                     id="notification_enabled"
                     checked={settings.notification_enabled}
-                    onCheckedChange={(checked) => setSettings({ ...settings, notification_enabled: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, notification_enabled: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -409,7 +408,7 @@ export default function SettingsPage() {
                   <Switch
                     id="email_notifications"
                     checked={settings.email_notifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, email_notifications: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, email_notifications: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -417,7 +416,7 @@ export default function SettingsPage() {
                   <Switch
                     id="system_notifications"
                     checked={settings.system_notifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, system_notifications: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, system_notifications: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -425,7 +424,7 @@ export default function SettingsPage() {
                   <Switch
                     id="reminder_notifications"
                     checked={settings.reminder_notifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, reminder_notifications: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, reminder_notifications: checked })}
                   />
                 </div>
               </div>
@@ -450,7 +449,7 @@ export default function SettingsPage() {
                     id="password_min_length"
                     type="number"
                     value={settings.password_min_length}
-                    onChange={(e) => setSettings({ ...settings, password_min_length: parseInt(e.target.value) })}
+                    onChange={e => setSettings({ ...settings, password_min_length: parseInt(e.target.value) })}
                     min="6"
                     max="32"
                   />
@@ -461,7 +460,7 @@ export default function SettingsPage() {
                     id="session_timeout"
                     type="number"
                     value={settings.session_timeout}
-                    onChange={(e) => setSettings({ ...settings, session_timeout: parseInt(e.target.value) })}
+                    onChange={e => setSettings({ ...settings, session_timeout: parseInt(e.target.value) })}
                     min="5"
                     max="480"
                   />
@@ -473,7 +472,7 @@ export default function SettingsPage() {
                   <Switch
                     id="password_require_uppercase"
                     checked={settings.password_require_uppercase}
-                    onCheckedChange={(checked) => setSettings({ ...settings, password_require_uppercase: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, password_require_uppercase: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -481,7 +480,7 @@ export default function SettingsPage() {
                   <Switch
                     id="password_require_lowercase"
                     checked={settings.password_require_lowercase}
-                    onCheckedChange={(checked) => setSettings({ ...settings, password_require_lowercase: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, password_require_lowercase: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -489,7 +488,7 @@ export default function SettingsPage() {
                   <Switch
                     id="password_require_numbers"
                     checked={settings.password_require_numbers}
-                    onCheckedChange={(checked) => setSettings({ ...settings, password_require_numbers: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, password_require_numbers: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -497,7 +496,7 @@ export default function SettingsPage() {
                   <Switch
                     id="password_require_symbols"
                     checked={settings.password_require_symbols}
-                    onCheckedChange={(checked) => setSettings({ ...settings, password_require_symbols: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, password_require_symbols: checked })}
                   />
                 </div>
               </div>
@@ -507,7 +506,7 @@ export default function SettingsPage() {
                   id="max_login_attempts"
                   type="number"
                   value={settings.max_login_attempts}
-                  onChange={(e) => setSettings({ ...settings, max_login_attempts: parseInt(e.target.value) })}
+                  onChange={e => setSettings({ ...settings, max_login_attempts: parseInt(e.target.value) })}
                   min="3"
                   max="10"
                 />
@@ -533,14 +532,17 @@ export default function SettingsPage() {
                     id="data_retention_months"
                     type="number"
                     value={settings.data_retention_months}
-                    onChange={(e) => setSettings({ ...settings, data_retention_months: parseInt(e.target.value) })}
+                    onChange={e => setSettings({ ...settings, data_retention_months: parseInt(e.target.value) })}
                     min="1"
                     max="120"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="export_format">导出格式</Label>
-                  <Select value={settings.export_format} onValueChange={(value) => setSettings({ ...settings, export_format: value })}>
+                  <Select
+                    value={settings.export_format}
+                    onValueChange={value => setSettings({ ...settings, export_format: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -558,12 +560,15 @@ export default function SettingsPage() {
                   <Switch
                     id="backup_enabled"
                     checked={settings.backup_enabled}
-                    onCheckedChange={(checked) => setSettings({ ...settings, backup_enabled: checked })}
+                    onCheckedChange={checked => setSettings({ ...settings, backup_enabled: checked })}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="backup_frequency">备份频率</Label>
-                  <Select value={settings.backup_frequency} onValueChange={(value) => setSettings({ ...settings, backup_frequency: value })}>
+                  <Select
+                    value={settings.backup_frequency}
+                    onValueChange={value => setSettings({ ...settings, backup_frequency: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -591,7 +596,11 @@ export default function SettingsPage() {
                       <Download className="w-4 h-4 mr-1" />
                       导出配置
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById('config-import')?.click()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById("config-import")?.click()}
+                    >
                       <Upload className="w-4 h-4 mr-1" />
                       导入配置
                     </Button>
@@ -623,5 +632,5 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  );
-} 
+  )
+}

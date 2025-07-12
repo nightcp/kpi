@@ -1,143 +1,144 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Users } from "lucide-react";
-import { employeeApi, departmentApi, type Employee, type Department } from "@/lib/api";
-import { useAppContext } from "@/lib/app-context";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Plus, Edit, Trash2, Users } from "lucide-react"
+import { employeeApi, departmentApi, type Employee, type Department } from "@/lib/api"
+import { useAppContext } from "@/lib/app-context"
 
 export default function EmployeesPage() {
-  const { Confirm } = useAppContext();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [managers, setManagers] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const { Confirm } = useAppContext()
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [managers, setManagers] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     position: "",
     department_id: "",
     manager_id: "",
-    role: "employee"
-  });
+    role: "employee",
+  })
 
   // 获取员工列表
   const fetchEmployees = async () => {
     try {
-      const response = await employeeApi.getAll();
-      setEmployees(response.data || []);
+      const response = await employeeApi.getAll()
+      setEmployees(response.data || [])
     } catch (error) {
-      console.error("获取员工列表失败:", error);
+      console.error("获取员工列表失败:", error)
     }
-    setLoading(false);
-  };
+    setLoading(false)
+  }
 
   // 获取部门列表
   const fetchDepartments = async () => {
     try {
-      const response = await departmentApi.getAll();
-      setDepartments(response.data || []);
+      const response = await departmentApi.getAll()
+      setDepartments(response.data || [])
     } catch (error) {
-      console.error("获取部门列表失败:", error);
+      console.error("获取部门列表失败:", error)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchEmployees();
-    fetchDepartments();
-  }, []);
+    fetchEmployees()
+    fetchDepartments()
+  }, [])
 
   // 根据选择的部门获取可能的上级
   useEffect(() => {
     if (formData.department_id) {
       const departmentEmployees = employees.filter(
-        emp => emp.department_id === parseInt(formData.department_id) && 
-               emp.role === "manager" && 
-               emp.id !== editingEmployee?.id
-      );
-      setManagers(departmentEmployees);
+        emp =>
+          emp.department_id === parseInt(formData.department_id) &&
+          emp.role === "manager" &&
+          emp.id !== editingEmployee?.id
+      )
+      setManagers(departmentEmployees)
     }
-  }, [formData.department_id, employees, editingEmployee]);
+  }, [formData.department_id, employees, editingEmployee])
 
   // 创建或更新员工
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       const submitData = {
         ...formData,
         department_id: parseInt(formData.department_id),
         manager_id: formData.manager_id ? parseInt(formData.manager_id) : undefined,
-        is_active: true
-      };
-
-      if (editingEmployee) {
-        await employeeApi.update(editingEmployee.id, submitData);
-      } else {
-        await employeeApi.create(submitData);
+        is_active: true,
       }
 
-      fetchEmployees();
-      setDialogOpen(false);
-      setEditingEmployee(null);
-      setFormData({ name: "", email: "", position: "", department_id: "", manager_id: "", role: "employee" });
+      if (editingEmployee) {
+        await employeeApi.update(editingEmployee.id, submitData)
+      } else {
+        await employeeApi.create(submitData)
+      }
+
+      fetchEmployees()
+      setDialogOpen(false)
+      setEditingEmployee(null)
+      setFormData({ name: "", email: "", position: "", department_id: "", manager_id: "", role: "employee" })
     } catch (error) {
-      console.error("保存员工失败:", error);
+      console.error("保存员工失败:", error)
     }
-  };
+  }
 
   // 删除员工
   const handleDelete = async (id: number) => {
     const result = await Confirm("删除员工", "确定要删除这个员工吗？")
     if (result) {
       try {
-        await employeeApi.delete(id);
-        fetchEmployees();
+        await employeeApi.delete(id)
+        fetchEmployees()
       } catch (error) {
-        console.error("删除员工失败:", error);
+        console.error("删除员工失败:", error)
       }
     }
-  };
+  }
 
   // 打开编辑对话框
   const handleEdit = (employee: Employee) => {
-    setEditingEmployee(employee);
+    setEditingEmployee(employee)
     setFormData({
       name: employee.name,
       email: employee.email,
       position: employee.position,
       department_id: employee.department_id.toString(),
       manager_id: employee.manager_id?.toString() || "",
-      role: employee.role
-    });
-    setDialogOpen(true);
-  };
+      role: employee.role,
+    })
+    setDialogOpen(true)
+  }
 
   // 打开新增对话框
   const handleAdd = () => {
-    setEditingEmployee(null);
-    setFormData({ name: "", email: "", position: "", department_id: "", manager_id: "", role: "employee" });
-    setDialogOpen(true);
-  };
+    setEditingEmployee(null)
+    setFormData({ name: "", email: "", position: "", department_id: "", manager_id: "", role: "employee" })
+    setDialogOpen(true)
+  }
 
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "manager":
-        return <Badge variant="default">主管</Badge>;
+        return <Badge variant="default">主管</Badge>
       case "hr":
-        return <Badge variant="secondary">HR</Badge>;
+        return <Badge variant="secondary">HR</Badge>
       default:
-        return <Badge variant="outline">员工</Badge>;
+        return <Badge variant="outline">员工</Badge>
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -156,9 +157,7 @@ export default function EmployeesPage() {
           </DialogTrigger>
           <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingEmployee ? "编辑员工" : "添加员工"}
-              </DialogTitle>
+              <DialogTitle>{editingEmployee ? "编辑员工" : "添加员工"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col gap-2">
@@ -166,7 +165,7 @@ export default function EmployeesPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                   required
                 />
               </div>
@@ -176,7 +175,7 @@ export default function EmployeesPage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
@@ -185,18 +184,21 @@ export default function EmployeesPage() {
                 <Input
                   id="position"
                   value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  onChange={e => setFormData({ ...formData, position: e.target.value })}
                   required
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="department">部门</Label>
-                <Select value={formData.department_id} onValueChange={(value) => setFormData({ ...formData, department_id: value, manager_id: "" })}>
+                <Select
+                  value={formData.department_id}
+                  onValueChange={value => setFormData({ ...formData, department_id: value, manager_id: "" })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="选择部门" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map((dept) => (
+                    {departments.map(dept => (
                       <SelectItem key={dept.id} value={dept.id.toString()}>
                         {dept.name}
                       </SelectItem>
@@ -206,7 +208,7 @@ export default function EmployeesPage() {
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="role">角色</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <Select value={formData.role} onValueChange={value => setFormData({ ...formData, role: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="选择角色" />
                   </SelectTrigger>
@@ -220,12 +222,15 @@ export default function EmployeesPage() {
               {formData.role === "employee" && (
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="manager">直属上级</Label>
-                  <Select value={formData.manager_id} onValueChange={(value) => setFormData({ ...formData, manager_id: value })}>
+                  <Select
+                    value={formData.manager_id}
+                    onValueChange={value => setFormData({ ...formData, manager_id: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="选择上级" />
                     </SelectTrigger>
                     <SelectContent>
-                      {managers.map((manager) => (
+                      {managers.map(manager => (
                         <SelectItem key={manager.id} value={manager.id.toString()}>
                           {manager.name}
                         </SelectItem>
@@ -235,7 +240,12 @@ export default function EmployeesPage() {
                 </div>
               )}
               <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:space-x-2 sm:gap-0">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                >
                   取消
                 </Button>
                 <Button type="submit" className="w-full sm:w-auto">
@@ -258,9 +268,7 @@ export default function EmployeesPage() {
           {loading ? (
             <div className="text-center py-8">加载中...</div>
           ) : employees.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              暂无员工数据
-            </div>
+            <div className="text-center py-8 text-gray-500">暂无员工数据</div>
           ) : (
             <>
               {/* 桌面端表格显示 */}
@@ -279,7 +287,7 @@ export default function EmployeesPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {employees.map((employee) => (
+                    {employees.map(employee => (
                       <TableRow key={employee.id}>
                         <TableCell className="font-medium">{employee.name}</TableCell>
                         <TableCell>{employee.email}</TableCell>
@@ -293,18 +301,10 @@ export default function EmployeesPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(employee)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(employee.id)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </TableCell>
@@ -316,7 +316,7 @@ export default function EmployeesPage() {
 
               {/* 移动端卡片显示 */}
               <div className="lg:hidden space-y-4">
-                {employees.map((employee) => (
+                {employees.map(employee => (
                   <Card key={employee.id} className="border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">
@@ -325,23 +325,15 @@ export default function EmployeesPage() {
                           <p className="text-sm text-gray-600">{employee.position}</p>
                         </div>
                         <div className="flex space-x-1 ml-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(employee)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(employee.id)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-500">邮箱:</span>
@@ -377,5 +369,5 @@ export default function EmployeesPage() {
         </CardContent>
       </Card>
     </div>
-  );
-} 
+  )
+}

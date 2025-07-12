@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react"
 
 // 用户接口定义
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  position: string;
-  department_id: number;
-  department_name: string;
-  role: 'employee' | 'manager' | 'hr';
-  manager_id?: number;
+  id: number
+  name: string
+  email: string
+  position: string
+  department_id: number
+  department_name: string
+  role: "employee" | "manager" | "hr"
+  manager_id?: number
 }
 
 // 测试用户数据
@@ -82,56 +82,58 @@ export const TEST_USERS: User[] = [
     department_name: "财务部",
     role: "manager",
   },
-];
+]
 
 // 用户上下文接口
 interface UserContextType {
-  currentUser: User | null;
-  setCurrentUser: (user: User) => void;
-  switchUser: (userId: number) => void;
-  isManager: boolean;
-  isHR: boolean;
-  isEmployee: boolean;
+  currentUser: User | null
+  setCurrentUser: (user: User) => void
+  switchUser: (userId: number) => void
+  isManager: boolean
+  isHR: boolean
+  isEmployee: boolean
 }
 
 // 创建上下文
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined)
 
 // 用户上下文提供者
 export function UserProvider({ children }: { children: ReactNode }) {
   // 默认用户为HR经理，方便测试
-  const [currentUser, setCurrentUser] = useState<User | null>(TEST_USERS[5]); // 孙八 HR经理
+  const [currentUser, setCurrentUser] = useState<User | null>(TEST_USERS[5]) // 孙八 HR经理
 
   const switchUser = (userId: number) => {
-    const user = TEST_USERS.find(u => u.id === userId);
+    const user = TEST_USERS.find(u => u.id === userId)
     if (user) {
-      setCurrentUser(user);
+      setCurrentUser(user)
     }
-  };
+  }
 
-  const isManager = currentUser?.role === 'manager';
-  const isHR = currentUser?.role === 'hr';
-  const isEmployee = currentUser?.role === 'employee';
+  const isManager = currentUser?.role === "manager"
+  const isHR = currentUser?.role === "hr"
+  const isEmployee = currentUser?.role === "employee"
 
   return (
-    <UserContext.Provider value={{
-      currentUser,
-      setCurrentUser,
-      switchUser,
-      isManager,
-      isHR,
-      isEmployee,
-    }}>
+    <UserContext.Provider
+      value={{
+        currentUser,
+        setCurrentUser,
+        switchUser,
+        isManager,
+        isHR,
+        isEmployee,
+      }}
+    >
       {children}
     </UserContext.Provider>
-  );
+  )
 }
 
 // 使用用户上下文的钩子
 export function useUser() {
-  const context = useContext(UserContext);
+  const context = useContext(UserContext)
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error("useUser must be used within a UserProvider")
   }
-  return context;
-} 
+  return context
+}

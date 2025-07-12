@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -20,94 +20,94 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart
-} from 'recharts';
-import { 
-  TrendingUp, 
-  Users, 
-  Award, 
-  Target, 
+  AreaChart,
+} from "recharts"
+import {
+  TrendingUp,
+  Users,
+  Award,
+  Target,
   BarChart3,
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
   Calendar,
-  Download
-} from "lucide-react";
-import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api";
-import { getPeriodLabel } from "@/lib/utils";
-import { useAppContext } from "@/lib/app-context";
+  Download,
+} from "lucide-react"
+import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api"
+import { getPeriodLabel } from "@/lib/utils"
+import { useAppContext } from "@/lib/app-context"
 
 export default function StatisticsPage() {
-  const { getStatusBadge } = useAppContext();
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1);
+  const { getStatusBadge } = useAppContext()
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+  const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedPeriod, setSelectedPeriod] = useState("monthly")
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1)
 
   // 获取统计数据
   const fetchStatisticsData = useCallback(async () => {
     try {
-      setLoading(true);
+      setLoading(true)
       const filterParams = {
         year: selectedYear.toString(),
         period: selectedPeriod,
-        month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
-        quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
-      };
-      
+        month: selectedPeriod === "monthly" ? selectedMonth.toString() : undefined,
+        quarter: selectedPeriod === "quarterly" ? selectedQuarter.toString() : undefined,
+      }
+
       const [dashboardResponse, statisticsResponse] = await Promise.all([
         statisticsApi.getDashboard(filterParams),
-        statisticsApi.getData(filterParams)
-      ]);
-      
-      setDashboardStats(dashboardResponse.data);
-      setStatisticsData(statisticsResponse.data);
+        statisticsApi.getData(filterParams),
+      ])
+
+      setDashboardStats(dashboardResponse.data)
+      setStatisticsData(statisticsResponse.data)
     } catch (error) {
-      console.error("获取统计数据失败:", error);
+      console.error("获取统计数据失败:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter]);
+  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter])
 
   useEffect(() => {
-    fetchStatisticsData();
-  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter, fetchStatisticsData]);
+    fetchStatisticsData()
+  }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter, fetchStatisticsData])
 
   // 导出报告
   const handleExport = async (type: string) => {
     try {
-      let response;
-      
+      let response
+
       switch (type) {
-        case 'period':
+        case "period":
           response = await exportApi.period(selectedPeriod, {
             year: selectedYear.toString(),
-            month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
-            quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
-          });
-          break;
-        case 'department':
-          response = await exportApi.department(1); // 示例部门ID
-          break;
+            month: selectedPeriod === "monthly" ? selectedMonth.toString() : undefined,
+            quarter: selectedPeriod === "quarterly" ? selectedQuarter.toString() : undefined,
+          })
+          break
+        case "department":
+          response = await exportApi.department(1) // 示例部门ID
+          break
         default:
-          return;
+          return
       }
-      
+
       // 直接跳转到下载URL
-      window.open(response.file_url, '_blank');
-      
+      window.open(response.file_url, "_blank")
+
       // 显示成功消息
-      console.log(response.message);
+      console.log(response.message)
     } catch (error) {
-      console.error('导出失败:', error);
+      console.error("导出失败:", error)
     }
-  };
+  }
 
   if (loading) {
-    return <div className="p-8 text-center">加载中...</div>;
+    return <div className="p-8 text-center">加载中...</div>
   }
 
   return (
@@ -117,18 +117,24 @@ export default function StatisticsPage() {
           <h1 className="text-3xl font-bold text-gray-900">统计分析</h1>
           <p className="text-gray-600 mt-2">
             绩效考核数据分析与报告 - {selectedYear}年
-            {selectedPeriod === 'monthly' ? `${selectedMonth}月` : 
-             selectedPeriod === 'quarterly' ? `第${selectedQuarter}季度` : 
-             '全年'}数据
+            {selectedPeriod === "monthly"
+              ? `${selectedMonth}月`
+              : selectedPeriod === "quarterly"
+              ? `第${selectedQuarter}季度`
+              : "全年"}
+            数据
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2">
-          <Select value={selectedPeriod} onValueChange={(value) => {
-            setSelectedPeriod(value);
-            // 重置月份和季度选择
-            if (value === 'monthly') setSelectedMonth(new Date().getMonth() + 1);
-            if (value === 'quarterly') setSelectedQuarter(Math.floor(new Date().getMonth() / 3) + 1);
-          }}>
+          <Select
+            value={selectedPeriod}
+            onValueChange={value => {
+              setSelectedPeriod(value)
+              // 重置月份和季度选择
+              if (value === "monthly") setSelectedMonth(new Date().getMonth() + 1)
+              if (value === "quarterly") setSelectedQuarter(Math.floor(new Date().getMonth() / 3) + 1)
+            }}
+          >
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
@@ -138,23 +144,23 @@ export default function StatisticsPage() {
               <SelectItem value="monthly">月度</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+          <Select value={selectedYear.toString()} onValueChange={value => setSelectedYear(parseInt(value))}>
             <SelectTrigger className="w-auto">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 10 }, (_, i) => {
-                const year = new Date().getFullYear() - i;
+                const year = new Date().getFullYear() - i
                 return (
                   <SelectItem key={year} value={year.toString()}>
                     {year}年
                   </SelectItem>
-                );
+                )
               })}
             </SelectContent>
           </Select>
-          {selectedPeriod === 'monthly' && (
-            <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+          {selectedPeriod === "monthly" && (
+            <Select value={selectedMonth.toString()} onValueChange={value => setSelectedMonth(parseInt(value))}>
               <SelectTrigger className="w-auto">
                 <SelectValue />
               </SelectTrigger>
@@ -167,8 +173,8 @@ export default function StatisticsPage() {
               </SelectContent>
             </Select>
           )}
-          {selectedPeriod === 'quarterly' && (
-            <Select value={selectedQuarter.toString()} onValueChange={(value) => setSelectedQuarter(parseInt(value))}>
+          {selectedPeriod === "quarterly" && (
+            <Select value={selectedQuarter.toString()} onValueChange={value => setSelectedQuarter(parseInt(value))}>
               <SelectTrigger className="w-auto">
                 <SelectValue />
               </SelectTrigger>
@@ -180,7 +186,7 @@ export default function StatisticsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button onClick={() => handleExport('period')}>
+          <Button onClick={() => handleExport("period")}>
             <Download className="w-4 h-4 mr-2" />
             导出报告
           </Button>
@@ -196,9 +202,7 @@ export default function StatisticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardStats?.total_employees || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              活跃员工数量
-            </p>
+            <p className="text-xs text-muted-foreground">活跃员工数量</p>
           </CardContent>
         </Card>
         <Card>
@@ -208,9 +212,7 @@ export default function StatisticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardStats?.total_evaluations || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              累计考核项目
-            </p>
+            <p className="text-xs text-muted-foreground">累计考核项目</p>
           </CardContent>
         </Card>
         <Card>
@@ -220,12 +222,12 @@ export default function StatisticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {dashboardStats?.total_evaluations ? 
-                Math.round((dashboardStats.completed_evaluations / dashboardStats.total_evaluations) * 100) : 0}%
+              {dashboardStats?.total_evaluations
+                ? Math.round((dashboardStats.completed_evaluations / dashboardStats.total_evaluations) * 100)
+                : 0}
+              %
             </div>
-            <p className="text-xs text-muted-foreground">
-              考核完成比例
-            </p>
+            <p className="text-xs text-muted-foreground">考核完成比例</p>
           </CardContent>
         </Card>
         <Card>
@@ -234,12 +236,8 @@ export default function StatisticsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {dashboardStats?.average_score?.toFixed(1) || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              总体平均得分
-            </p>
+            <div className="text-2xl font-bold">{dashboardStats?.average_score?.toFixed(1) || 0}</div>
+            <p className="text-xs text-muted-foreground">总体平均得分</p>
           </CardContent>
         </Card>
       </div>
@@ -444,7 +442,7 @@ export default function StatisticsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(statisticsData?.recentEvaluations || []).map((evaluation) => (
+                {(statisticsData?.recentEvaluations || []).map(evaluation => (
                   <TableRow key={evaluation.id}>
                     <TableCell className="font-medium">{evaluation.employee}</TableCell>
                     <TableCell>{evaluation.department}</TableCell>
@@ -457,9 +455,7 @@ export default function StatisticsPage() {
                     <TableCell>
                       <div className="text-lg font-semibold">{evaluation.score}</div>
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(evaluation.status)}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -468,5 +464,5 @@ export default function StatisticsPage() {
         </CardContent>
       </Card>
     </div>
-  );
-} 
+  )
+}
