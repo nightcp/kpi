@@ -15,32 +15,121 @@ import (
 
 // 获取仪表板统计数据
 func GetDashboardStats(c *gin.Context) {
-	var stats struct {
-		TotalEmployees       int64                  `json:"total_employees"`
-		TotalDepartments     int64                  `json:"total_departments"`
-		TotalEvaluations     int64                  `json:"total_evaluations"`
-		PendingEvaluations   int64                  `json:"pending_evaluations"`
-		CompletedEvaluations int64                  `json:"completed_evaluations"`
-		AverageScore         float64                `json:"average_score"`
-		RecentEvaluations    []models.KPIEvaluation `json:"recent_evaluations"`
+	// 获取查询参数
+	year := c.DefaultQuery("year", strconv.Itoa(time.Now().Year()))
+	period := c.DefaultQuery("period", "")
+	month := c.DefaultQuery("month", "")
+	quarter := c.DefaultQuery("quarter", "")
+
+	// 最近评估结构
+	type RecentEvaluation struct {
+		ID         uint    `json:"id"`
+		Employee   string  `json:"employee"`
+		Department string  `json:"department"`
+		Template   string  `json:"template"`
+		Score      float64 `json:"score"`
+		Status     string  `json:"status"`
+		Period     string  `json:"period"`
+		Year       int     `json:"year"`
+		Month      *int    `json:"month"`
+		Quarter    *int    `json:"quarter"`
 	}
 
-	// 获取基本统计数据
+	var stats struct {
+		TotalEmployees       int64              `json:"total_employees"`
+		TotalDepartments     int64              `json:"total_departments"`
+		TotalEvaluations     int64              `json:"total_evaluations"`
+		PendingEvaluations   int64              `json:"pending_evaluations"`
+		CompletedEvaluations int64              `json:"completed_evaluations"`
+		AverageScore         float64            `json:"average_score"`
+		RecentEvaluations    []RecentEvaluation `json:"recent_evaluations"`
+	}
+
+	// 获取基本统计数据（员工数和部门数不受时间筛选影响）
 	models.DB.Model(&models.Employee{}).Count(&stats.TotalEmployees)
 	models.DB.Model(&models.Department{}).Count(&stats.TotalDepartments)
-	models.DB.Model(&models.KPIEvaluation{}).Count(&stats.TotalEvaluations)
-	models.DB.Model(&models.KPIEvaluation{}).Where("status = ?", "pending").Count(&stats.PendingEvaluations)
-	models.DB.Model(&models.KPIEvaluation{}).Where("status = ?", "completed").Count(&stats.CompletedEvaluations)
 
-	// 计算平均得分
+	// 构建评估数据的时间筛选查询
+	baseQuery := models.DB.Model(&models.KPIEvaluation{})
+
+	// 根据时间筛选条件构建查询
+	if period != "" {
+		if period == "monthly" && month != "" {
+			baseQuery = baseQuery.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
+		} else if period == "quarterly" && quarter != "" {
+			baseQuery = baseQuery.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
+		} else if period == "yearly" {
+			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+			baseQuery = baseQuery.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
+		}
+	}
+
+	// 获取筛选后的评估统计数据
+	baseQuery.Count(&stats.TotalEvaluations)
+
+	// 创建baseQuery的副本来分别查询不同状态的数据
+	pendingQuery := models.DB.Model(&models.KPIEvaluation{})
+	completedQuery := models.DB.Model(&models.KPIEvaluation{})
+	avgQuery := models.DB.Model(&models.KPIEvaluation{})
+
+	// 应用相同的时间筛选条件
+	if period != "" {
+		if period == "monthly" && month != "" {
+			pendingQuery = pendingQuery.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
+			completedQuery = completedQuery.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
+			avgQuery = avgQuery.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
+		} else if period == "quarterly" && quarter != "" {
+			pendingQuery = pendingQuery.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
+			completedQuery = completedQuery.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
+			avgQuery = avgQuery.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
+		} else if period == "yearly" {
+			pendingQuery = pendingQuery.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
+			completedQuery = completedQuery.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
+			avgQuery = avgQuery.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
+		}
+	}
+
+	// 分别查询不同状态的数据
+	pendingQuery.Where("status = ?", "pending").Count(&stats.PendingEvaluations)
+	completedQuery.Where("status = ?", "completed").Count(&stats.CompletedEvaluations)
+
+	// 计算筛选后的平均得分（只计算已完成的评估）
 	var avgResult struct {
 		AvgScore float64
 	}
-	models.DB.Model(&models.KPIEvaluation{}).Select("AVG(total_score) as avg_score").Where("status = ?", "completed").Scan(&avgResult)
+	avgQuery.Select("AVG(total_score) as avg_score").Where("status = ?", "completed").Scan(&avgResult)
 	stats.AverageScore = avgResult.AvgScore
 
-	// 获取最近的评估记录
-	models.DB.Preload("Employee.Department").Preload("Template").Order("created_at DESC").Limit(10).Find(&stats.RecentEvaluations)
+	// 获取最近的评估记录（应用相同的时间筛选）
+	var recentEvals []models.KPIEvaluation
+	recentQuery := models.DB.Preload("Employee.Department").Preload("Template")
+	if period != "" {
+		if period == "monthly" && month != "" {
+			recentQuery = recentQuery.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
+		} else if period == "quarterly" && quarter != "" {
+			recentQuery = recentQuery.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
+		} else if period == "yearly" {
+			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+			recentQuery = recentQuery.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
+		}
+	}
+	recentQuery.Order("created_at DESC").Limit(10).Find(&recentEvals)
+
+	// 构建RecentEvaluation结构体
+	for _, eval := range recentEvals {
+		stats.RecentEvaluations = append(stats.RecentEvaluations, RecentEvaluation{
+			ID:         eval.ID,
+			Employee:   eval.Employee.Name,
+			Department: eval.Employee.Department.Name,
+			Template:   eval.Template.Name,
+			Score:      eval.TotalScore,
+			Status:     eval.Status,
+			Period:     eval.Period,
+			Year:       eval.Year,
+			Month:      eval.Month,
+			Quarter:    eval.Quarter,
+		})
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": stats,
@@ -516,7 +605,10 @@ func GetStatisticsData(c *gin.Context) {
 		Template   string  `json:"template"`
 		Score      float64 `json:"score"`
 		Status     string  `json:"status"`
-		Date       string  `json:"date"`
+		Period     string  `json:"period"`
+		Year       int     `json:"year"`
+		Month      *int    `json:"month"`
+		Quarter    *int    `json:"quarter"`
 	}
 
 	var response struct {
@@ -541,14 +633,12 @@ func GetStatisticsData(c *gin.Context) {
 			Where("employees.department_id = ?", dept.ID)
 
 		if period == "monthly" {
-			query = query.Where("kpi_evaluations.year = ? AND kpi_evaluations.month = ?", year, month)
+			query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.month = ?", "monthly", year, month)
 		} else if period == "quarterly" {
-			q, _ := strconv.Atoi(quarter)
-			startMonth := (q-1)*3 + 1
-			endMonth := q * 3
-			query = query.Where("kpi_evaluations.year = ? AND kpi_evaluations.month BETWEEN ? AND ?", year, startMonth, endMonth)
+			query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.quarter = ?", "quarterly", year, quarter)
 		} else {
-			query = query.Where("kpi_evaluations.year = ?", year)
+			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+			query = query.Where("(kpi_evaluations.period = ? OR kpi_evaluations.period = ?) AND kpi_evaluations.year = ?", "yearly", year, year)
 		}
 
 		query.Count(&stat.Total)
@@ -625,14 +715,12 @@ func GetStatisticsData(c *gin.Context) {
 			Where("status = ? AND total_score >= ? AND total_score <= ?", "completed", scoreRange.min, scoreRange.max)
 
 		if period == "monthly" {
-			query = query.Where("year = ? AND month = ?", year, month)
+			query = query.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
 		} else if period == "quarterly" {
-			q, _ := strconv.Atoi(quarter)
-			startMonth := (q-1)*3 + 1
-			endMonth := q * 3
-			query = query.Where("year = ? AND month BETWEEN ? AND ?", year, startMonth, endMonth)
+			query = query.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
 		} else {
-			query = query.Where("year = ?", year)
+			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+			query = query.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
 		}
 
 		query.Count(&count)
@@ -660,14 +748,12 @@ func GetStatisticsData(c *gin.Context) {
 		Where("kpi_evaluations.status = ?", "completed")
 
 	if period == "monthly" {
-		query = query.Where("kpi_evaluations.year = ? AND kpi_evaluations.month = ?", year, month)
+		query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.month = ?", "monthly", year, month)
 	} else if period == "quarterly" {
-		q, _ := strconv.Atoi(quarter)
-		startMonth := (q-1)*3 + 1
-		endMonth := q * 3
-		query = query.Where("kpi_evaluations.year = ? AND kpi_evaluations.month BETWEEN ? AND ?", year, startMonth, endMonth)
+		query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.quarter = ?", "quarterly", year, quarter)
 	} else {
-		query = query.Where("kpi_evaluations.year = ?", year)
+		// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
+		query = query.Where("(kpi_evaluations.period = ? OR kpi_evaluations.period = ?) AND kpi_evaluations.year = ?", "yearly", year, year)
 	}
 
 	query.Group("employees.id, employees.name, departments.name").
@@ -699,7 +785,10 @@ func GetStatisticsData(c *gin.Context) {
 			Template:   eval.Template.Name,
 			Score:      eval.TotalScore,
 			Status:     eval.Status,
-			Date:       eval.CreatedAt.Format("2006-01-02"),
+			Period:     eval.Period,
+			Year:       eval.Year,
+			Month:      eval.Month,
+			Quarter:    eval.Quarter,
 		})
 	}
 

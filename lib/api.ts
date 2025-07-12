@@ -137,7 +137,10 @@ export interface RecentEvaluation {
   template: string;
   score: number;
   status: string;
-  date: string;
+  period: string;
+  year: number;
+  month?: number;
+  quarter?: number;
 }
 
 // 统计数据响应类型
@@ -262,7 +265,7 @@ export const scoreApi = {
 
 // 统计API
 export const statisticsApi = {
-  getDashboard: (): Promise<{ data: DashboardStats }> => api.get('/statistics/dashboard'),
+  getDashboard: (params?: { year?: string; period?: string; month?: string; quarter?: string }): Promise<{ data: DashboardStats }> => api.get('/statistics/dashboard', { params }),
   getDepartment: (id: number): Promise<StatisticsResponse> => api.get('/statistics/department/' + id),
   getEmployee: (id: number): Promise<StatisticsResponse> => api.get('/statistics/employee/' + id),
   getTrends: (period?: string): Promise<StatisticsResponse> => api.get('/statistics/trends', { params: { period } }),

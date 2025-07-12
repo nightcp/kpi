@@ -35,6 +35,7 @@ import {
   Download
 } from "lucide-react";
 import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api";
+import { getPeriodLabel } from "@/lib/utils";
 
 export default function StatisticsPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -49,14 +50,16 @@ export default function StatisticsPage() {
   const fetchStatisticsData = useCallback(async () => {
     try {
       setLoading(true);
+      const filterParams = {
+        year: selectedYear.toString(),
+        period: selectedPeriod,
+        month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
+        quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
+      };
+      
       const [dashboardResponse, statisticsResponse] = await Promise.all([
-        statisticsApi.getDashboard(),
-        statisticsApi.getData({
-          year: selectedYear.toString(),
-          period: selectedPeriod,
-          month: selectedPeriod === 'monthly' ? selectedMonth.toString() : undefined,
-          quarter: selectedPeriod === 'quarterly' ? selectedQuarter.toString() : undefined,
-        })
+        statisticsApi.getDashboard(filterParams),
+        statisticsApi.getData(filterParams)
       ]);
       
       setDashboardStats(dashboardResponse.data);
@@ -452,9 +455,9 @@ export default function StatisticsPage() {
                   <TableHead>员工</TableHead>
                   <TableHead>部门</TableHead>
                   <TableHead>考核模板</TableHead>
+                  <TableHead>周期</TableHead>
                   <TableHead>得分</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead>日期</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -464,12 +467,16 @@ export default function StatisticsPage() {
                     <TableCell>{evaluation.department}</TableCell>
                     <TableCell>{evaluation.template}</TableCell>
                     <TableCell>
+                      {getPeriodLabel(evaluation.period)} {evaluation.year}
+                      {evaluation.month && `年${evaluation.month}月`}
+                      {evaluation.quarter && `年Q${evaluation.quarter}`}
+                    </TableCell>
+                    <TableCell>
                       <div className="text-lg font-semibold">{evaluation.score}</div>
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(evaluation.status)}
                     </TableCell>
-                    <TableCell>{evaluation.date}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

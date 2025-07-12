@@ -15,6 +15,7 @@ import { Plus, Eye, Award, FileCheck, CheckCircle, Clock, Star, Edit2, Save, X }
 import { evaluationApi, scoreApi, employeeApi, templateApi, type KPIEvaluation, type KPIScore, type Employee, type KPITemplate } from "@/lib/api";
 import { useUser } from "@/lib/user-context";
 import { useAppContext } from "@/lib/app-context";
+import { getPeriodLabel } from "@/lib/utils";
 
 export default function EvaluationsPage() {
   const { Alert, Confirm } = useAppContext();
@@ -338,18 +339,6 @@ export default function EvaluationsPage() {
         return <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="w-3 h-3 mr-1" />已完成</Badge>;
       default:
         return <Badge variant="outline">未知状态</Badge>;
-    }
-  };
-
-  // 周期标签
-  const getPeriodLabel = (period: string) => {
-    switch (period) {
-      case "monthly":
-        return "月度";
-      case "quarterly":
-        return "季度";
-      default:
-        return "年度";
     }
   };
 

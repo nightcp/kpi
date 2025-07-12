@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, ClipboardList, Settings, Eye } from "lucide-react";
 import { templateApi, itemApi, type KPITemplate, type KPIItem } from "@/lib/api";
 import { useAppContext } from "@/lib/app-context";
+import { getPeriodLabel } from "@/lib/utils";
 
 export default function TemplatesPage() {
   const { Confirm } = useAppContext();
@@ -170,15 +171,6 @@ export default function TemplatesPage() {
       order: item.order
     });
     setItemDialogOpen(true);
-  };
-
-  const getPeriodLabel = (period: string) => {
-    switch (period) {
-      case "monthly": return "月度";
-      case "quarterly": return "季度";
-      case "yearly": return "年度";
-      default: return period;
-    }
   };
 
   return (
