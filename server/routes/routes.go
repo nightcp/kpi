@@ -60,6 +60,12 @@ func SetupRoutes(r *gin.RouterGroup) {
 		evaluationRoutes.DELETE("/:id", handlers.DeleteEvaluation)
 		evaluationRoutes.GET("/employee/:employeeId", handlers.GetEmployeeEvaluations)
 		evaluationRoutes.GET("/pending/:employeeId", handlers.GetPendingEvaluations)
+
+		// 评论管理
+		evaluationRoutes.GET("/:id/comments", handlers.GetEvaluationComments)
+		evaluationRoutes.POST("/:id/comments", handlers.CreateEvaluationComment)
+		evaluationRoutes.PUT("/:id/comments/:comment_id", handlers.UpdateEvaluationComment)
+		evaluationRoutes.DELETE("/:id/comments/:comment_id", handlers.DeleteEvaluationComment)
 	}
 
 	// KPI评分管理

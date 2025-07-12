@@ -11,16 +11,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Eye, Award, CheckCircle, Clock, Star, Edit2, Save, X } from "lucide-react"
+import {
+  Plus,
+  Eye,
+  Award,
+  CheckCircle,
+  Clock,
+  Star,
+  Edit2,
+  Save,
+  X,
+  MessageCircle,
+  Lock,
+  Globe,
+  Trash2,
+} from "lucide-react"
 import {
   evaluationApi,
   scoreApi,
   employeeApi,
   templateApi,
+  commentApi,
   type KPIEvaluation,
   type KPIScore,
   type Employee,
   type KPITemplate,
+  type EvaluationComment,
 } from "@/lib/api"
 import { useUser } from "@/lib/user-context"
 import { useAppContext } from "@/lib/app-context"
@@ -45,6 +61,17 @@ export default function EvaluationsPage() {
   const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false) // 新增：自评提交状态
   const [loading, setLoading] = useState(false) // 新增：通用加载状态
   const [error, setError] = useState<string | null>(null) // 新增：错误状态
+
+  // 绩效评论相关状态
+  const [comments, setComments] = useState<EvaluationComment[]>([]) // 评论列表
+  const [isLoadingComments, setIsLoadingComments] = useState<boolean>(false) // 是否正在加载评论
+  const [newComment, setNewComment] = useState<string>("") // 新评论内容
+  const [newCommentPrivate, setNewCommentPrivate] = useState<boolean>(false) // 新评论是否私有
+  const [isAddingComment, setIsAddingComment] = useState<boolean>(false) // 是否正在添加评论
+  const [isSavingComment, setIsSavingComment] = useState<boolean>(false) // 是否正在保存评论
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null) // 正在编辑的评论ID
+  const [editingCommentContent, setEditingCommentContent] = useState<string>("") // 编辑中的评论内容
+  const [editingCommentPrivate, setEditingCommentPrivate] = useState<boolean>(false) // 编辑中的评论是否私有
   const [formData, setFormData] = useState({
     employee_ids: [] as string[],
     template_id: "",
@@ -53,10 +80,6 @@ export default function EvaluationsPage() {
     month: new Date().getMonth() + 1,
     quarter: Math.floor(new Date().getMonth() / 3) + 1,
   })
-
-
-
-
 
   // 获取评估列表
   const fetchEvaluations = async () => {
@@ -114,19 +137,19 @@ export default function EvaluationsPage() {
   // 创建新评估
   const handleCreateEvaluation = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // 验证是否至少选择了一个员工
     if (formData.employee_ids.length === 0) {
       Alert("验证失败", "请至少选择一个员工进行考核")
       return
     }
-    
+
     // 验证是否选择了模板
     if (!formData.template_id) {
       Alert("验证失败", "请选择考核模板")
       return
     }
-    
+
     try {
       // 为每个选中的员工创建评估
       const promises = formData.employee_ids.map(employeeId =>
@@ -155,7 +178,7 @@ export default function EvaluationsPage() {
         month: new Date().getMonth() + 1,
         quarter: Math.floor(new Date().getMonth() / 3) + 1,
       })
-      
+
       // 成功提示
       Alert("创建成功", `已为 ${formData.employee_ids.length} 个员工创建考核`)
     } catch (error) {
@@ -476,12 +499,115 @@ export default function EvaluationsPage() {
     }
   }
 
+  // 获取评论列表
+  const fetchComments = async (evaluationId: number) => {
+    try {
+      setIsLoadingComments(true)
+      const response = await commentApi.getByEvaluation(evaluationId)
+      setComments(response.data || [])
+    } catch (error) {
+      console.error("获取评论失败:", error)
+      setComments([])
+    } finally {
+      setIsLoadingComments(false)
+    }
+  }
+
+  // 添加评论
+  const handleAddComment = async () => {
+    if (!selectedEvaluation || !newComment.trim()) return
+
+    try {
+      setIsSavingComment(true)
+      const response = await commentApi.create(selectedEvaluation.id, {
+        content: newComment,
+        is_private: newCommentPrivate,
+      })
+
+      setComments([response.data, ...comments])
+      setNewComment("")
+      setNewCommentPrivate(false)
+      setIsAddingComment(false)
+      Alert("添加成功", "评论已添加")
+    } catch (error) {
+      console.error("添加评论失败:", error)
+      Alert("添加失败", "添加评论失败，请重试")
+    } finally {
+      setIsSavingComment(false)
+    }
+  }
+
+  // 开始编辑评论
+  const handleStartEditComment = (comment: EvaluationComment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentContent(comment.content)
+    setEditingCommentPrivate(comment.is_private)
+  }
+
+  // 保存编辑的评论
+  const handleSaveEditComment = async (commentId: number) => {
+    if (!selectedEvaluation || !editingCommentContent.trim()) return
+
+    try {
+      setIsSavingComment(true)
+      const response = await commentApi.update(selectedEvaluation.id, commentId, {
+        content: editingCommentContent,
+        is_private: editingCommentPrivate,
+      })
+
+      setComments(comments.map(c => (c.id === commentId ? response.data : c)))
+      setEditingCommentId(null)
+      setEditingCommentContent("")
+      setEditingCommentPrivate(false)
+      Alert("保存成功", "评论已更新")
+    } catch (error) {
+      console.error("更新评论失败:", error)
+      Alert("保存失败", "更新评论失败，请重试")
+    } finally {
+      setIsSavingComment(false)
+    }
+  }
+
+  // 取消编辑评论
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentContent("")
+    setEditingCommentPrivate(false)
+  }
+
+  // 删除评论
+  const handleDeleteComment = async (commentId: number) => {
+    if (!selectedEvaluation) return
+
+    const confirmed = await Confirm("确认删除", "确定要删除这条评论吗？此操作无法撤销。")
+    if (!confirmed) return
+
+    try {
+      await commentApi.delete(selectedEvaluation.id, commentId)
+      setComments(comments.filter(c => c.id !== commentId))
+      Alert("删除成功", "评论已删除")
+    } catch (error) {
+      console.error("删除评论失败:", error)
+      Alert("删除失败", "删除评论失败，请重试")
+    }
+  }
+
   // 查看详情
   const handleViewDetails = (evaluation: KPIEvaluation) => {
     setSelectedEvaluation(evaluation)
     fetchEvaluationScores(evaluation.id)
+    fetchComments(evaluation.id)
     setScoreDialogOpen(true)
     setActiveTab("details")
+
+    // 重置评论状态
+    setComments([])
+    setNewComment("")
+    setNewCommentPrivate(false)
+    setIsAddingComment(false)
+    setEditingCommentId(null)
+    setEditingCommentContent("")
+    setEditingCommentPrivate(false)
   }
 
   // 排序评估列表
@@ -609,7 +735,7 @@ export default function EvaluationsPage() {
                 <EmployeeSelector
                   employees={employees}
                   selectedEmployeeIds={formData.employee_ids}
-                  onSelectionChange={(employeeIds) => setFormData(prev => ({ ...prev, employee_ids: employeeIds }))}
+                  onSelectionChange={employeeIds => setFormData(prev => ({ ...prev, employee_ids: employeeIds }))}
                   label="员工"
                   placeholder="选择员工..."
                   maxDisplayTags={5}
@@ -1458,6 +1584,164 @@ export default function EvaluationsPage() {
                             </div>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 绩效评论卡片 */}
+                    <Card className="mt-4">
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <MessageCircle className="w-5 h-5 mr-2" />
+                            绩效评论 ({comments.length})
+                          </div>
+                          {!isAddingComment && (
+                            <Button variant="outline" size="sm" onClick={() => setIsAddingComment(true)}>
+                              <Plus className="w-4 h-4 mr-1" />
+                              添加评论
+                            </Button>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {/* 添加评论表单 */}
+                        {isAddingComment && (
+                          <div className="space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="flex flex-col gap-2">
+                              <Label htmlFor="newComment">评论内容</Label>
+                              <Textarea
+                                id="newComment"
+                                placeholder="请输入您的评论..."
+                                value={newComment}
+                                onChange={e => setNewComment(e.target.value)}
+                                className="mt-1 min-h-[100px] bg-white"
+                              />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="newPrivate"
+                                checked={newCommentPrivate}
+                                onChange={e => setNewCommentPrivate(e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <Label htmlFor="newPrivate" className="text-sm">
+                                仅自己可见
+                              </Label>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setIsAddingComment(false)
+                                  setNewComment("")
+                                  setNewCommentPrivate(false)
+                                }}
+                              >
+                                取消
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={handleAddComment}
+                                disabled={isSavingComment || !newComment.trim()}
+                              >
+                                {isSavingComment ? "保存中..." : "保存评论"}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 评论列表 */}
+                        {isLoadingComments ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">加载评论中...</p>
+                          </div>
+                        ) : comments.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p className="text-sm">暂无评论</p>
+                            <p className="text-xs mt-1">点击&quot;添加评论&quot;按钮来记录您的想法</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {comments.map(comment => (
+                              <div key={comment.id} className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center mb-2">
+                                      <span className="font-medium text-sm">{comment.user?.name || "未知用户"}</span>
+                                      <span className="text-xs text-gray-500 ml-2">{comment.user?.position}</span>
+                                      <span className="text-xs text-gray-400 ml-2">
+                                        {new Date(comment.created_at).toLocaleString()}
+                                      </span>
+                                      <div className="flex items-center ml-2 text-xs text-gray-500">
+                                        {comment.is_private ? (
+                                          <>
+                                            <Lock className="w-3 h-3 mr-1" />
+                                            仅自己可见
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Globe className="w-3 h-3 mr-1" />
+                                            公开可见
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {editingCommentId === comment.id ? (
+                                      <div className="space-y-3">
+                                        <Textarea
+                                          value={editingCommentContent}
+                                          onChange={e => setEditingCommentContent(e.target.value)}
+                                          className="min-h-[80px]"
+                                        />
+                                        <div className="flex items-center space-x-2">
+                                          <input
+                                            type="checkbox"
+                                            id={`edit-private-${comment.id}`}
+                                            checked={editingCommentPrivate}
+                                            onChange={e => setEditingCommentPrivate(e.target.checked)}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                          />
+                                          <Label htmlFor={`edit-private-${comment.id}`} className="text-sm">
+                                            仅自己可见
+                                          </Label>
+                                        </div>
+                                        <div className="flex justify-end space-x-2">
+                                          <Button variant="outline" size="sm" onClick={handleCancelEditComment}>
+                                            取消
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleSaveEditComment(comment.id)}
+                                            disabled={isSavingComment}
+                                          >
+                                            {isSavingComment ? "保存中..." : "保存"}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                                    )}
+                                  </div>
+
+                                  {editingCommentId !== comment.id && comment.user_id === currentUser?.id && (
+                                    <div className="flex items-center space-x-1 ml-2">
+                                      <Button variant="ghost" size="sm" onClick={() => handleStartEditComment(comment)}>
+                                        <Edit2 className="w-3 h-3" />
+                                      </Button>
+                                      <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(comment.id)}>
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>

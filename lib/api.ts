@@ -301,4 +301,41 @@ export const exportApi = {
     api.get(`/export/period/${period}`, { params }),
 }
 
+// 评论接口类型
+export interface EvaluationComment {
+  id: number
+  evaluation_id: number
+  user_id: number
+  content: string
+  is_private: boolean
+  created_at: string
+  updated_at: string
+  user?: {
+    id: number
+    name: string
+    email: string
+    position: string
+    department?: {
+      name: string
+    }
+  }
+}
+
+// 评论API
+export const commentApi = {
+  getByEvaluation: (evaluationId: number): Promise<{ data: EvaluationComment[] }> =>
+    api.get(`/evaluations/${evaluationId}/comments`),
+  create: (
+    evaluationId: number,
+    data: { content: string; is_private: boolean }
+  ): Promise<{ data: EvaluationComment }> => api.post(`/evaluations/${evaluationId}/comments`, data),
+  update: (
+    evaluationId: number,
+    commentId: number,
+    data: { content: string; is_private: boolean }
+  ): Promise<{ data: EvaluationComment }> => api.put(`/evaluations/${evaluationId}/comments/${commentId}`, data),
+  delete: (evaluationId: number, commentId: number): Promise<void> =>
+    api.delete(`/evaluations/${evaluationId}/comments/${commentId}`),
+}
+
 export default api

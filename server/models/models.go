@@ -102,3 +102,18 @@ type KPIScore struct {
 	Evaluation KPIEvaluation `json:"evaluation,omitempty" gorm:"foreignKey:EvaluationID"`
 	Item       KPIItem       `json:"item,omitempty" gorm:"foreignKey:ItemID"`
 }
+
+// 评论模型
+type EvaluationComment struct {
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	EvaluationID uint      `json:"evaluation_id"`
+	UserID       uint      `json:"user_id"` // 评论者ID
+	Content      string    `json:"content" gorm:"not null"`
+	IsPrivate    bool      `json:"is_private" gorm:"default:false"` // 是否仅自己可见
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+
+	// 关联关系
+	Evaluation KPIEvaluation `json:"evaluation,omitempty" gorm:"foreignKey:EvaluationID"`
+	User       Employee      `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
