@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { authApi, RegisterRequest, type Department } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
+import { toast } from "sonner"
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -51,7 +52,7 @@ export default function RegisterPage() {
 
     try {
       await register(formData)
-      await Alert("注册成功", "欢迎加入我们的团队！")
+      toast.success("注册成功")
     } catch (error: unknown) {
       let errorMessage = "注册失败，请重试"
 

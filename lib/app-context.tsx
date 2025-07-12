@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useRef } from "react"
 import AlertLayout, { AlertLayoutRef, AlertProps } from "@/components/alert"
+import { Toaster } from "@/components/ui/sonner"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, Eye, FileText, Star } from "lucide-react"
 
@@ -102,6 +103,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       {/* 弹出框 */}
       <AlertLayout ref={alertLayoutRef} />
+
+      {/* 通知 */}
+      <Toaster position="top-center" />
     </AppContext.Provider>
   )
 }

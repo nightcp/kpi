@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -27,7 +28,7 @@ export default function LoginPage() {
         email: formData.email,
         password: formData.password,
       })
-      await Alert("登录成功", "欢迎回来！")
+      toast.success("登录成功")
     } catch (error: unknown) {
       let errorMessage = "登录失败，请重试"
 
