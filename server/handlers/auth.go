@@ -110,6 +110,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// 查找上级
+	var manager models.Employee
+	if err := models.DB.Where("department_id = ? AND role in ?", req.DepartmentID, []string{"manager", "hr"}).First(&manager).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "部门不存在上级"})
+		return
+	}
+
 	// 密码哈希
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -124,6 +131,7 @@ func Register(c *gin.Context) {
 		Password:     string(hashedPassword),
 		Position:     req.Position,
 		DepartmentID: req.DepartmentID,
+		ManagerID:    &manager.ID,
 		Role:         "employee", // 默认角色为员工
 		IsActive:     true,
 	}
