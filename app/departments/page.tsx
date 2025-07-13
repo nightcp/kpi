@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, Users } from "lucide-react"
-import { departmentApi, type Department } from "@/lib/api"
+import { Plus, Edit, Trash2, Users, Search } from "lucide-react"
+import { departmentApi, type Department, type PaginatedResponse, type PaginationParams } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
+import { Pagination, usePagination } from "@/components/pagination"
 
 export default function DepartmentsPage() {
   const { Confirm } = useAppContext()
@@ -23,20 +24,48 @@ export default function DepartmentsPage() {
     description: "",
   })
 
+  // 分页相关状态
+  const [paginationData, setPaginationData] = useState<PaginatedResponse<Department> | null>(null)
+  const [search, setSearch] = useState<string>("")
+
+  // 使用分页Hook
+  const { currentPage, pageSize, setCurrentPage, handlePageSizeChange, resetPagination } = usePagination(10)
+
   // 获取部门列表
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
-      const response = await departmentApi.getAll()
+      setLoading(true)
+
+      const params: PaginationParams = {
+        page: currentPage,
+        pageSize: pageSize,
+      }
+
+      if (search.trim()) {
+        params.search = search.trim()
+      }
+
+      const response = await departmentApi.getAll(params)
       setDepartments(response.data || [])
+      setPaginationData(response)
     } catch (error) {
       console.error("获取部门列表失败:", error)
+      setDepartments([])
+      setPaginationData(null)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }
+  }, [currentPage, pageSize, search])
 
   useEffect(() => {
     fetchDepartments()
-  }, [])
+  }, [fetchDepartments])
+
+  // 搜索处理
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    resetPagination()
+  }
 
   // 创建或更新部门
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,9 +173,22 @@ export default function DepartmentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            部门列表
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              部门列表
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="搜索部门..."
+                  value={search}
+                  onChange={e => handleSearchChange(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -186,6 +228,21 @@ export default function DepartmentsPage() {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {/* 分页组件 */}
+          {paginationData && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={paginationData.totalPages}
+                pageSize={pageSize}
+                totalItems={paginationData.total}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={handlePageSizeChange}
+                className="justify-center"
+              />
+            </div>
           )}
         </CardContent>
       </Card>

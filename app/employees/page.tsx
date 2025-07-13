@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Edit, Trash2, Users } from "lucide-react"
-import { employeeApi, departmentApi, type Employee, type Department } from "@/lib/api"
+import { Plus, Edit, Trash2, Users, Search } from "lucide-react"
+import { employeeApi, departmentApi, type Employee, type Department, type PaginatedResponse } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
+import { Pagination, usePagination } from "@/components/pagination"
 
 export default function EmployeesPage() {
   const { Confirm } = useAppContext()
@@ -21,6 +22,12 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [paginationData, setPaginationData] = useState<PaginatedResponse<Employee> | null>(null)
+
+  // 使用分页Hook
+  const { currentPage, pageSize, setCurrentPage, handlePageSizeChange, resetPagination } = usePagination(10)
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,15 +38,24 @@ export default function EmployeesPage() {
   })
 
   // 获取员工列表
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
-      const response = await employeeApi.getAll()
+      setLoading(true)
+      const response = await employeeApi.getAll({
+        page: currentPage,
+        pageSize: pageSize,
+        search: searchQuery || undefined,
+      })
       setEmployees(response.data || [])
+      setPaginationData(response)
     } catch (error) {
       console.error("获取员工列表失败:", error)
+      setEmployees([])
+      setPaginationData(null)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }
+  }, [currentPage, pageSize, searchQuery])
 
   // 获取部门列表
   const fetchDepartments = async () => {
@@ -53,8 +69,20 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     fetchEmployees()
+  }, [fetchEmployees])
+
+  useEffect(() => {
     fetchDepartments()
   }, [])
+
+  // 搜索处理函数
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchQuery(value)
+      resetPagination() // 搜索时重置到第一页
+    },
+    [resetPagination]
+  )
 
   // 根据选择的部门获取可能的上级
   useEffect(() => {
@@ -230,7 +258,11 @@ export default function EmployeesPage() {
                       <SelectValue placeholder="选择上级" />
                     </SelectTrigger>
                     <SelectContent>
-                      {managers.length === 0 && <SelectItem value="none" disabled>无上级</SelectItem>}
+                      {managers.length === 0 && (
+                        <SelectItem value="none" disabled>
+                          无上级
+                        </SelectItem>
+                      )}
                       {managers.map(manager => (
                         <SelectItem key={manager.id} value={manager.id.toString()}>
                           {manager.name}
@@ -260,16 +292,31 @@ export default function EmployeesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            员工列表
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              员工列表
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="搜索员工姓名、邮箱或职位..."
+                  value={searchQuery}
+                  onChange={e => handleSearch(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">加载中...</div>
           ) : employees.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">暂无员工数据</div>
+            <div className="text-center py-8 text-muted-foreground">
+              {searchQuery ? "未找到匹配的员工" : "暂无员工数据"}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -310,6 +357,21 @@ export default function EmployeesPage() {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {/* 分页组件 */}
+          {paginationData && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={paginationData.totalPages}
+                pageSize={pageSize}
+                totalItems={paginationData.total}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={handlePageSizeChange}
+                className="justify-center"
+              />
+            </div>
           )}
         </CardContent>
       </Card>

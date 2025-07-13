@@ -13,7 +13,49 @@ import (
 func GetEmployees(c *gin.Context) {
 	var employees []models.Employee
 
-	result := models.DB.Preload("Department").Preload("Manager").Find(&employees)
+	// 解析分页参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	search := c.Query("search")
+
+	// 验证分页参数
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	// 构建查询
+	query := models.DB.Preload("Department").Preload("Manager")
+
+	// 添加搜索条件
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("name LIKE ? OR email LIKE ? OR position LIKE ?",
+			searchPattern, searchPattern, searchPattern)
+	}
+
+	// 获取总数
+	var total int64
+	countQuery := models.DB.Model(&models.Employee{})
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		countQuery = countQuery.Where("name LIKE ? OR email LIKE ? OR position LIKE ?",
+			searchPattern, searchPattern, searchPattern)
+	}
+
+	if err := countQuery.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "获取员工总数失败",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// 分页查询
+	offset := (page - 1) * pageSize
+	result := query.Offset(offset).Limit(pageSize).Find(&employees)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取员工列表失败",
@@ -22,9 +64,17 @@ func GetEmployees(c *gin.Context) {
 		return
 	}
 
+	// 计算分页信息
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
 	c.JSON(http.StatusOK, gin.H{
-		"data":  employees,
-		"total": len(employees),
+		"data":       employees,
+		"total":      total,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"hasNext":    page < totalPages,
+		"hasPrev":    page > 1,
 	})
 }
 

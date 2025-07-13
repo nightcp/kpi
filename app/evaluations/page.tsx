@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,11 +37,14 @@ import {
   type Employee,
   type KPITemplate,
   type EvaluationComment,
+  type PaginatedResponse,
+  type EvaluationPaginationParams,
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
 import { EmployeeSelector } from "@/components/employee-selector"
+import { Pagination, usePagination } from "@/components/pagination"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -62,9 +65,28 @@ export default function EvaluationsPage() {
   const [loading, setLoading] = useState(false) // 新增：通用加载状态
   const [error, setError] = useState<string | null>(null) // 新增：错误状态
 
+  // 分页相关状态
+  const [paginationData, setPaginationData] = useState<PaginatedResponse<KPIEvaluation> | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [employeeFilter, setEmployeeFilter] = useState<string>("all")
+
+  // 使用分页Hook
+  const { currentPage, pageSize, setCurrentPage, handlePageSizeChange, resetPagination } = usePagination(10)
+
   // 绩效评论相关状态
   const [comments, setComments] = useState<EvaluationComment[]>([]) // 评论列表
+  const [commentsPaginationData, setCommentsPaginationData] = useState<PaginatedResponse<EvaluationComment> | null>(
+    null
+  )
   const [isLoadingComments, setIsLoadingComments] = useState<boolean>(false) // 是否正在加载评论
+
+  // 评论分页Hook
+  const {
+    currentPage: commentsCurrentPage,
+    pageSize: commentsPageSize,
+    setCurrentPage: setCommentsCurrentPage,
+    handlePageSizeChange: handleCommentsPageSizeChange,
+  } = usePagination(5) // 评论每页5条
   const [newComment, setNewComment] = useState<string>("") // 新评论内容
   const [newCommentPrivate, setNewCommentPrivate] = useState<boolean>(false) // 新评论是否私有
   const [isAddingComment, setIsAddingComment] = useState<boolean>(false) // 是否正在添加评论
@@ -82,19 +104,36 @@ export default function EvaluationsPage() {
   })
 
   // 获取评估列表
-  const fetchEvaluations = async () => {
+  const fetchEvaluations = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await evaluationApi.getAll()
+
+      const params: EvaluationPaginationParams = {
+        page: currentPage,
+        pageSize: pageSize,
+      }
+
+      if (statusFilter && statusFilter !== "all") {
+        params.status = statusFilter
+      }
+
+      if (employeeFilter && employeeFilter !== "all") {
+        params.employee_id = employeeFilter
+      }
+
+      const response = await evaluationApi.getAll(params)
       setEvaluations(response.data || [])
+      setPaginationData(response)
     } catch (error) {
       console.error("获取评估列表失败:", error)
       setError("获取评估列表失败，请刷新重试")
+      setEvaluations([])
+      setPaginationData(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, pageSize, statusFilter, employeeFilter])
 
   // 获取员工列表
   const fetchEmployees = async () => {
@@ -130,6 +169,9 @@ export default function EvaluationsPage() {
 
   useEffect(() => {
     fetchEvaluations()
+  }, [fetchEvaluations])
+
+  useEffect(() => {
     fetchEmployees()
     fetchTemplates()
   }, [])
@@ -293,8 +335,8 @@ export default function EvaluationsPage() {
       })
       // 添加一个视觉提示
       element.style.transition = "box-shadow 1s ease"
-      setTimeout(() => element.style.boxShadow = "rgb(255 87 34 / 50%) 0px 0px 10px 0px", 500)
-      setTimeout(() => element.style.boxShadow = "", 3000)
+      setTimeout(() => (element.style.boxShadow = "rgb(255 87 34 / 50%) 0px 0px 10px 0px"), 500)
+      setTimeout(() => (element.style.boxShadow = ""), 3000)
     })
   }
 
@@ -507,18 +549,26 @@ export default function EvaluationsPage() {
   }
 
   // 获取评论列表
-  const fetchComments = async (evaluationId: number) => {
-    try {
-      setIsLoadingComments(true)
-      const response = await commentApi.getByEvaluation(evaluationId)
-      setComments(response.data || [])
-    } catch (error) {
-      console.error("获取评论失败:", error)
-      setComments([])
-    } finally {
-      setIsLoadingComments(false)
-    }
-  }
+  const fetchComments = useCallback(
+    async (evaluationId: number) => {
+      try {
+        setIsLoadingComments(true)
+        const response = await commentApi.getByEvaluation(evaluationId, {
+          page: commentsCurrentPage,
+          pageSize: commentsPageSize,
+        })
+        setComments(response.data || [])
+        setCommentsPaginationData(response)
+      } catch (error) {
+        console.error("获取评论失败:", error)
+        setComments([])
+        setCommentsPaginationData(null)
+      } finally {
+        setIsLoadingComments(false)
+      }
+    },
+    [commentsCurrentPage, commentsPageSize]
+  )
 
   // 添加评论
   const handleAddComment = async () => {
@@ -600,67 +650,35 @@ export default function EvaluationsPage() {
   }
 
   // 查看详情
-  const handleViewDetails = (evaluation: KPIEvaluation) => {
+  const handleViewDetails = useCallback((evaluation: KPIEvaluation) => {
     setSelectedEvaluation(evaluation)
     fetchEvaluationScores(evaluation.id)
-    fetchComments(evaluation.id)
     setScoreDialogOpen(true)
     setActiveTab("details")
 
     // 重置评论状态
     setComments([])
+    setCommentsPaginationData(null)
     setNewComment("")
     setNewCommentPrivate(false)
     setIsAddingComment(false)
     setEditingCommentId(null)
     setEditingCommentContent("")
     setEditingCommentPrivate(false)
-  }
+  }, [])
 
-  // 排序评估列表
-  const sortEvaluations = (evaluations: KPIEvaluation[], status?: string) => {
-    const sorts = ["pending", "pending_confirm"]
-    if (status) {
-      sorts.unshift(status)
+  // 当选中的评估或评论分页参数变化时，重新获取评论
+  useEffect(() => {
+    if (selectedEvaluation) {
+      fetchComments(selectedEvaluation.id)
     }
-    return evaluations.sort((a, b) => {
-      const aIndex = sorts.indexOf(a.status)
-      const bIndex = sorts.indexOf(b.status)
+  }, [selectedEvaluation, fetchComments])
 
-      // 如果都在sorts数组中，按照sorts数组的顺序排序
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex
-      }
-
-      // 如果只有一个在sorts数组中，在sorts中的排前面
-      if (aIndex !== -1 && bIndex === -1) return -1
-      if (aIndex === -1 && bIndex !== -1) return 1
-
-      // 如果都不在sorts数组中，按照id排序
-      return a.id - b.id
-    })
-  }
-
-  // 根据用户角色过滤评估
+  // 根据用户角色过滤评估（现在分页在后端处理，这里只做基本的权限过滤显示）
   const getFilteredEvaluations = useMemo(() => {
     if (!currentUser) return []
-
-    if (isHR) {
-      return sortEvaluations(evaluations, "manager_evaluated") // HR可以看到所有评估
-    }
-    return sortEvaluations(
-      evaluations.filter(evaluation => {
-        if (isManager) {
-          // 主管可以看到自己的考核 + 下属的考核
-          return evaluation.employee_id === currentUser.id || evaluation.employee?.manager_id === currentUser.id
-        } else {
-          // 员工只能看到自己的评估
-          return evaluation.employee_id === currentUser.id
-        }
-      }),
-      isManager ? "self_evaluated" : undefined
-    )
-  }, [currentUser, evaluations, isHR, isManager])
+    return evaluations // 后端已经处理了分页和筛选，前端直接使用
+  }, [currentUser, evaluations])
 
   // 检查是否可以进行某个操作
   const canPerformAction = (evaluation: KPIEvaluation, action: "self" | "manager" | "hr" | "confirm") => {
@@ -925,7 +943,47 @@ export default function EvaluationsPage() {
       {/* 评估列表 */}
       <Card>
         <CardHeader>
-          <CardTitle>考核列表</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>考核列表</span>
+            <div className="flex items-center gap-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="状态筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="pending">等待自评</SelectItem>
+                  <SelectItem value="self_evaluated">等待主管评估</SelectItem>
+                  <SelectItem value="manager_evaluated">等待HR审核</SelectItem>
+                  <SelectItem value="pending_confirm">等待确认</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="员工筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部员工</SelectItem>
+                  {employees.map(employee => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStatusFilter("all")
+                  setEmployeeFilter("all")
+                  resetPagination()
+                }}
+              >
+                重置筛选
+              </Button>
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading && (
@@ -978,6 +1036,39 @@ export default function EvaluationsPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* 分页组件 */}
+          {paginationData && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={paginationData.totalPages}
+                pageSize={pageSize}
+                totalItems={paginationData.total}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={handlePageSizeChange}
+                className="justify-center"
+              />
+            </div>
+          )}
+
+          {/* 评论分页组件 */}
+          {commentsPaginationData && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={commentsCurrentPage}
+                totalPages={commentsPaginationData.totalPages}
+                pageSize={commentsPageSize}
+                totalItems={commentsPaginationData.total}
+                onPageChange={setCommentsCurrentPage}
+                onPageSizeChange={handleCommentsPageSizeChange}
+                showSizeChanger={false}
+                showQuickJumper={false}
+                pageSizeOptions={[5, 10, 20]}
+                className="justify-center"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1009,19 +1100,21 @@ export default function EvaluationsPage() {
                     {/* 当前状态 */}
                     <div className="flex justify-between items-center">
                       <Label className="text-sm text-muted-foreground">当前状态</Label>
-                      <div className="mt-1.5 space-y-2">
-                        {getStatusBadge(selectedEvaluation.status)}
-                      </div>
+                      <div className="mt-1.5 space-y-2">{getStatusBadge(selectedEvaluation.status)}</div>
                     </div>
                     {/* 状态进度条 */}
                     <div className="flex justify-between items-end">
                       <Label className="text-sm text-muted-foreground">流程进度</Label>
                       <span className="text-xs text-muted-foreground">
-                        {getStatusProgress(selectedEvaluation.status).step} / {getStatusProgress(selectedEvaluation.status).total}
+                        {getStatusProgress(selectedEvaluation.status).step} /{" "}
+                        {getStatusProgress(selectedEvaluation.status).total}
                       </span>
                     </div>
                     {(() => {
-                      const percent = getStatusProgress(selectedEvaluation.status).step / getStatusProgress(selectedEvaluation.status).total * 100
+                      const percent =
+                        (getStatusProgress(selectedEvaluation.status).step /
+                          getStatusProgress(selectedEvaluation.status).total) *
+                        100
                       let colorClass = "bg-gray-300"
                       if (percent >= 100) {
                         colorClass = "bg-green-600"
@@ -1573,7 +1666,7 @@ export default function EvaluationsPage() {
                                 placeholder="请输入您的评论..."
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
-                                                                  className="mt-1 min-h-[100px] bg-background"
+                                className="mt-1 min-h-[100px] bg-background"
                               />
                             </div>
                             <div className="flex items-center space-x-2">
@@ -1630,7 +1723,9 @@ export default function EvaluationsPage() {
                                   <div className="flex-1">
                                     <div className="flex items-center mb-2">
                                       <span className="font-medium text-sm">{comment.user?.name || "未知用户"}</span>
-                                      <span className="text-xs text-muted-foreground ml-2">{comment.user?.position}</span>
+                                      <span className="text-xs text-muted-foreground ml-2">
+                                        {comment.user?.position}
+                                      </span>
                                       <span className="text-xs text-muted-foreground/70 ml-2">
                                         {new Date(comment.created_at).toLocaleString()}
                                       </span>

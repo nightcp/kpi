@@ -138,7 +138,53 @@ func DeleteItem(c *gin.Context) {
 func GetEvaluations(c *gin.Context) {
 	var evaluations []models.KPIEvaluation
 
-	result := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").Find(&evaluations)
+	// 解析分页参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	status := c.Query("status")
+	employeeID := c.Query("employee_id")
+
+	// 验证分页参数
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	// 构建查询
+	query := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores")
+
+	// 添加筛选条件
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	if employeeID != "" {
+		query = query.Where("employee_id = ?", employeeID)
+	}
+
+	// 获取总数
+	var total int64
+	countQuery := models.DB.Model(&models.KPIEvaluation{})
+	if status != "" {
+		countQuery = countQuery.Where("status = ?", status)
+	}
+	if employeeID != "" {
+		countQuery = countQuery.Where("employee_id = ?", employeeID)
+	}
+
+	if err := countQuery.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "获取评估总数失败",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// 分页查询，按创建时间倒序
+	offset := (page - 1) * pageSize
+	result := query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&evaluations)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取评估列表失败",
@@ -147,9 +193,17 @@ func GetEvaluations(c *gin.Context) {
 		return
 	}
 
+	// 计算分页信息
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
 	c.JSON(http.StatusOK, gin.H{
-		"data":  evaluations,
-		"total": len(evaluations),
+		"data":       evaluations,
+		"total":      total,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"hasNext":    page < totalPages,
+		"hasPrev":    page > 1,
 	})
 }
 

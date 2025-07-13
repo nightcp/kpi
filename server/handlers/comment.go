@@ -16,6 +16,18 @@ func GetEvaluationComments(c *gin.Context) {
 	// 当前用户ID（暂时硬编码，实际应从JWT token获取）
 	currentUserID := uint(1)
 
+	// 解析分页参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+
+	// 验证分页参数
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 50 {
+		pageSize = 10
+	}
+
 	var comments []models.EvaluationComment
 
 	// 构建查询条件
@@ -25,15 +37,35 @@ func GetEvaluationComments(c *gin.Context) {
 	// 这里简化处理，假设所有用户都可以看到公开评论
 	query = query.Where("is_private = ? OR user_id = ?", false, currentUserID)
 
-	// 预加载用户信息
-	if err := query.Preload("User").Order("created_at DESC").Find(&comments).Error; err != nil {
+	// 获取总数
+	var total int64
+	countQuery := models.DB.Model(&models.EvaluationComment{}).Where("evaluation_id = ?", evaluationID)
+	countQuery = countQuery.Where("is_private = ? OR user_id = ?", false, currentUserID)
+
+	if err := countQuery.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论总数失败"})
+		return
+	}
+
+	// 分页查询，按创建时间倒序
+	offset := (page - 1) * pageSize
+	if err := query.Preload("User").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&comments).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败"})
 		return
 	}
 
+	// 计算分页信息
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "获取评论成功",
-		"data":    comments,
+		"message":    "获取评论成功",
+		"data":       comments,
+		"total":      total,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"hasNext":    page < totalPages,
+		"hasPrev":    page > 1,
 	})
 }
 

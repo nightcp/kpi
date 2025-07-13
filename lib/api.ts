@@ -225,7 +225,7 @@ export interface AuthUser {
 
 // 部门API
 export const departmentApi = {
-  getAll: (): Promise<{ data: Department[]; total: number }> => api.get("/departments"),
+  getAll: (params?: PaginationParams): Promise<PaginatedResponse<Department>> => api.get("/departments", { params }),
   getById: (id: number): Promise<{ data: Department }> => api.get(`/departments/${id}`),
   create: (data: Omit<Department, "id" | "created_at">): Promise<{ data: Department }> =>
     api.post("/departments", data),
@@ -233,9 +233,33 @@ export const departmentApi = {
   delete: (id: number): Promise<void> => api.delete(`/departments/${id}`),
 }
 
+// 分页响应接口
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  hasNext: boolean
+  hasPrev: boolean
+}
+
+// 分页查询参数接口
+export interface PaginationParams {
+  page?: number
+  pageSize?: number
+  search?: string
+}
+
+// 评估分页查询参数接口
+export interface EvaluationPaginationParams extends PaginationParams {
+  status?: string
+  employee_id?: string
+}
+
 // 员工API
 export const employeeApi = {
-  getAll: (): Promise<{ data: Employee[]; total: number }> => api.get("/employees"),
+  getAll: (params?: PaginationParams): Promise<PaginatedResponse<Employee>> => api.get("/employees", { params }),
   getById: (id: number): Promise<{ data: Employee }> => api.get(`/employees/${id}`),
   create: (data: Omit<Employee, "id" | "created_at">): Promise<{ data: Employee }> => api.post("/employees", data),
   update: (id: number, data: Partial<Employee>): Promise<{ data: Employee }> => api.put(`/employees/${id}`, data),
@@ -265,7 +289,8 @@ export const itemApi = {
 
 // KPI评估API
 export const evaluationApi = {
-  getAll: (): Promise<{ data: KPIEvaluation[]; total: number }> => api.get("/evaluations"),
+  getAll: (params?: EvaluationPaginationParams): Promise<PaginatedResponse<KPIEvaluation>> =>
+    api.get("/evaluations", { params }),
   getById: (id: number): Promise<{ data: KPIEvaluation }> => api.get(`/evaluations/${id}`),
   create: (data: Omit<KPIEvaluation, "id" | "created_at">): Promise<{ data: KPIEvaluation }> =>
     api.post("/evaluations", data),
@@ -339,8 +364,8 @@ export interface EvaluationComment {
 
 // 评论API
 export const commentApi = {
-  getByEvaluation: (evaluationId: number): Promise<{ data: EvaluationComment[] }> =>
-    api.get(`/evaluations/${evaluationId}/comments`),
+  getByEvaluation: (evaluationId: number, params?: PaginationParams): Promise<PaginatedResponse<EvaluationComment>> =>
+    api.get(`/evaluations/${evaluationId}/comments`, { params }),
   create: (
     evaluationId: number,
     data: { content: string; is_private: boolean }
@@ -405,7 +430,7 @@ export const authApi = {
 export const settingsApi = {
   // 获取系统设置
   get: (): Promise<{ data: SystemSettings }> => api.get("/settings"),
-  
+
   // 更新系统设置
   update: (data: SystemSettings): Promise<{ data: SystemSettings; message: string }> => api.put("/settings", data),
 }
