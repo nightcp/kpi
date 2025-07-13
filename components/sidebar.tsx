@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X } from "lucide-react"
+import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X, HelpCircle } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
@@ -41,11 +41,13 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         { name: "考核管理", href: "/evaluations", icon: FileText },
         { name: "统计分析", href: "/statistics", icon: BarChart3 },
         { name: "系统设置", href: "/settings", icon: Settings },
+        { name: "帮助中心", href: "/help", icon: HelpCircle },
       ]
     }
     return [
       { name: "考核管理", href: "/evaluations", icon: FileText },
       { name: "系统设置", href: "/settings", icon: Settings },
+      { name: "帮助中心", href: "/help", icon: HelpCircle },
     ]
   }, [isHR])
 
@@ -56,7 +58,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
   // 监听用户角色变化
   useEffect(() => {
-    if (!isHR && !["/evaluations", "/settings"].includes(pathname)) {
+    if (!isHR && !["/evaluations", "/settings", "/help"].includes(pathname)) {
       router.push("/evaluations")
     }
   }, [isHR, router, pathname])

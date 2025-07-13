@@ -268,7 +268,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* 左侧导航菜单 - 小屏幕时显示在上方 */}
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="sticky top-6">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">设置菜单</CardTitle>
             </CardHeader>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
                     key={item.id}
                     variant={activeTab === item.id ? "default" : "ghost"}
                     className={cn(
-                      "w-full justify-start",
+                      "w-full justify-start text-left",
                       item.id === "logout" && "text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                     )}
                     onClick={() => handleMenuClick(item)}
