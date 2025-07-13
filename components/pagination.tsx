@@ -86,6 +86,10 @@ export function Pagination({
 
   const visiblePages = getVisiblePages()
 
+  if (totalItems === 0) {
+    return null
+  }
+
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${className}`}>
       {/* 总数信息 */}
