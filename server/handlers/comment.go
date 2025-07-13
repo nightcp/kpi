@@ -13,8 +13,12 @@ import (
 func GetEvaluationComments(c *gin.Context) {
 	evaluationID := c.Param("id")
 
-	// 当前用户ID（暂时硬编码，实际应从JWT token获取）
-	currentUserID := uint(1)
+	// 从JWT token获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
 
 	// 解析分页参数
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -33,14 +37,17 @@ func GetEvaluationComments(c *gin.Context) {
 	// 构建查询条件
 	query := models.DB.Where("evaluation_id = ?", evaluationID)
 
+	// 转换用户ID类型
+	userID := currentUserID.(uint)
+
 	// 如果不是管理员，只显示公开评论和自己的私有评论
 	// 这里简化处理，假设所有用户都可以看到公开评论
-	query = query.Where("is_private = ? OR user_id = ?", false, currentUserID)
+	query = query.Where("is_private = ? OR user_id = ?", false, userID)
 
 	// 获取总数
 	var total int64
 	countQuery := models.DB.Model(&models.EvaluationComment{}).Where("evaluation_id = ?", evaluationID)
-	countQuery = countQuery.Where("is_private = ? OR user_id = ?", false, currentUserID)
+	countQuery = countQuery.Where("is_private = ? OR user_id = ?", false, userID)
 
 	if err := countQuery.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论总数失败"})
@@ -73,8 +80,13 @@ func GetEvaluationComments(c *gin.Context) {
 func CreateEvaluationComment(c *gin.Context) {
 	evaluationID := c.Param("id")
 
-	// 当前用户ID（暂时硬编码，实际应从JWT token获取）
-	currentUserID := uint(1)
+	// 从JWT token获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
 
 	var req struct {
 		Content   string `json:"content" binding:"required"`
@@ -97,7 +109,7 @@ func CreateEvaluationComment(c *gin.Context) {
 	evalID, _ := strconv.ParseUint(evaluationID, 10, 32)
 	comment := models.EvaluationComment{
 		EvaluationID: uint(evalID),
-		UserID:       currentUserID,
+		UserID:       userID,
 		Content:      req.Content,
 		IsPrivate:    req.IsPrivate,
 	}
@@ -120,8 +132,13 @@ func CreateEvaluationComment(c *gin.Context) {
 func UpdateEvaluationComment(c *gin.Context) {
 	commentID := c.Param("comment_id")
 
-	// 当前用户ID（暂时硬编码，实际应从JWT token获取）
-	currentUserID := uint(1)
+	// 从JWT token获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
 
 	var req struct {
 		Content   string `json:"content" binding:"required"`
@@ -141,7 +158,7 @@ func UpdateEvaluationComment(c *gin.Context) {
 	}
 
 	// 检查权限：只有评论作者可以编辑
-	if comment.UserID != currentUserID {
+	if comment.UserID != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "无权限编辑此评论"})
 		return
 	}
@@ -168,8 +185,13 @@ func UpdateEvaluationComment(c *gin.Context) {
 func DeleteEvaluationComment(c *gin.Context) {
 	commentID := c.Param("comment_id")
 
-	// 当前用户ID（暂时硬编码，实际应从JWT token获取）
-	currentUserID := uint(1)
+	// 从JWT token获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
 
 	// 查找评论
 	var comment models.EvaluationComment
@@ -179,7 +201,7 @@ func DeleteEvaluationComment(c *gin.Context) {
 	}
 
 	// 检查权限：只有评论作者可以删除
-	if comment.UserID != currentUserID {
+	if comment.UserID != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "无权限删除此评论"})
 		return
 	}

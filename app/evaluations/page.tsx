@@ -46,6 +46,7 @@ import { getPeriodValue } from "@/lib/utils"
 import { EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
+import { toast } from "sonner"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -586,7 +587,7 @@ export default function EvaluationsPage() {
       setNewComment("")
       setNewCommentPrivate(false)
       setIsAddingComment(false)
-      Alert("添加成功", "评论已添加")
+      toast.success("添加评论成功")
     } catch (error) {
       console.error("添加评论失败:", error)
       Alert("添加失败", "添加评论失败，请重试")
@@ -617,7 +618,7 @@ export default function EvaluationsPage() {
       setEditingCommentId(null)
       setEditingCommentContent("")
       setEditingCommentPrivate(false)
-      Alert("保存成功", "评论已更新")
+      toast.success("更新评论成功")
     } catch (error) {
       console.error("更新评论失败:", error)
       Alert("保存失败", "更新评论失败，请重试")
@@ -643,7 +644,7 @@ export default function EvaluationsPage() {
     try {
       await commentApi.delete(selectedEvaluation.id, commentId)
       setComments(comments.filter(c => c.id !== commentId))
-      Alert("删除成功", "评论已删除")
+      toast.success("删除评论成功")
     } catch (error) {
       console.error("删除评论失败:", error)
       Alert("删除失败", "删除评论失败，请重试")
