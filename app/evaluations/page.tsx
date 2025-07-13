@@ -58,13 +58,13 @@ export default function EvaluationsPage() {
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false)
   const [selectedEvaluation, setSelectedEvaluation] = useState<KPIEvaluation | null>(null)
   const [scores, setScores] = useState<KPIScore[]>([])
-  const [activeTab, setActiveTab] = useState("details") // 新增：标签页状态
-  const [editingScore, setEditingScore] = useState<number | null>(null) // 新增：正在编辑的评分ID
-  const [tempScore, setTempScore] = useState<string>("") // 新增：临时评分
-  const [tempComment, setTempComment] = useState<string>("") // 新增：临时评论
-  const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false) // 新增：自评提交状态
-  const [loading, setLoading] = useState(false) // 新增：通用加载状态
-  const [error, setError] = useState<string | null>(null) // 新增：错误状态
+  const [activeTab, setActiveTab] = useState("details")
+  const [editingScore, setEditingScore] = useState<number | null>(null)
+  const [tempScore, setTempScore] = useState<string>("")
+  const [tempComment, setTempComment] = useState<string>("")
+  const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // 分页相关状态
   const [paginationData, setPaginationData] = useState<PaginatedResponse<KPIEvaluation> | null>(null)
@@ -1050,24 +1050,6 @@ export default function EvaluationsPage() {
               />
             </div>
           )}
-
-          {/* 评论分页组件 */}
-          {commentsPaginationData && (
-            <div className="mt-4">
-              <Pagination
-                currentPage={commentsCurrentPage}
-                totalPages={commentsPaginationData.totalPages}
-                pageSize={commentsPageSize}
-                totalItems={commentsPaginationData.total}
-                onPageChange={setCommentsCurrentPage}
-                onPageSizeChange={handleCommentsPageSizeChange}
-                showSizeChanger={false}
-                showQuickJumper={false}
-                pageSizeOptions={[5, 10, 20]}
-                className="justify-center"
-              />
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -1793,6 +1775,24 @@ export default function EvaluationsPage() {
                                 </div>
                               </div>
                             ))}
+                          </div>
+                        )}
+
+                        {/* 评论分页组件 */}
+                        {commentsPaginationData && (
+                          <div className="mt-4">
+                            <Pagination
+                              currentPage={commentsCurrentPage}
+                              totalPages={commentsPaginationData.totalPages}
+                              pageSize={commentsPageSize}
+                              totalItems={commentsPaginationData.total}
+                              onPageChange={setCommentsCurrentPage}
+                              onPageSizeChange={handleCommentsPageSizeChange}
+                              showSizeChanger={false}
+                              showQuickJumper={false}
+                              pageSizeOptions={[5, 10, 20]}
+                              className="justify-center"
+                            />
                           </div>
                         )}
                       </CardContent>
