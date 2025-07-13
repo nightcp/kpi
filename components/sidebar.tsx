@@ -34,20 +34,45 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const navigation = useMemo(() => {
     if (isHR) {
       return [
-        { name: "仪表板", href: "/", icon: Home },
-        { name: "部门管理", href: "/departments", icon: Building },
-        { name: "员工管理", href: "/employees", icon: Users },
-        { name: "KPI模板", href: "/templates", icon: ClipboardList },
-        { name: "考核管理", href: "/evaluations", icon: FileText },
-        { name: "统计分析", href: "/statistics", icon: BarChart3 },
-        { name: "系统设置", href: "/settings", icon: Settings },
-        { name: "帮助中心", href: "/help", icon: HelpCircle },
+        {
+          category: "核心功能",
+          items: [
+            { name: "仪表板", href: "/", icon: Home },
+            { name: "考核管理", href: "/evaluations", icon: FileText },
+            { name: "统计分析", href: "/statistics", icon: BarChart3 },
+          ]
+        },
+        {
+          category: "管理功能", 
+          items: [
+            { name: "部门管理", href: "/departments", icon: Building },
+            { name: "员工管理", href: "/employees", icon: Users },
+            { name: "KPI模板", href: "/templates", icon: ClipboardList },
+          ]
+        },
+        {
+          category: "系统功能",
+          items: [
+            { name: "系统设置", href: "/settings", icon: Settings },
+            { name: "帮助中心", href: "/help", icon: HelpCircle },
+          ]
+        }
       ]
     }
     return [
-      { name: "考核管理", href: "/evaluations", icon: FileText },
-      { name: "系统设置", href: "/settings", icon: Settings },
-      { name: "帮助中心", href: "/help", icon: HelpCircle },
+      {
+        category: "我的功能",
+        items: [
+          { name: "考核管理", href: "/evaluations", icon: FileText },
+        ]
+      },
+      {
+        category: "系统功能",
+        items: [
+          { name: "系统设置", href: "/settings", icon: Settings },
+          { name: "帮助中心", href: "/help", icon: HelpCircle },
+        ]
+      }
     ]
   }, [isHR])
 
@@ -114,25 +139,35 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
         {/* 导航菜单 - 可滚动区域 */}
         <nav className="flex-1 overflow-y-auto py-1">
-          {navigation.map(item => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={handleNavClick}
-                className={cn(
-                  "flex items-center px-6 py-3 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent border-r-2 border-sidebar-primary"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                )}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
-              </Link>
-            )
-          })}
+          {navigation.map((section) => (
+            <div key={section.category} className="mb-2">
+              {/* 分类标题 */}
+              <div className="px-6 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                {section.category}
+              </div>
+              
+              {/* 分类下的菜单项 */}
+              {section.items.map(item => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={handleNavClick}
+                    className={cn(
+                      "flex items-center px-6 py-3 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent border-r-2 border-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <item.icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
       </div>
     </>
