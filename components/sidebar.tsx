@@ -43,7 +43,10 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         { name: "系统设置", href: "/settings", icon: Settings },
       ]
     }
-    return [{ name: "考核管理", href: "/evaluations", icon: FileText }]
+    return [
+      { name: "考核管理", href: "/evaluations", icon: FileText },
+      { name: "系统设置", href: "/settings", icon: Settings },
+    ]
   }, [isHR])
 
   // 点击导航项时关闭移动端菜单
@@ -53,7 +56,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
   // 监听用户角色变化
   useEffect(() => {
-    if (!isHR && pathname !== "/evaluations") {
+    if (!isHR && !["/evaluations", "/settings"].includes(pathname)) {
       router.push("/evaluations")
     }
   }, [isHR, router, pathname])
