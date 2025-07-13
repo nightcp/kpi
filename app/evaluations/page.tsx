@@ -422,7 +422,7 @@ export default function EvaluationsPage() {
       let newStatus = ""
       switch (stage) {
         case "self":
-          newStatus = isManager ? "manager_evaluated" : "self_evaluated"
+          newStatus = "self_evaluated"
           break
         case "manager":
           newStatus = "manager_evaluated"
@@ -453,10 +453,14 @@ export default function EvaluationsPage() {
           break
       }
 
-      await evaluationApi.update(evaluationId, {
+      const response = await evaluationApi.update(evaluationId, {
         status: newStatus,
         total_score: totalScore,
       })
+
+      // 处理后端返回的状态信息（后端可能根据员工是否有主管调整状态）
+      const finalStatus = response.data?.status || newStatus
+      const finalTotalScore = response.data?.total_score || totalScore
 
       if (stage === "confirm") {
         // 员工确认最终得分后，更新最终得分
@@ -472,14 +476,19 @@ export default function EvaluationsPage() {
       if (selectedEvaluation) {
         setSelectedEvaluation({
           ...selectedEvaluation,
-          status: newStatus,
-          total_score: totalScore,
+          status: finalStatus,
+          total_score: finalTotalScore,
         })
       }
 
       // 成功提示
       if (stage === "self") {
-        await Alert("自评", "自评提交成功！请等待上级主管评分。")
+        // 根据最终状态给出相应提示
+        if (finalStatus === "manager_evaluated") {
+          await Alert("自评", "自评提交成功！由于您没有直接主管，评估已自动转入HR审核阶段。")
+        } else {
+          await Alert("自评", "自评提交成功！请等待上级主管评分。")
+        }
       } else if (stage === "manager") {
         await Alert("主管评分", "主管评分提交成功！评估已转入HR审核阶段。")
       } else if (stage === "hr") {

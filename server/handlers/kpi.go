@@ -247,7 +247,7 @@ func UpdateEvaluation(c *gin.Context) {
 	}
 
 	var evaluation models.KPIEvaluation
-	result := models.DB.First(&evaluation, evaluationId)
+	result := models.DB.Preload("Employee").First(&evaluation, evaluationId)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "评估不存在",
@@ -262,6 +262,15 @@ func UpdateEvaluation(c *gin.Context) {
 			"message": err.Error(),
 		})
 		return
+	}
+
+	// 特殊处理：如果状态是self_evaluated，检查员工是否有主管
+	if updateData.Status == "self_evaluated" {
+		// 检查员工是否有直属主管
+		if evaluation.Employee.ManagerID == nil {
+			// 如果没有主管，直接将状态改为manager_evaluated
+			updateData.Status = "manager_evaluated"
+		}
 	}
 
 	result = models.DB.Model(&evaluation).Updates(updateData)
@@ -291,6 +300,9 @@ func UpdateEvaluation(c *gin.Context) {
 			models.DB.Model(&evaluation).Update("total_score", total)
 		}
 	}
+
+	// 重新加载更新后的数据
+	models.DB.Preload("Employee").First(&evaluation, evaluationId)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "评估更新成功",
