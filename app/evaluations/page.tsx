@@ -72,6 +72,9 @@ export default function EvaluationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [employeeFilter, setEmployeeFilter] = useState<string>("all")
 
+  // 添加绩效视图Tab相关状态
+  const [viewTab, setViewTab] = useState<"my" | "team">("my") // 默认显示我的绩效
+
   // 使用分页Hook
   const { currentPage, pageSize, setCurrentPage, handlePageSizeChange, resetPagination } = usePagination(10)
 
@@ -120,8 +123,17 @@ export default function EvaluationsPage() {
         params.status = statusFilter
       }
 
-      if (employeeFilter && employeeFilter !== "all") {
-        params.employee_id = employeeFilter
+      // 根据Tab和角色设置员工筛选
+      if (viewTab === "my") {
+        // 我的绩效：只显示自己的
+        params.employee_id = currentUser?.id.toString()
+      } else if (viewTab === "team") {
+        // 团队绩效：根据角色显示
+        if (employeeFilter && employeeFilter !== "all") {
+          params.employee_id = employeeFilter
+        }
+        // 如果是主管但不是HR，只显示自己管理的员工（这里需要后端支持manager_id筛选）
+        // 暂时使用现有的员工筛选逻辑
       }
 
       const response = await evaluationApi.getAll(params)
@@ -135,7 +147,7 @@ export default function EvaluationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, pageSize, statusFilter, employeeFilter])
+  }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab])
 
   // 获取员工列表
   const fetchEmployees = async () => {
@@ -177,6 +189,28 @@ export default function EvaluationsPage() {
     fetchEmployees()
     fetchTemplates()
   }, [])
+
+  // 初始化默认Tab
+  useEffect(() => {
+    if (currentUser) {
+      // 根据角色设置默认Tab
+      if (isHR) {
+        setViewTab("team") // HR默认显示团队绩效
+      } else if (isManager) {
+        setViewTab("my") // 主管默认显示我的绩效
+      } else {
+        setViewTab("my") // 普通员工只显示自己的绩效
+      }
+    }
+  }, [currentUser, isHR, isManager])
+
+  // 切换Tab时重置筛选和分页
+  const handleTabChange = (tab: "my" | "team") => {
+    setViewTab(tab)
+    setStatusFilter("all")
+    setEmployeeFilter("all")
+    resetPagination()
+  }
 
   // 创建新评估
   const handleCreateEvaluation = async (e: React.FormEvent) => {
@@ -964,19 +998,21 @@ export default function EvaluationsPage() {
                   <SelectItem value="completed">已完成</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="员工筛选" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部员工</SelectItem>
-                  {employees.map(employee => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {viewTab === "team" && (
+                <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="员工筛选" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部员工</SelectItem>
+                    {employees.map(employee => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
@@ -991,6 +1027,34 @@ export default function EvaluationsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* 绩效视图Tab */}
+          {(isManager || isHR) && (
+            <div className="mb-6">
+              <Tabs value={viewTab} onValueChange={(value) => handleTabChange(value as "my" | "team")}>
+                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+                  <TabsTrigger value="my" className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    我的绩效
+                  </TabsTrigger>
+                  <TabsTrigger value="team" className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    {isHR ? "全部绩效" : "团队绩效"}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="my" className="mt-4">
+                  <div className="text-sm text-muted-foreground mb-4">
+                    📊 显示您个人的考核记录和绩效状况
+                  </div>
+                </TabsContent>
+                <TabsContent value="team" className="mt-4">
+                  <div className="text-sm text-muted-foreground mb-4">
+                    {isHR ? "👥 显示全部员工的考核记录" : "👥 显示您管理团队的考核记录"}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -1007,15 +1071,24 @@ export default function EvaluationsPage() {
               {getFilteredEvaluations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    暂无考核数据
+                    {viewTab === "my" ? "您暂无考核记录" : "暂无考核数据"}
                   </TableCell>
                 </TableRow>
               ) : (
                 getFilteredEvaluations.map(evaluation => (
-                  <TableRow key={evaluation.id}>
+                  <TableRow key={evaluation.id} className={
+                    evaluation.employee_id === currentUser?.id ? "bg-blue-50/30 dark:bg-blue-950/20" : ""
+                  }>
                     <TableCell className="font-medium">
-                      {evaluation.employee?.name}
-                      <div className="text-sm text-muted-foreground">{evaluation.employee?.position}</div>
+                      <div className="flex items-center gap-2">
+                        {evaluation.employee_id === currentUser?.id && (
+                          <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+                        )}
+                        <div>
+                          {evaluation.employee?.name}
+                          <div className="text-sm text-muted-foreground">{evaluation.employee?.position}</div>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>{evaluation.employee?.department?.name}</TableCell>
                     <TableCell>{evaluation.template?.name}</TableCell>
