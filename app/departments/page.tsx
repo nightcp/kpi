@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Users, Search } from "lucide-react"
 import { departmentApi, type Department, type PaginatedResponse, type PaginationParams } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
 import { Pagination, usePagination } from "@/components/pagination"
+import { LoadingInline } from "@/components/loading"
 
 export default function DepartmentsPage() {
   const { Confirm } = useAppContext()
@@ -193,7 +194,7 @@ export default function DepartmentsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">加载中...</div>
+            <LoadingInline className="py-8" message="加载中..." />
           ) : departments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">暂无部门数据</div>
           ) : (

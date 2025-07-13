@@ -14,6 +14,7 @@ import { Plus, Edit, Trash2, ClipboardList, Settings, Eye } from "lucide-react"
 import { templateApi, itemApi, type KPITemplate, type KPIItem } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodLabel } from "@/lib/utils"
+import { LoadingInline } from "@/components/loading"
 
 const defaultTemplateFormData = {
   name: "",
@@ -265,7 +266,7 @@ export default function TemplatesPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8">加载中...</div>
+                <LoadingInline className="py-8" message="加载中..." />
               ) : templates.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">暂无模板数据</div>
               ) : (

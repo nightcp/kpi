@@ -40,6 +40,7 @@ import {
 import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api"
 import { getPeriodValue } from "@/lib/utils"
 import { useAppContext } from "@/lib/app-context"
+import { LoadingInline } from "@/components/loading"
 
 export default function StatisticsPage() {
   const { getStatusBadge } = useAppContext()
@@ -133,7 +134,7 @@ export default function StatisticsPage() {
   }
 
   if (loading) {
-    return <div className="p-8 text-center">加载中...</div>
+    return <LoadingInline className="py-8" message="加载中..." />
   }
 
   return (

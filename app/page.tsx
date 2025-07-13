@@ -6,6 +6,7 @@ import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, E
 import { statisticsApi, type DashboardStats } from "@/lib/api"
 import Link from "next/link"
 import { useAppContext } from "@/lib/app-context"
+import { LoadingInline } from "@/components/loading"
 
 export default function Dashboard() {
   const { getStatusBadge } = useAppContext()
@@ -28,7 +29,7 @@ export default function Dashboard() {
   }, [])
 
   if (loading) {
-    return <div className="p-8 text-center">加载中...</div>
+    return <LoadingInline className="py-8" message="加载中..." />
   }
 
   return (

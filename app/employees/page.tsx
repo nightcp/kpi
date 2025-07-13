@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Users, Search } from "lucide-react"
 import { employeeApi, departmentApi, type Employee, type Department, type PaginatedResponse } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
 import { Pagination, usePagination } from "@/components/pagination"
+import { LoadingInline } from "@/components/loading"
 
 export default function EmployeesPage() {
   const { Confirm } = useAppContext()
@@ -312,7 +313,7 @@ export default function EmployeesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">加载中...</div>
+            <LoadingInline className="py-8" message="加载中..." />
           ) : employees.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? "未找到匹配的员工" : "暂无员工数据"}

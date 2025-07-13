@@ -45,6 +45,7 @@ import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
 import { EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
+import { LoadingInline } from "@/components/loading"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -944,7 +945,10 @@ export default function EvaluationsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>考核列表</span>
+            <div className="flex items-center gap-2">
+              考核列表
+              {loading && <LoadingInline />}
+            </div>
             <div className="flex items-center gap-4">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-32">
@@ -986,11 +990,6 @@ export default function EvaluationsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && (
-            <div className="text-center py-8">
-              <div className="text-muted-foreground">加载中...</div>
-            </div>
-          )}
           <Table>
             <TableHeader>
               <TableRow>
