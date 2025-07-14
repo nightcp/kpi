@@ -245,7 +245,7 @@ export function EmployeeSelector({
                 Object.entries(groupedEmployees).map(([department, employees]) => (
                   <div key={department} className="border-b last:border-b-0">
                     <div className="sticky top-0 bg-muted/80 border-b text-sm font-medium text-foreground">
-                      <Label className="px-4 py-3">
+                      <Label className="pl-2 pr-4 py-3">
                         <Checkbox
                           checked={getDepartmentSelectionState(employees) === 'all'}
                           onCheckedChange={() => handleDepartmentSelect(employees)}
@@ -265,7 +265,7 @@ export function EmployeeSelector({
                       {employees.map(employee => (
                         <Label 
                           key={employee.id} 
-                          className="px-4 py-3 hover:bg-muted/50"
+                          className="pl-8 pr-4 py-3 hover:bg-muted/50"
                         >
                           <Checkbox
                             checked={selectedEmployeeIds.includes(employee.id.toString())}
