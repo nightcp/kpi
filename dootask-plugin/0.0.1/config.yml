@@ -1,0 +1,7 @@
+menu_items:
+  - location: application
+    label:
+      en: KPI
+      zh: 绩效考核
+    url: apps/kpi
+    url_type: iframe

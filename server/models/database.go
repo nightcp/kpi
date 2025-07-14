@@ -51,14 +51,28 @@ func InitDB() {
 func CreateTestData() {
 	// 检查是否已有数据
 	var count int64
+	var count2 int64
 	DB.Model(&Department{}).Count(&count)
-	if count > 0 {
+	DB.Model(&KPITemplate{}).Count(&count2)
+	if count > 0 && count2 > 0 {
 		log.Println("测试数据已存在，跳过创建")
 		return
 	}
 
-	log.Println("开始创建测试数据...")
+	// 根据系统模式创建测试数据
+	if os.Getenv("SYSTEM_MODE") == "integrated" {
+		log.Println("集成模式，仅创建KPI模板")
+	} else {
+		log.Println("独立模式，创建测试数据")
+		CreateTestDataForUser()
+	}
+	CreateTestDataForTemplate()
 
+	log.Println("测试数据创建完成")
+}
+
+// 创建测试数据（用户）
+func CreateTestDataForUser() {
 	// 创建部门
 	departments := []Department{
 		{Name: "技术部", Description: "负责产品研发和技术支持"},
@@ -92,7 +106,10 @@ func CreateTestData() {
 	for _, emp := range employees {
 		DB.Create(&emp)
 	}
+}
 
+// 创建测试数据（KPI模板）
+func CreateTestDataForTemplate() {
 	// 创建KPI模板
 	templates := []KPITemplate{
 		{Name: "技术岗位月度考核", Description: "适用于技术人员的月度绩效考核", Period: "monthly"},
@@ -136,8 +153,6 @@ func CreateTestData() {
 	for _, setting := range settings {
 		DB.Create(&setting)
 	}
-
-	log.Println("测试数据创建完成")
 }
 
 // 辅助函数：获取uint指针
