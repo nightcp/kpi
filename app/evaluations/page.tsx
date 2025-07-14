@@ -25,6 +25,8 @@ import {
   Lock,
   Globe,
   Trash2,
+  RefreshCcw,
+  Loader2,
 } from "lucide-react"
 import {
   evaluationApi,
@@ -189,20 +191,6 @@ export default function EvaluationsPage() {
     fetchEmployees()
     fetchTemplates()
   }, [])
-
-  // 初始化默认Tab
-  useEffect(() => {
-    if (currentUser) {
-      // 根据角色设置默认Tab
-      if (isHR) {
-        setViewTab("team") // HR默认显示团队绩效
-      } else if (isManager) {
-        setViewTab("my") // 主管默认显示我的绩效
-      } else {
-        setViewTab("my") // 普通员工只显示自己的绩效
-      }
-    }
-  }, [currentUser, isHR, isManager])
 
   // 切换Tab时重置筛选和分页
   const handleTabChange = (tab: "my" | "team") => {
@@ -1194,7 +1182,12 @@ export default function EvaluationsPage() {
                 </div>
 
                 {/* 标签页 */}
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs value={activeTab} onValueChange={value => {
+                  setActiveTab(value)
+                  if (value === "summary" && comments.length === 0) {
+                    fetchComments(selectedEvaluation.id)
+                  }
+                }}>
                   <TabsList className="grid w-full grid-cols-2 mb-2">
                     <TabsTrigger value="details">评分详情</TabsTrigger>
                     <TabsTrigger value="summary">总结汇总</TabsTrigger>
@@ -1701,12 +1694,29 @@ export default function EvaluationsPage() {
                             <MessageCircle className="w-5 h-5 mr-2" />
                             绩效评论 ({comments.length})
                           </div>
-                          {!isAddingComment && (
-                            <Button variant="outline" size="sm" onClick={() => setIsAddingComment(true)}>
-                              <Plus className="w-4 h-4 mr-1" />
-                              添加评论
+                          <div className="flex items-center justify-end gap-2">
+                            {!isAddingComment && (
+                              <Button variant="outline" size="sm" onClick={() => setIsAddingComment(true)}>
+                                <Plus className="w-4 h-4 mr-1" />
+                                添加评论
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={isLoadingComments}
+                              onClick={() => {
+                                fetchComments(selectedEvaluation.id)
+                              }}
+                            >
+                              {isLoadingComments ? (
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                              ) : (
+                                <RefreshCcw className="w-4 h-4 mr-1" />
+                              )}
+                              刷新
                             </Button>
-                          )}
+                          </div>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -1759,16 +1769,18 @@ export default function EvaluationsPage() {
                         )}
 
                         {/* 评论列表 */}
-                        {isLoadingComments ? (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <p className="text-sm">加载评论中...</p>
-                          </div>
-                        ) : comments.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted/50" />
-                            <p className="text-sm">暂无评论</p>
-                            <p className="text-xs mt-1">点击&quot;添加评论&quot;按钮来记录您的想法</p>
-                          </div>
+                        {comments.length === 0 ? (
+                          isLoadingComments ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <p className="text-sm">加载评论中...</p>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted/50" />
+                              <p className="text-sm">暂无评论</p>
+                              <p className="text-xs mt-1">点击&quot;添加评论&quot;按钮来记录您的想法</p>
+                            </div>
+                          )
                         ) : (
                           <div className="space-y-4">
                             {comments.map(comment => (
