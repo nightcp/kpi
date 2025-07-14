@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
-import { useAppContext } from "@/lib/app-context"
+import { useDootaskContext } from "@/lib/dootask-context"
 
 interface SidebarProps {
   isMobileMenuOpen: boolean
@@ -20,7 +20,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const pathname = usePathname()
   const router = useRouter()
   const { user: currentUser, isHR } = useAuth()
-  const { systemMode } = useAppContext()
+  const { isDootask } = useDootaskContext()
 
   // 根据用户角色生成角色徽章
   const getRoleBadge = (role: string) => {
@@ -48,15 +48,15 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         {
           category: "管理功能", 
           items: [
-            { name: "部门管理", href: "/departments", icon: Building, hidden: systemMode === "integrated" },
-            { name: "员工管理", href: "/employees", icon: Users, hidden: systemMode === "integrated" },
+            { name: "部门管理", href: "/departments", icon: Building },
+            { name: "员工管理", href: "/employees", icon: Users },
             { name: "KPI模板", href: "/templates", icon: ClipboardList },
           ]
         },
         {
           category: "其他功能",
           items: [
-            { name: "系统设置", href: "/settings", icon: Settings, hidden: systemMode === "integrated" },
+            { name: "系统设置", href: "/settings", icon: Settings, hidden: isDootask },
             { name: "帮助中心", href: "/help", icon: HelpCircle },
           ]
         }
@@ -83,7 +83,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
       ...menu,
       items: menu.items.filter(item => !item.hidden)
     })).filter(menu => menu.items.length > 0)
-  }, [isHR, systemMode])
+  }, [isHR, isDootask])
 
   // 点击导航项时关闭移动端菜单
   const handleNavClick = () => {

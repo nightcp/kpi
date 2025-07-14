@@ -202,6 +202,12 @@ export interface LoginRequest {
   password: string
 }
 
+// 用户登录（DooTaskToken）请求类型
+export interface LoginByDooTaskTokenRequest {
+  email: string
+  token: string
+}
+
 export interface RegisterRequest {
   name: string
   email: string
@@ -389,6 +395,9 @@ export const commentApi = {
 export const authApi = {
   // 用户登录
   login: (data: LoginRequest): Promise<LoginResponse> => api.post("/auth/login", data),
+
+  // 用户登录（DooTaskToken）
+  loginByDooTaskToken: (data: LoginByDooTaskTokenRequest): Promise<LoginResponse> => api.post("/auth/login-by-dootask-token", data),
 
   // 用户注册
   register: (data: RegisterRequest): Promise<LoginResponse> => api.post("/auth/register", data),

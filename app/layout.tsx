@@ -8,6 +8,7 @@ import { AppProvider } from "@/lib/app-context"
 
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/lib/theme-context"
+import { DootaskProvider } from "@/lib/dootask-context"
 import ProtectedRoute from "@/components/protected-route"
 import { useState } from "react"
 import "./globals.css"
@@ -62,9 +63,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <ThemeProvider>
           <AppProvider>
-            <AuthProvider>
-              <AppLayout>{children}</AppLayout>
-            </AuthProvider>
+            <DootaskProvider>
+              <AuthProvider>
+                <AppLayout>{children}</AppLayout>
+              </AuthProvider>
+            </DootaskProvider>
           </AppProvider>
         </ThemeProvider>
       </body>

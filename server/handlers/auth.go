@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,12 @@ type Claims struct {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+// 用户登录（DooTaskToken）请求结构
+type LoginByDooTaskTokenRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	Token string `json:"token" binding:"required"`
 }
 
 // 注册请求结构
@@ -184,6 +191,89 @@ func Login(c *gin.Context) {
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "邮箱或密码错误"})
+		return
+	}
+
+	// 生成token
+	token, err := generateToken(&user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token生成失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Token: token,
+		User:  &user,
+	})
+}
+
+// 用户登录（DooTaskToken）
+func LoginByDooTaskToken(c *gin.Context) {
+	var req LoginByDooTaskTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 连接 DooTask
+	dooTaskUser, err := DooTaskCheckUser(req.Token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "DooTask连接失败"})
+		return
+	}
+
+	// 查找用户
+	var user models.Employee
+	if err := models.DB.Preload("Department").Where("email = ?", req.Email).First(&user).Error; err != nil {
+		// 如果用户不存在，则创建用户
+		user = models.Employee{
+			Email: req.Email,
+			Role:  "employee",
+		}
+		if err := models.DB.Create(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "用户创建失败"})
+			return
+		}
+	}
+
+	// 部门信息
+	departments, err := DooTaskUserInfoDepartments(req.Token)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取部门信息失败"})
+		return
+	}
+	user.DepartmentID = 0
+	user.Role = "employee"
+	if len(departments) > 0 {
+		user.DepartmentID = uint(departments[0].ID)
+		user.ManagerID = &departments[0].OwnerUserID
+		if departments[0].OwnerUserID == dooTaskUser.UserID {
+			user.Role = "manager"
+		}
+		// 同步部门信息
+		var existingDepartment models.Department
+		if err := models.DB.Where("dootask_department_id = ?", user.DepartmentID).First(&existingDepartment).Error; err != nil {
+			models.DB.Create(&models.Department{
+				Name:                departments[0].Name,
+				DooTaskDepartmentID: &user.DepartmentID,
+			})
+		} else {
+			existingDepartment.Name = departments[0].Name
+			models.DB.Save(&existingDepartment)
+		}
+	}
+
+	// 更新用户信息
+	user.Name = dooTaskUser.Nickname
+	user.Position = dooTaskUser.Profession
+	if slices.Contains(dooTaskUser.Identity, "admin") {
+		user.Role = "hr"
+	}
+	models.DB.Save(&user)
+
+	// 检查用户是否激活
+	if !user.IsActive {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "账户已被禁用"})
 		return
 	}
 

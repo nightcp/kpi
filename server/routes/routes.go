@@ -23,6 +23,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	{
 		publicRoutes.POST("/register", handlers.Register)
 		publicRoutes.POST("/login", handlers.Login)
+		publicRoutes.POST("/login-by-dootask-token", handlers.LoginByDooTaskToken)
 		publicRoutes.POST("/refresh", handlers.RefreshToken)
 		publicRoutes.GET("/departments", handlers.GetDepartments) // 注册时需要获取部门列表
 	}
