@@ -4,10 +4,10 @@ import { Loader2 } from "lucide-react"
 
 export default function Loading({ message = "正在加载..." }: { message?: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">{message}</p>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+        <p className="text-muted-foreground">{message}</p>
       </div>
     </div>
   )

@@ -3,5 +3,5 @@ menu_items:
     label:
       en: KPI
       zh: 绩效考核
-    url: apps/kpi
+    url: "apps/kpi?theme={system_theme}"
     url_type: iframe

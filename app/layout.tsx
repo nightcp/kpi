@@ -2,7 +2,7 @@
 
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { Sidebar, MobileHeader } from "@/components/sidebar"
 import { AppProvider } from "@/lib/app-context"
 
@@ -53,8 +53,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams()
+  const theme = searchParams.get("theme")
+  
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" className={theme || undefined} data-theme={theme} disable-auto-theme={theme}>
       <head>
         <title>{String(metadata.title)}</title>
         <meta name="description" content={String(metadata.description)} />

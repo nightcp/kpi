@@ -3,21 +3,22 @@
 import { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "light" | "dark" | "system"
+type ActualTheme = "light" | "dark"
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
-  actualTheme: "light" | "dark" // 实际显示的主题（解析system后的结果）
+  actualTheme: ActualTheme
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("system")
-  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light")
+  const [actualTheme, setActualTheme] = useState<ActualTheme>("light")
 
   // 获取系统主题
-  const getSystemTheme = (): "light" | "dark" => {
+  const getSystemTheme = (): ActualTheme => {
     if (typeof window !== "undefined") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
@@ -25,16 +26,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   // 计算实际主题
-  const calculateActualTheme = (currentTheme: Theme): "light" | "dark" => {
+  const calculateActualTheme = (currentTheme: Theme): ActualTheme => {
     if (currentTheme === "system") {
       return getSystemTheme()
     }
-    return currentTheme as "light" | "dark"
+    return currentTheme as ActualTheme
   }
 
   // 应用主题到DOM
-  const applyTheme = (newActualTheme: "light" | "dark") => {
+  const applyTheme = (newActualTheme: ActualTheme) => {
     const root = document.documentElement
+    if (root.getAttribute("disable-auto-theme")) {
+      return
+    }
     root.classList.remove("light", "dark")
     root.classList.add(newActualTheme)
     setActualTheme(newActualTheme)
@@ -93,4 +97,4 @@ export function useTheme() {
     throw new Error("useTheme must be used within a ThemeProvider")
   }
   return context
-} 
+}
