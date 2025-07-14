@@ -8,10 +8,12 @@ import (
 	"strconv"
 	"time"
 
+	"dootask-kpi-server/global"
 	"dootask-kpi-server/models"
 	"dootask-kpi-server/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -234,8 +236,12 @@ func ExportEvaluationToExcel(c *gin.Context) {
 		return
 	}
 
+	// 缓存到内存
+	randomKey := "export_" + uuid.New().String()
+	global.Cache.Set(randomKey, fileName, time.Minute*5)
+
 	// 返回下载URL
-	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", randomKey))
 
 	c.JSON(http.StatusOK, ExportResponse{
 		FileURL:  downloadURL,
@@ -410,8 +416,12 @@ func ExportDepartmentToExcel(c *gin.Context) {
 		return
 	}
 
+	// 缓存到内存
+	randomKey := "export_" + uuid.New().String()
+	global.Cache.Set(randomKey, fileName, time.Minute*5)
+
 	// 返回下载URL
-	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", randomKey))
 
 	c.JSON(http.StatusOK, ExportResponse{
 		FileURL:  downloadURL,
@@ -603,8 +613,12 @@ func ExportPeriodToExcel(c *gin.Context) {
 		return
 	}
 
+	// 缓存到内存
+	randomKey := "export_" + uuid.New().String()
+	global.Cache.Set(randomKey, fileName, time.Minute*5)
+
 	// 返回下载URL
-	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", fileName))
+	downloadURL := utils.GetFileURL(c.GetString("base_url"), fmt.Sprintf("/api/download/exports/%s", randomKey))
 
 	c.JSON(http.StatusOK, ExportResponse{
 		FileURL:  downloadURL,
@@ -622,8 +636,16 @@ func ExportPeriodToExcel(c *gin.Context) {
 
 // 文件下载处理
 func DownloadFile(c *gin.Context) {
-	fileName := c.Param("filename")
-	filePath := filepath.Join("./public/exports", fileName)
+	randomKey := c.Param("randomKey")
+
+	fileName, ok := global.Cache.Get(randomKey)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "文件不存在",
+		})
+		return
+	}
+	filePath := filepath.Join("./public/exports", fileName.(string))
 
 	// 检查文件是否存在
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -635,7 +657,7 @@ func DownloadFile(c *gin.Context) {
 
 	// 设置响应头
 	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Disposition", "attachment; filename="+fileName.(string))
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 	// 返回文件

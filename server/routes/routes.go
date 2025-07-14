@@ -33,6 +33,12 @@ func SetupRoutes(r *gin.RouterGroup) {
 		settingsRoutes.PUT("", handlers.RoleMiddleware("hr"), handlers.UpdateSystemSettings) // 只有HR可以修改设置
 	}
 
+	// 文件下载（所有用户）
+	downloadRoutes := r.Group("/download")
+	{
+		downloadRoutes.GET("/exports/:randomKey", handlers.DownloadFile)
+	}
+
 	// 需要认证的路由
 	protected := r.Group("/")
 	protected.Use(handlers.AuthMiddleware())
@@ -125,13 +131,6 @@ func SetupRoutes(r *gin.RouterGroup) {
 			exportRoutes.GET("/evaluation/:id", handlers.ExportEvaluationToExcel)
 			exportRoutes.GET("/department/:id", handlers.ExportDepartmentToExcel)
 			exportRoutes.GET("/period/:period", handlers.ExportPeriodToExcel)
-		}
-
-		// 文件下载（管理员和HR）
-		downloadRoutes := protected.Group("/download")
-		downloadRoutes.Use(handlers.RoleMiddleware("hr", "manager"))
-		{
-			downloadRoutes.GET("/exports/:filename", handlers.DownloadFile)
 		}
 	}
 }
