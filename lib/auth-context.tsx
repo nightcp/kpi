@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { authApi, LoginRequest, RegisterRequest, type AuthUser } from "@/lib/api"
+import { useDootaskContext } from "./dootask-context"
 
 interface AuthContextType {
   user: AuthUser | null
@@ -21,11 +22,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { loading: dooTaskLoading } = useDootaskContext()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   // 初始化时检查用户状态
   useEffect(() => {
+    if (dooTaskLoading) {
+      return
+    }
+
     const initializeAuth = async () => {
       try {
         const token = authApi.getToken()
@@ -54,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     initializeAuth()
-  }, [])
+  }, [dooTaskLoading])
 
   const login = async (data: LoginRequest) => {
     try {
