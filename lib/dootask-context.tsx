@@ -7,6 +7,7 @@ import { authApi, settingsApi } from "./api"
 
 interface DootaskContextType {
   loading: boolean
+  error: string | null
   isDootask: boolean
   dooTaskUser: DooTaskUserInfo | null
 }
@@ -15,6 +16,7 @@ const DootaskContext = createContext<DootaskContextType | undefined>(undefined)
 
 export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isDootask, setIsDootask] = useState(false)
   const [dooTaskUser, setDooTaskUser] = useState<DooTaskUserInfo | null>(null)
 
@@ -28,7 +30,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
 
         const dooTaskUser = await getUserInfo()
         if (!dooTaskUser) {
-          console.warn("DootaskContext error: dooTaskUser is null")
+          setError("无法获取身份")
           return
         }
 
@@ -41,7 +43,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
         setDooTaskUser(dooTaskUser)
         setIsDootask(true)
       } catch (error) {
-        console.error("DootaskContext error:", error)
+        setError(error as string)
       } finally {
         setLoading(false)
       }
@@ -53,6 +55,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
     <DootaskContext.Provider
       value={{
         loading,
+        error,
         isDootask,
         dooTaskUser,
       }}

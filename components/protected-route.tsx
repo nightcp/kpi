@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import Loading from "./loading"
 import { useDootaskContext } from "@/lib/dootask-context"
+import { AlertCircle } from "lucide-react"
+import { Button } from "./ui/button"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -18,7 +20,7 @@ export default function ProtectedRoute({
   redirectTo = "/auth/login",
 }: ProtectedRouteProps) {
   const { user, loading, isHR, logout } = useAuth()
-  const { loading: dooTaskLoading } = useDootaskContext()
+  const { loading: dooTaskLoading, error: dooTaskError } = useDootaskContext()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -52,6 +54,20 @@ export default function ProtectedRoute({
   // 显示加载状态
   if (loading || dooTaskLoading) {
     return <Loading />
+  }
+
+  // 显示错误状态
+  if (dooTaskError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400 animate-bounce" />
+          <h2 className="text-2xl font-semibold text-red-500 mb-2">系统异常</h2>
+          <p className="text-gray-600 mb-4">{dooTaskError}</p>
+          <Button onClick={() => window.location.reload()}>刷新</Button>
+        </div>
+      </div>
+    )
   }
 
   // 如果需要认证但用户未登录，不渲染内容

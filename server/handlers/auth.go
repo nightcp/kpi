@@ -86,7 +86,7 @@ func verifyToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-// 用户注册
+// Register 用户注册
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -167,7 +167,7 @@ func Register(c *gin.Context) {
 	})
 }
 
-// 用户登录
+// Login 用户登录
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -207,7 +207,14 @@ func Login(c *gin.Context) {
 	})
 }
 
-// 用户登录（DooTaskToken）
+// LoginByDooTaskToken 用户登录（DooTaskToken）
+// 1、如果用户不存在，则创建用户
+//   - 创建用户时，如果部门不存在，则创建部门
+//   - 如果是管理员，则设置为HR
+//   - 如果是员工，且是部门负责人，则设置为经理
+//
+// 2、如果用户存在，则更新用户信息
+//   - 只更新用户名、职位
 func LoginByDooTaskToken(c *gin.Context) {
 	var req LoginByDooTaskTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -218,58 +225,60 @@ func LoginByDooTaskToken(c *gin.Context) {
 	// 连接 DooTask
 	dooTaskUser, err := DooTaskCheckUser(req.Token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "DooTask连接失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "验证身份失败"})
 		return
 	}
 
 	// 查找用户
 	var user models.Employee
 	if err := models.DB.Preload("Department").Where("email = ?", req.Email).First(&user).Error; err != nil {
-		// 如果用户不存在，则创建用户
+		// 如果用户不存在
 		user = models.Employee{
-			Email: req.Email,
-			Role:  "employee",
+			Name:     dooTaskUser.Nickname,
+			Email:    req.Email,
+			Position: dooTaskUser.Profession,
 		}
+		if slices.Contains(dooTaskUser.Identity, "admin") {
+			user.Role = "hr"
+		} else {
+			user.Role = "employee"
+		}
+
+		// 检测部门
+		if departments, err := DooTaskUserInfoDepartments(req.Token); err == nil {
+			if len(departments) > 0 {
+				var existingDepartment models.Department
+				if err := models.DB.Where("name = ?", departments[0].Name).First(&existingDepartment).Error; err != nil {
+					existingDepartment = models.Department{
+						Name: departments[0].Name,
+					}
+					if err := models.DB.Create(&existingDepartment).Error; err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "部门创建失败"})
+						return
+					}
+				}
+
+				// 设置部门ID
+				user.DepartmentID = existingDepartment.ID
+
+				// 如果用户是员工，且是部门负责人，则设置为经理
+				if user.Role == "employee" && departments[0].OwnerUserID == dooTaskUser.UserID {
+					user.Role = "manager"
+				}
+			}
+		}
+
+		// 创建用户
 		if err := models.DB.Create(&user).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "用户创建失败"})
 			return
 		}
+	} else {
+		// 更新用户信息
+		user.Name = dooTaskUser.Nickname
+		user.Position = dooTaskUser.Profession
+		models.DB.Save(&user)
 	}
-
-	// 部门信息
-	departments, err := DooTaskUserInfoDepartments(req.Token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取部门信息失败"})
-		return
-	}
-	user.DepartmentID = 0
-	user.Role = "employee"
-	if len(departments) > 0 {
-		user.DepartmentID = uint(departments[0].ID)
-		user.ManagerID = &departments[0].OwnerUserID
-		if departments[0].OwnerUserID == dooTaskUser.UserID {
-			user.Role = "manager"
-		}
-		// 同步部门信息
-		var existingDepartment models.Department
-		if err := models.DB.Where("dootask_department_id = ?", user.DepartmentID).First(&existingDepartment).Error; err != nil {
-			models.DB.Create(&models.Department{
-				Name:                departments[0].Name,
-				DooTaskDepartmentID: &user.DepartmentID,
-			})
-		} else {
-			existingDepartment.Name = departments[0].Name
-			models.DB.Save(&existingDepartment)
-		}
-	}
-
-	// 更新用户信息
-	user.Name = dooTaskUser.Nickname
-	user.Position = dooTaskUser.Profession
-	if slices.Contains(dooTaskUser.Identity, "admin") {
-		user.Role = "hr"
-	}
-	models.DB.Save(&user)
 
 	// 检查用户是否激活
 	if !user.IsActive {
@@ -290,7 +299,7 @@ func LoginByDooTaskToken(c *gin.Context) {
 	})
 }
 
-// 获取当前用户信息
+// GetCurrentUser 获取当前用户信息
 func GetCurrentUser(c *gin.Context) {
 	// 从中间件获取用户ID
 	userID, exists := c.Get("user_id")
@@ -308,7 +317,7 @@ func GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user})
 }
 
-// 刷新token
+// RefreshToken 刷新token
 func RefreshToken(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -351,7 +360,7 @@ func RefreshToken(c *gin.Context) {
 	})
 }
 
-// JWT认证中间件
+// AuthMiddleware JWT认证中间件
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 标记为已认证
@@ -404,7 +413,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// 角色权限中间件
+// RoleMiddleware 角色权限中间件
 func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 先执行认证中间件
