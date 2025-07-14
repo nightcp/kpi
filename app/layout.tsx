@@ -1,16 +1,12 @@
-"use client"
-
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { usePathname, useSearchParams } from "next/navigation"
-import { Sidebar, MobileHeader } from "@/components/sidebar"
+import { headers } from "next/headers"
 import { AppProvider } from "@/lib/app-context"
 
 import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/lib/theme-context"
 import { DootaskProvider } from "@/lib/dootask-context"
-import ProtectedRoute from "@/components/protected-route"
-import { useState } from "react"
+import { LayoutProvider } from "@/lib/layout-context"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -21,41 +17,10 @@ const metadata: Metadata = {
   description: "基于NextJS和React的KPI绩效考核管理系统",
 }
 
-const AppLayout = ({ children }: { children: React.ReactNode }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
-  const isAuthPage = pathname.startsWith("/auth")
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers()
+  const theme = headersList.get("x-theme")
 
-  if (isAuthPage) {
-    // 认证页面布局（不需要侧边栏）
-    return <ProtectedRoute requireAuth={false}>{children}</ProtectedRoute>
-  }
-
-  // 主要应用程序布局（需要认证）
-  return (
-    <ProtectedRoute requireAuth={true}>
-      <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
-        {/* 移动端头部 */}
-        <MobileHeader onMenuClick={() => setIsMobileMenuOpen(true)} />
-
-        {/* 侧边栏 */}
-        <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
-
-        {/* 主内容区域 */}
-        <main className="flex-1 bg-muted/30 min-w-0 overflow-y-auto lg:h-screen">
-          <div className="p-4 lg:p-6">
-            <div className="max-w-7xl mx-auto">{children}</div>
-          </div>
-        </main>
-      </div>
-    </ProtectedRoute>
-  )
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const searchParams = useSearchParams()
-  const theme = searchParams.get("theme")
-  
   return (
     <html lang="zh-CN" className={theme || undefined} data-theme={theme} disable-auto-theme={theme}>
       <head>
@@ -68,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AppProvider>
             <DootaskProvider>
               <AuthProvider>
-                <AppLayout>{children}</AppLayout>
+                <LayoutProvider>{children}</LayoutProvider>
               </AuthProvider>
             </DootaskProvider>
           </AppProvider>

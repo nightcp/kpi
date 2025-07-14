@@ -57,6 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const systemTheme = getSystemTheme()
       applyTheme(systemTheme)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 监听系统主题变化

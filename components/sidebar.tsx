@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
+import { closeApp } from "@dootask/tools"
 import { useDootaskContext } from "@/lib/dootask-context"
 
 interface SidebarProps {
@@ -43,46 +44,46 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             { name: "仪表板", href: "/", icon: Home },
             { name: "考核管理", href: "/evaluations", icon: FileText },
             { name: "统计分析", href: "/statistics", icon: BarChart3 },
-          ]
+          ],
         },
         {
-          category: "管理功能", 
+          category: "管理功能",
           items: [
             { name: "部门管理", href: "/departments", icon: Building },
             { name: "员工管理", href: "/employees", icon: Users },
             { name: "KPI模板", href: "/templates", icon: ClipboardList },
-          ]
+          ],
         },
         {
           category: "其他功能",
           items: [
             { name: "系统设置", href: "/settings", icon: Settings, hidden: isDootask },
             { name: "帮助中心", href: "/help", icon: HelpCircle },
-          ]
-        }
+          ],
+        },
       ]
     } else {
       menus = [
         {
           category: "我的功能",
-          items: [
-            { name: "考核管理", href: "/evaluations", icon: FileText },
-          ]
+          items: [{ name: "考核管理", href: "/evaluations", icon: FileText }],
         },
         {
           category: "系统功能",
           items: [
             { name: "系统设置", href: "/settings", icon: Settings },
             { name: "帮助中心", href: "/help", icon: HelpCircle },
-          ]
-        }
+          ],
+        },
       ]
     }
 
-    return menus.map(menu => ({
-      ...menu,
-      items: menu.items.filter(item => !item.hidden)
-    })).filter(menu => menu.items.length > 0)
+    return menus
+      .map(menu => ({
+        ...menu,
+        items: menu.items.filter(item => !item.hidden),
+      }))
+      .filter(menu => menu.items.length > 0)
   }, [isHR, isDootask])
 
   // 点击导航项时关闭移动端菜单
@@ -130,7 +131,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             {currentUser && (
               <div className="text-sm text-sidebar-foreground/70 flex items-center gap-2">
                 <div>
-                  {currentUser.name} - {currentUser.department?.name || '未知部门'}
+                  {currentUser.name} - {currentUser.department?.name || "未知部门"}
                 </div>
                 <div>{getRoleBadge(currentUser.role)}</div>
               </div>
@@ -148,13 +149,13 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
         {/* 导航菜单 - 可滚动区域 */}
         <nav className="flex-1 overflow-y-auto py-1">
-          {navigation.map((section) => (
+          {navigation.map(section => (
             <div key={section.category} className="mb-2">
               {/* 分类标题 */}
               <div className="px-6 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                 {section.category}
               </div>
-              
+
               {/* 分类下的菜单项 */}
               {section.items.map(item => {
                 const isActive = pathname === item.href
@@ -185,6 +186,8 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
 // 移动端头部组件
 export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
+  const { isDootask } = useDootaskContext()
+
   return (
     <div className="lg:hidden bg-background shadow-sm border-b border-border flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-2">
@@ -192,7 +195,13 @@ export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu className="w-6 h-6 text-muted-foreground" />
         </button>
         <h1 className="text-lg font-semibold text-foreground">KPI考核系统</h1>
-        <div className="w-10 h-10"></div> {/* 占位符，保持标题居中 */}
+        {isDootask ? (
+          <button onClick={() => closeApp()} className="p-2 rounded-md hover:bg-accent">
+            <X className="w-6 h-6 text-muted-foreground" />
+          </button>
+        ) : (
+          <div className="w-10 h-10"></div>
+        )}
       </div>
     </div>
   )
