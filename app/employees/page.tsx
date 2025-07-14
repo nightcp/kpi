@@ -328,7 +328,7 @@ export default function EmployeesPage() {
                   <TableHead>部门</TableHead>
                   <TableHead>直属上级</TableHead>
                   <TableHead>角色</TableHead>
-                  <TableHead>状态</TableHead>
+                  {/* <TableHead>状态</TableHead> */}
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
@@ -341,11 +341,11 @@ export default function EmployeesPage() {
                     <TableCell>{employee.department?.name}</TableCell>
                     <TableCell>{employee.manager?.name || "-"}</TableCell>
                     <TableCell>{getRoleBadge(employee.role)}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Badge variant={employee.is_active ? "default" : "secondary"}>
                         {employee.is_active ? "活跃" : "停用"}
                       </Badge>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell className="text-right space-x-2">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
                         <Edit className="w-4 h-4" />

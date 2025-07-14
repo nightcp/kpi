@@ -276,7 +276,7 @@ export default function TemplatesPage() {
                       <TableHead>模板名称</TableHead>
                       <TableHead>描述</TableHead>
                       <TableHead>考核周期</TableHead>
-                      <TableHead>状态</TableHead>
+                      {/* <TableHead>状态</TableHead> */}
                       <TableHead>创建时间</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
@@ -289,11 +289,11 @@ export default function TemplatesPage() {
                         <TableCell>
                           <Badge variant="outline">{getPeriodLabel(template.period)}</Badge>
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <Badge variant={template.is_active ? "default" : "secondary"}>
                             {template.is_active ? "活跃" : "停用"}
                           </Badge>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right space-x-2">
                           <Button variant="outline" size="sm" onClick={() => handleSelectTemplate(template)}>
