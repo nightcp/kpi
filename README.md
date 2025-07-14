@@ -107,8 +107,8 @@ dootask-kpi/
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd dootask-kpi
+git clone https://github.com/dootask/kpi
+cd kpi
 ```
 
 2. **安装前端依赖**
@@ -188,19 +188,6 @@ CGO_ENABLED=1 go build -o kpi-server main.go
 - ✅ 系统设置和配置管理
 - ✅ 暗黑模式支持
 - ✅ 组件化设计，易于扩展
-
-## 🔧 开发脚本
-
-```bash
-# 开发环境
-npm run dev           # 启动前端开发服务器
-npm run dev:all       # 启动前后端开发环境
-
-# 生产环境
-npm run build         # 构建前端应用
-npm run start         # 启动生产环境前端
-npm run lint          # 代码质量检查
-```
 
 ## 🤝 默认测试账户
 
