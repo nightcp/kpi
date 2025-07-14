@@ -2,15 +2,18 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"dootask-kpi-server/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 系统设置响应结构
 type SystemSettingsResponse struct {
-	AllowRegistration bool `json:"allow_registration"`
+	AllowRegistration bool   `json:"allow_registration"`
+	SystemMode        string `json:"system_mode"` // 系统模式，独立模式: standalone，集成模式: integrated
 }
 
 // 设置更新请求结构
@@ -21,7 +24,7 @@ type UpdateSettingsRequest struct {
 // 获取系统设置
 func GetSystemSettings(c *gin.Context) {
 	var settings SystemSettingsResponse
-	
+
 	// 获取注册设置
 	var allowRegistrationSetting models.SystemSetting
 	if err := models.DB.Where("key = ?", "allow_registration").First(&allowRegistrationSetting).Error; err == nil {
@@ -30,6 +33,9 @@ func GetSystemSettings(c *gin.Context) {
 		// 如果设置不存在，默认为true
 		settings.AllowRegistration = true
 	}
+
+	// 获取系统模式
+	settings.SystemMode = getSystemMode()
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": settings,
@@ -47,7 +53,7 @@ func UpdateSystemSettings(c *gin.Context) {
 	// 更新注册设置
 	allowRegistrationValue := strconv.FormatBool(req.AllowRegistration)
 	var allowRegistrationSetting models.SystemSetting
-	
+
 	// 先查找是否存在
 	if err := models.DB.Where("key = ?", "allow_registration").First(&allowRegistrationSetting).Error; err != nil {
 		// 如果不存在，创建新的设置
@@ -73,6 +79,7 @@ func UpdateSystemSettings(c *gin.Context) {
 		"message": "设置更新成功",
 		"data": SystemSettingsResponse{
 			AllowRegistration: req.AllowRegistration,
+			SystemMode:        getSystemMode(),
 		},
 	})
 }
@@ -89,7 +96,7 @@ func GetSetting(key string) (string, error) {
 // 设置单个设置项（供其他组件使用）
 func SetSetting(key, value, settingType string) error {
 	var setting models.SystemSetting
-	
+
 	// 先查找是否存在
 	if err := models.DB.Where("key = ?", key).First(&setting).Error; err != nil {
 		// 如果不存在，创建新的设置
@@ -107,4 +114,13 @@ func SetSetting(key, value, settingType string) error {
 		}
 		return models.DB.Save(&setting).Error
 	}
+}
+
+// 获取系统模式
+func getSystemMode() string {
+	systemMode := "standalone"
+	if os.Getenv("SYSTEM_MODE") == "integrated" {
+		systemMode = "integrated"
+	}
+	return systemMode
 }

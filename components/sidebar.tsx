@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
+import { useAppContext } from "@/lib/app-context"
 
 interface SidebarProps {
   isMobileMenuOpen: boolean
@@ -19,6 +20,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const pathname = usePathname()
   const router = useRouter()
   const { user: currentUser, isHR } = useAuth()
+  const { systemMode } = useAppContext()
 
   // 根据用户角色生成角色徽章
   const getRoleBadge = (role: string) => {
@@ -32,8 +34,9 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
   // 根据用户角色动态生成导航菜单
   const navigation = useMemo(() => {
+    let menus = []
     if (isHR) {
-      return [
+      menus = [
         {
           category: "核心功能",
           items: [
@@ -45,9 +48,25 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         {
           category: "管理功能", 
           items: [
-            { name: "部门管理", href: "/departments", icon: Building },
-            { name: "员工管理", href: "/employees", icon: Users },
+            { name: "部门管理", href: "/departments", icon: Building, hidden: systemMode === "integrated" },
+            { name: "员工管理", href: "/employees", icon: Users, hidden: systemMode === "integrated" },
             { name: "KPI模板", href: "/templates", icon: ClipboardList },
+          ]
+        },
+        {
+          category: "其他功能",
+          items: [
+            { name: "系统设置", href: "/settings", icon: Settings, hidden: systemMode === "integrated" },
+            { name: "帮助中心", href: "/help", icon: HelpCircle },
+          ]
+        }
+      ]
+    } else {
+      menus = [
+        {
+          category: "我的功能",
+          items: [
+            { name: "考核管理", href: "/evaluations", icon: FileText },
           ]
         },
         {
@@ -59,22 +78,12 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         }
       ]
     }
-    return [
-      {
-        category: "我的功能",
-        items: [
-          { name: "考核管理", href: "/evaluations", icon: FileText },
-        ]
-      },
-      {
-        category: "系统功能",
-        items: [
-          { name: "系统设置", href: "/settings", icon: Settings },
-          { name: "帮助中心", href: "/help", icon: HelpCircle },
-        ]
-      }
-    ]
-  }, [isHR])
+
+    return menus.map(menu => ({
+      ...menu,
+      items: menu.items.filter(item => !item.hidden)
+    })).filter(menu => menu.items.length > 0)
+  }, [isHR, systemMode])
 
   // 点击导航项时关闭移动端菜单
   const handleNavClick = () => {

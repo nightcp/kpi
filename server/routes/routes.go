@@ -9,14 +9,6 @@ import (
 
 // 设置所有路由
 func SetupRoutes(r *gin.RouterGroup) {
-	// 公开路由（不需要认证）
-	publicRoutes := r.Group("/auth")
-	{
-		publicRoutes.POST("/register", handlers.Register)
-		publicRoutes.POST("/login", handlers.Login)
-		publicRoutes.POST("/refresh", handlers.RefreshToken)
-		publicRoutes.GET("/departments", handlers.GetDepartments) // 注册时需要获取部门列表
-	}
 
 	// 健康检查（公开）
 	r.GET("/health", func(c *gin.Context) {
@@ -26,14 +18,23 @@ func SetupRoutes(r *gin.RouterGroup) {
 		})
 	})
 
-	// 系统设置（部分需要HR权限）
+	// 认证路由（公开）
+	publicRoutes := r.Group("/auth")
+	{
+		publicRoutes.POST("/register", handlers.Register)
+		publicRoutes.POST("/login", handlers.Login)
+		publicRoutes.POST("/refresh", handlers.RefreshToken)
+		publicRoutes.GET("/departments", handlers.GetDepartments) // 注册时需要获取部门列表
+	}
+
+	// 系统设置（公开，部分需要HR权限）
 	settingsRoutes := r.Group("/settings")
 	{
 		settingsRoutes.GET("", handlers.GetSystemSettings)                                   // 所有用户可以读取设置
 		settingsRoutes.PUT("", handlers.RoleMiddleware("hr"), handlers.UpdateSystemSettings) // 只有HR可以修改设置
 	}
 
-	// 文件下载（所有用户）
+	// 文件下载（公开）
 	downloadRoutes := r.Group("/download")
 	{
 		downloadRoutes.GET("/exports/:randomKey", handlers.DownloadFile)

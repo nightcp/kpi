@@ -179,9 +179,15 @@ export interface ExportResponse {
   message: string
 }
 
-// 设置相关接口
-export interface SystemSettings {
+// 系统设置请求类型
+export interface SystemSettingsRequest {
   allow_registration: boolean
+}
+
+// 系统设置响应类型
+export interface SystemSettingsResponse {
+  allow_registration: boolean
+  system_mode: "standalone" | "integrated" // 系统模式，独立模式: standalone，集成模式: integrated
 }
 
 // 消息类型
@@ -429,10 +435,11 @@ export const authApi = {
 // 系统设置API
 export const settingsApi = {
   // 获取系统设置
-  get: (): Promise<{ data: SystemSettings }> => api.get("/settings"),
+  get: (): Promise<{ data: SystemSettingsResponse }> => api.get("/settings"),
 
   // 更新系统设置
-  update: (data: SystemSettings): Promise<{ data: SystemSettings; message: string }> => api.put("/settings", data),
+  update: (data: SystemSettingsRequest): Promise<{ data: SystemSettingsResponse; message: string }> =>
+    api.put("/settings", data),
 }
 
 export default api

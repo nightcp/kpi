@@ -1,12 +1,17 @@
 "use client"
 
-import { createContext, useCallback, useContext, useRef } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import AlertLayout, { AlertLayoutRef, AlertProps } from "@/components/alert"
 import { Toaster } from "@/components/ui/sonner"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, Eye, FileText, Star } from "lucide-react"
+import { settingsApi } from "./api"
+
+type SystemMode = "standalone" | "integrated" | "loading" | "error"
 
 interface AppContextType {
+  systemMode: SystemMode
+
   Alert: (title: string | AlertProps, message?: string) => Promise<void>
   Confirm: (title: string | AlertProps, message?: string) => Promise<boolean>
 
@@ -17,6 +22,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const alertLayoutRef = useRef<AlertLayoutRef>(null)
+
+  const [systemMode, setSystemMode] = useState<SystemMode>("loading")
 
   const Alert = useCallback((title: string | AlertProps, message?: string) => {
     return new Promise<void>(resolve => {
@@ -91,9 +98,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  useEffect(() => {
+    const fetchSystemMode = async () => {
+      try {
+        const response = await settingsApi.get()
+        setSystemMode(response.data.system_mode)
+      } catch (error) {
+        console.error("获取系统模式失败:", error)
+        setSystemMode("error")
+      }
+    }
+    fetchSystemMode()
+  }, [])
+
   return (
     <AppContext.Provider
       value={{
+        systemMode,
         Alert,
         Confirm,
         getStatusBadge,
