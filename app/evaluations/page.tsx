@@ -744,13 +744,13 @@ export default function EvaluationsPage() {
   // 获取状态流转进度
   const getStatusProgress = (status: string) => {
     const statusMap = {
-      pending: { step: 1, total: 4, label: "等待自评" },
-      self_evaluated: { step: 2, total: 4, label: "等待主管评估" },
-      manager_evaluated: { step: 3, total: 4, label: "等待HR审核" },
-      pending_confirm: { step: 4, total: 4, label: "等待确认" },
-      completed: { step: 4, total: 4, label: "已完成" },
+      pending: { step: 1, total: 5, label: "等待自评" },
+      self_evaluated: { step: 2, total: 5, label: "等待主管评估" },
+      manager_evaluated: { step: 3, total: 5, label: "等待HR审核" },
+      pending_confirm: { step: 4, total: 5, label: "等待确认" },
+      completed: { step: 5, total: 5, label: "已完成" },
     }
-    return statusMap[status as keyof typeof statusMap] || { step: 0, total: 4, label: "未知状态" }
+    return statusMap[status as keyof typeof statusMap] || { step: 0, total: 5, label: "未知状态" }
   }
 
   // 验证评估是否可以进入下一阶段
@@ -1030,7 +1030,7 @@ export default function EvaluationsPage() {
           {/* 绩效视图Tab */}
           {(isManager || isHR) && (
             <div className="mb-6">
-              <Tabs value={viewTab} onValueChange={(value) => handleTabChange(value as "my" | "team")}>
+              <Tabs value={viewTab} onValueChange={value => handleTabChange(value as "my" | "team")}>
                 <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
                   <TabsTrigger value="my" className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -1042,9 +1042,7 @@ export default function EvaluationsPage() {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="my" className="mt-4">
-                  <div className="text-sm text-muted-foreground mb-4">
-                    📊 显示您个人的考核记录和绩效状况
-                  </div>
+                  <div className="text-sm text-muted-foreground mb-4">📊 显示您个人的考核记录和绩效状况</div>
                 </TabsContent>
                 <TabsContent value="team" className="mt-4">
                   <div className="text-sm text-muted-foreground mb-4">
@@ -1076,12 +1074,13 @@ export default function EvaluationsPage() {
                 </TableRow>
               ) : (
                 getFilteredEvaluations.map(evaluation => (
-                  <TableRow key={evaluation.id} className={
-                    evaluation.employee_id === currentUser?.id ? "bg-blue-50/30 dark:bg-blue-950/20" : ""
-                  }>
+                  <TableRow
+                    key={evaluation.id}
+                    className={evaluation.employee_id === currentUser?.id ? "bg-blue-50/30 dark:bg-blue-950/20" : ""}
+                  >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        {evaluation.employee_id === currentUser?.id && (
+                        {evaluation.employee_id === currentUser?.id && evaluation.status !== "completed" && (
                           <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
                         )}
                         <div>
@@ -1136,7 +1135,7 @@ export default function EvaluationsPage() {
           {selectedEvaluation && (
             <>
               {/* 可滚动的内容区域 */}
-              <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6">
+              <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6 pb-2">
                 {/* 基本信息卡片 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-muted/50 p-3 rounded">
@@ -1362,7 +1361,7 @@ export default function EvaluationsPage() {
                                 {Math.abs(
                                   scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
                                     scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
-                                )}
+                                ).toFixed(1)}
                               </div>
                               <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
                             </div>
@@ -1876,7 +1875,7 @@ export default function EvaluationsPage() {
               </div>
 
               {/* 固定的流程控制按钮区域 */}
-              <div className="flex-shrink-0 border-t pt-4">
+              <div className="flex-shrink-0">
                 <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0">
                   {canPerformAction(selectedEvaluation, "self") && (
                     <Button
