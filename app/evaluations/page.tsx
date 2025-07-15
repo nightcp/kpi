@@ -520,7 +520,7 @@ export default function EvaluationsPage() {
         case "hr":
         case "confirm":
           // HR审核或员工确认最终得分后，总分为最终得分总和
-          totalScore = scores.reduce((acc, score) => acc + (score.final_score || score.manager_score || 0), 0)
+          totalScore = scores.reduce((acc, score) => acc + (score.final_score || score.hr_score || score.manager_score || 0), 0)
           break
       }
 
@@ -538,7 +538,7 @@ export default function EvaluationsPage() {
         setScores(scores =>
           scores.map(s => ({
             ...s,
-            final_score: s.manager_score ?? s.self_score,
+            final_score: s.hr_score ?? s.manager_score ?? s.self_score,
           }))
         )
       }
