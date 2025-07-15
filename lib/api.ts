@@ -108,7 +108,10 @@ export interface KPIScore {
   self_comment: string
   manager_score?: number
   manager_comment: string
+  hr_score?: number
+  hr_comment: string
   final_score?: number
+  final_comment: string
   created_at: string
   item?: KPIItem
 }
@@ -326,7 +329,9 @@ export const scoreApi = {
     api.put(`/scores/${id}/self`, data),
   updateManager: (id: number, data: { manager_score?: number; manager_comment: string }): Promise<{ data: KPIScore }> =>
     api.put(`/scores/${id}/manager`, data),
-  updateFinal: (id: number, data: { final_score?: number }): Promise<{ data: KPIScore }> =>
+  updateHR: (id: number, data: { hr_score?: number; hr_comment: string }): Promise<{ data: KPIScore }> =>
+    api.put(`/scores/${id}/hr`, data),
+  updateFinal: (id: number, data: { final_score?: number; final_comment?: string }): Promise<{ data: KPIScore }> =>
     api.put(`/scores/${id}/final`, data),
 }
 

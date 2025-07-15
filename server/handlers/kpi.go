@@ -579,6 +579,58 @@ func UpdateManagerScore(c *gin.Context) {
 	})
 }
 
+// 更新HR评分
+func UpdateHRScore(c *gin.Context) {
+	id := c.Param("id")
+	scoreId, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "无效的评分ID",
+		})
+		return
+	}
+
+	var score models.KPIScore
+	result := models.DB.First(&score, scoreId)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "评分记录不存在",
+		})
+		return
+	}
+
+	var updateData struct {
+		HRScore   *float64 `json:"hr_score"`
+		HRComment string   `json:"hr_comment"`
+	}
+
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "请求参数错误",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	result = models.DB.Model(&score).Updates(map[string]interface{}{
+		"hr_score":   updateData.HRScore,
+		"hr_comment": updateData.HRComment,
+	})
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "更新HR评分失败",
+			"message": result.Error.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "HR评分更新成功",
+		"data":    score,
+	})
+}
+
 // 更新最终得分
 func UpdateFinalScore(c *gin.Context) {
 	id := c.Param("id")
@@ -600,7 +652,8 @@ func UpdateFinalScore(c *gin.Context) {
 	}
 
 	var updateData struct {
-		FinalScore *float64 `json:"final_score"`
+		FinalScore   *float64 `json:"final_score"`
+		FinalComment string   `json:"final_comment"`
 	}
 
 	if err := c.ShouldBindJSON(&updateData); err != nil {
@@ -612,7 +665,8 @@ func UpdateFinalScore(c *gin.Context) {
 	}
 
 	result = models.DB.Model(&score).Updates(map[string]interface{}{
-		"final_score": updateData.FinalScore,
+		"final_score":   updateData.FinalScore,
+		"final_comment": updateData.FinalComment,
 	})
 
 	if result.Error != nil {

@@ -308,7 +308,7 @@ export default function EvaluationsPage() {
   }
 
   // 找到下一个未评分的项目
-  const findNextUnscored = (currentScoreId: number, type: "self" | "manager"): number | null => {
+  const findNextUnscored = (currentScoreId: number, type: "self" | "manager" | "hr"): number | null => {
     const currentIndex = scores.findIndex(s => s.id === currentScoreId)
     if (currentIndex === -1) return null
 
@@ -319,6 +319,9 @@ export default function EvaluationsPage() {
         return score.id
       }
       if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
+        return score.id
+      }
+      if (type === "hr" && (!score.hr_score || score.hr_score === 0)) {
         return score.id
       }
     }
@@ -332,13 +335,16 @@ export default function EvaluationsPage() {
       if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
         return score.id
       }
+      if (type === "hr" && (!score.hr_score || score.hr_score === 0)) {
+        return score.id
+      }
     }
 
     return null
   }
 
   // 滚动到指定的评分项目
-  const scrollToNextUnscored = (currentScoreId: number, type?: "self" | "manager") => {
+  const scrollToNextUnscored = (currentScoreId: number, type?: "self" | "manager" | "hr") => {
     let nextUnscored: number | null = currentScoreId
     if (type) {
       nextUnscored = findNextUnscored(currentScoreId, type)
@@ -362,7 +368,7 @@ export default function EvaluationsPage() {
   }
 
   // 保存评分
-  const handleSaveScore = async (scoreId: number, type: "self" | "manager") => {
+  const handleSaveScore = async (scoreId: number, type: "self" | "manager" | "hr") => {
     try {
       // 获取当前编辑的评分项目
       const currentScore = scores.find(s => s.id === scoreId)
@@ -384,6 +390,8 @@ export default function EvaluationsPage() {
         await scoreApi.updateSelf(scoreId, { self_score: scoreValue, self_comment: tempComment })
       } else if (type === "manager") {
         await scoreApi.updateManager(scoreId, { manager_score: scoreValue, manager_comment: tempComment })
+      } else if (type === "hr") {
+        await scoreApi.updateHR(scoreId, { hr_score: scoreValue, hr_comment: tempComment })
       }
 
       if (selectedEvaluation) {
@@ -1396,14 +1404,14 @@ export default function EvaluationsPage() {
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                  {score.final_score || score.manager_score || score.self_score || 0}
+                                  {score.final_score || score.hr_score || score.manager_score || score.self_score || 0}
                                 </div>
                                 <div className="text-sm text-muted-foreground">当前得分</div>
                               </div>
                             </div>
 
                             {/* 评分区域 */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                               {/* 自评区域 */}
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium flex items-center h-6">
@@ -1555,6 +1563,81 @@ export default function EvaluationsPage() {
                                 )}
                               </div>
 
+                              {/* HR评分区域 */}
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center h-6">
+                                  HR评分
+                                  {canPerformAction(selectedEvaluation, "hr") && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="ml-2 h-6 w-6 p-0"
+                                      onClick={() => handleStartEdit(score.id, score.hr_score, score.hr_comment)}
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </Label>
+
+                                {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
+                                  <div className="space-y-2">
+                                    <div className="space-y-2">
+                                      <div className="space-y-1">
+                                        <Input
+                                          ref={scoreInputRef}
+                                          type="number"
+                                          value={tempScore}
+                                          onChange={e =>
+                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
+                                          }
+                                          min={0}
+                                          max={score.item?.max_score}
+                                          step="0.1"
+                                          placeholder="HR评分"
+                                        />
+                                        <div className="text-xs text-gray-500">
+                                          评分范围：0 - {score.item?.max_score || 100}分
+                                        </div>
+                                      </div>
+                                      {/* HR评分参考标准 */}
+                                      <div className="text-xs text-muted-foreground bg-indigo-50/80 dark:bg-indigo-950/50 p-2 rounded border border-indigo-200 dark:border-indigo-800">
+                                        <div className="font-medium mb-1">HR评分参考：</div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>员工自评：{score.self_score || 0}分</div>
+                                          <div>主管评分：{score.manager_score || 0}分</div>
+                                        </div>
+                                        <div className="mt-2 text-indigo-700 dark:text-indigo-300">
+                                          💡 建议：基于员工自评和主管评分，结合公司标准给出客观评价
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <Textarea
+                                      value={tempComment}
+                                      onChange={e => setTempComment(e.target.value)}
+                                      placeholder="HR评价说明（请说明调整原因和改进建议）"
+                                      rows={4}
+                                    />
+                                    <div className="flex space-x-2">
+                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "hr")}>
+                                        <Save className="w-3 h-3 mr-1" />
+                                        保存
+                                      </Button>
+                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                                        <X className="w-3 h-3 mr-1" />
+                                        取消
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <div className="text-sm font-medium">{score.hr_score || "未评分"}</div>
+                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
+                                      {score.hr_comment || "暂无说明"}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
                               {/* 最终得分区域 */}
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium flex items-center h-6">
@@ -1596,12 +1679,13 @@ export default function EvaluationsPage() {
                                       {/* HR最终评分参考 */}
                                       <div className="text-xs text-muted-foreground bg-indigo-50/80 dark:bg-indigo-950/50 p-2 rounded border border-indigo-200 dark:border-indigo-800">
                                         <div className="font-medium mb-1">最终评分参考：</div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
                                           <div>员工自评：{score.self_score || 0}分</div>
                                           <div>主管评分：{score.manager_score || 0}分</div>
+                                          <div>HR评分：{score.hr_score || 0}分</div>
                                         </div>
                                         <div className="mt-2 text-indigo-700 dark:text-indigo-300">
-                                          💡 建议：通常采用主管评分作为最终得分，如有争议可适当调整
+                                          💡 建议：优先采用HR评分，如无HR评分则采用主管评分
                                         </div>
                                       </div>
                                     </div>
@@ -1630,9 +1714,9 @@ export default function EvaluationsPage() {
                                   </div>
                                 ) : (
                                   <div>
-                                    {score.final_score || score.manager_score ? (
+                                    {score.final_score || score.hr_score || score.manager_score ? (
                                       <div className="text-2xl font-bold text-green-600">
-                                        {score.final_score || score.manager_score}
+                                        {score.final_score || score.hr_score || score.manager_score}
                                       </div>
                                     ) : (
                                       <div className="text-lg font-bold text-green-600">未评分</div>
@@ -1663,7 +1747,7 @@ export default function EvaluationsPage() {
                             <div className="text-4xl font-bold text-blue-600 mt-2">
                               {scores.reduce(
                                 (acc, score) =>
-                                  acc + (score.final_score || score.manager_score || score.self_score || 0),
+                                  acc + (score.final_score || score.hr_score || score.manager_score || score.self_score || 0),
                                 0
                               )}
                             </div>
@@ -1672,7 +1756,7 @@ export default function EvaluationsPage() {
                             </p>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="grid grid-cols-4 gap-4 text-center">
                             <div>
                               <div className="text-lg font-semibold">
                                 {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
@@ -1684,6 +1768,12 @@ export default function EvaluationsPage() {
                                 {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
                               </div>
                               <div className="text-sm text-muted-foreground">主管评分</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-semibold">
+                                {scores.reduce((acc, score) => acc + (score.hr_score || 0), 0)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">HR评分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">

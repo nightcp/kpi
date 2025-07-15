@@ -113,6 +113,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			scoreRoutes.GET("/evaluation/:evaluationId", handlers.GetEvaluationScores)
 			scoreRoutes.PUT("/:id/self", handlers.UpdateSelfScore)
 			scoreRoutes.PUT("/:id/manager", handlers.RoleMiddleware("manager", "hr"), handlers.UpdateManagerScore)
+			scoreRoutes.PUT("/:id/hr", handlers.RoleMiddleware("hr"), handlers.UpdateHRScore)
 			scoreRoutes.PUT("/:id/final", handlers.RoleMiddleware("hr"), handlers.UpdateFinalScore)
 		}
 
