@@ -36,7 +36,7 @@ echo ""
 echo "🔍 检查服务状态..."
 
 # 检查Go后端
-for i in {1..5}; do
+for i in {1..30}; do
     sleep 1
     if curl -s http://localhost:8080/health > /dev/null; then
         echo "✅ Go后端启动成功 (PID: $BACKEND_PID)"
@@ -47,6 +47,7 @@ for i in {1..5}; do
         kill $BACKEND_PID 2>/dev/null
         exit 1
     fi
+    echo "🔍 检查Go后端状态... $i"
 done
 
 # 启动前端（阻塞进程）

@@ -989,14 +989,14 @@ export default function EvaluationsPage() {
       {/* 评估列表 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               考核列表
               {loading && <LoadingInline />}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-auto">
                   <SelectValue placeholder="状态筛选" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1010,7 +1010,7 @@ export default function EvaluationsPage() {
               </Select>
               {viewTab === "team" && (
                 <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-auto">
                     <SelectValue placeholder="员工筛选" />
                   </SelectTrigger>
                   <SelectContent>

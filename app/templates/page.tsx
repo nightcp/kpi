@@ -320,7 +320,7 @@ export default function TemplatesPage() {
           {selectedTemplate && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center">
                     <Settings className="w-5 h-5 mr-2" />
                     KPI项目配置
@@ -427,7 +427,7 @@ export default function TemplatesPage() {
                             <Badge variant="outline">{item.order}</Badge>
                           </TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>
+                          <TableCell className="min-w-40">
                             <pre className="whitespace-pre-wrap break-words text-sm text-muted-foreground line-clamp-5">
                               {item.description}
                             </pre>
