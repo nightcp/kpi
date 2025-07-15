@@ -19,10 +19,10 @@ const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers()
-  const theme = headersList.get("x-theme")
+  const theme = headersList.get("x-theme") || undefined
 
   return (
-    <html lang="zh-CN" className={theme || undefined} data-theme={theme} disable-auto-theme={theme}>
+    <html lang="zh-CN" className={theme} data-theme={theme} disable-auto-theme={theme}>
       <head>
         <title>{String(metadata.title)}</title>
         <meta name="description" content={String(metadata.description)} />

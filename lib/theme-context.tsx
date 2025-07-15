@@ -41,6 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
     root.classList.remove("light", "dark")
     root.classList.add(newActualTheme)
+    root.setAttribute("data-theme", newActualTheme)
     setActualTheme(newActualTheme)
   }
 
