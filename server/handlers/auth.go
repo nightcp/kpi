@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"dootask-kpi-server/models"
+	"github.com/dootask/tools/go/utils"
 )
 
 // JWT密钥 - 生产环境中应该使用环境变量
@@ -223,7 +224,8 @@ func LoginByDooTaskToken(c *gin.Context) {
 	}
 
 	// 连接 DooTask
-	dooTaskUser, err := DooTaskCheckUser(req.Token)
+	client := utils.NewClient(req.Token)
+	dooTaskUser, err := client.GetUserInfo()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "验证身份失败"})
 		return
@@ -245,7 +247,8 @@ func LoginByDooTaskToken(c *gin.Context) {
 		}
 
 		// 检测部门
-		if departments, err := DooTaskUserInfoDepartments(req.Token); err == nil {
+		client := utils.NewClient(req.Token)
+		if departments, err := client.GetUserDepartments(); err == nil {
 			if len(departments) > 0 {
 				var existingDepartment models.Department
 				if err := models.DB.Where("name = ?", departments[0].Name).First(&existingDepartment).Error; err != nil {
