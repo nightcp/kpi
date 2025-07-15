@@ -68,6 +68,7 @@ export default function EvaluationsPage() {
   const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const scoreInputRef = useRef<HTMLInputElement>(null)
 
   // 分页相关状态
   const [paginationData, setPaginationData] = useState<PaginatedResponse<KPIEvaluation> | null>(null)
@@ -568,6 +569,13 @@ export default function EvaluationsPage() {
     }
   }
 
+  // 当编辑状态变化时，自动聚焦到分数输入框
+  useEffect(() => {
+    if (editingScore !== null && scoreInputRef.current) {
+      scoreInputRef.current.focus()
+    }
+  }, [editingScore])
+
   // 获取评论列表
   const fetchComments = useCallback(
     async (evaluationId: number) => {
@@ -944,8 +952,8 @@ export default function EvaluationsPage() {
             <div className="text-xl sm:text-2xl font-bold">
               {getFilteredEvaluations.length > 0
                 ? Math.round(
-                    getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length
-                  )
+                  getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length
+                )
                 : 0}
             </div>
             <p className="text-xs text-muted-foreground">总体考核平均分</p>
@@ -1217,20 +1225,19 @@ export default function EvaluationsPage() {
                               <div
                                 className="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
                                 style={{
-                                  width: `${
-                                    scores.length > 0
+                                  width: `${scores.length > 0
                                       ? (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) *
-                                        100
+                                      100
                                       : 0
-                                  }%`,
+                                    }%`,
                                 }}
                               />
                             </div>
                             <span className="text-sm font-medium text-green-900 dark:text-green-100">
                               {scores.length > 0
                                 ? Math.round(
-                                    (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
-                                  )
+                                  (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
+                                )
                                 : 0}
                               %
                             </span>
@@ -1275,10 +1282,10 @@ export default function EvaluationsPage() {
                               <span className="text-xs font-medium text-orange-900 dark:text-orange-100">
                                 {scores.length > 0
                                   ? Math.round(
-                                      (scores.filter(s => s.manager_score && s.manager_score > 0).length /
-                                        scores.length) *
-                                        100
-                                    )
+                                    (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                                      scores.length) *
+                                    100
+                                  )
                                   : 0}
                                 %
                               </span>
@@ -1287,13 +1294,12 @@ export default function EvaluationsPage() {
                               <div
                                 className="bg-orange-600 dark:bg-orange-400 h-2 rounded-full transition-all duration-300"
                                 style={{
-                                  width: `${
-                                    scores.length > 0
+                                  width: `${scores.length > 0
                                       ? (scores.filter(s => s.manager_score && s.manager_score > 0).length /
-                                          scores.length) *
-                                        100
+                                        scores.length) *
+                                      100
                                       : 0
-                                  }%`,
+                                    }%`,
                                 }}
                               />
                             </div>
@@ -1328,8 +1334,8 @@ export default function EvaluationsPage() {
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                      scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
-                                    ).toFixed(1)
+                                    scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
+                                  ).toFixed(1)
                                   : 0}
                               </div>
                             </div>
@@ -1342,8 +1348,8 @@ export default function EvaluationsPage() {
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                      scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
-                                    ).toFixed(1)
+                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
+                                  ).toFixed(1)
                                   : 0}
                               </div>
                             </div>
@@ -1352,7 +1358,7 @@ export default function EvaluationsPage() {
                               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {Math.abs(
                                   scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                                  scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                                 ).toFixed(1)}
                               </div>
                               <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
@@ -1362,15 +1368,15 @@ export default function EvaluationsPage() {
                           {/* 差异分析提示 */}
                           {Math.abs(
                             scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                              scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                            scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                           ) > 10 && (
-                            <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
-                              <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                                ⚠️ <strong>注意：</strong>
-                                员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
+                              <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
+                                <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                                  ⚠️ <strong>注意：</strong>
+                                  员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
                       </div>
                     )}
@@ -1418,6 +1424,7 @@ export default function EvaluationsPage() {
                                   <div className="space-y-2">
                                     <div className="space-y-1">
                                       <Input
+                                        ref={scoreInputRef}
                                         type="number"
                                         value={tempScore}
                                         onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
@@ -1480,6 +1487,7 @@ export default function EvaluationsPage() {
                                     <div className="space-y-2">
                                       <div className="space-y-1">
                                         <Input
+                                          ref={scoreInputRef}
                                           type="number"
                                           value={tempScore}
                                           onChange={e =>
@@ -1570,6 +1578,7 @@ export default function EvaluationsPage() {
                                     <div className="space-y-2">
                                       <div className="space-y-1">
                                         <Input
+                                          ref={scoreInputRef}
                                           type="number"
                                           value={tempScore}
                                           onChange={e =>
@@ -1632,8 +1641,8 @@ export default function EvaluationsPage() {
                                       {score.final_score
                                         ? "已确认"
                                         : canPerformAction(selectedEvaluation, "hr")
-                                        ? "待HR确认"
-                                        : "等待确认"}
+                                          ? "待HR确认"
+                                          : "等待确认"}
                                     </div>
                                   </div>
                                 )}
