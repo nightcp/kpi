@@ -716,6 +716,16 @@ export default function EvaluationsPage() {
     return evaluations // 后端已经处理了分页和筛选，前端直接使用
   }, [currentUser, evaluations])
 
+  // 根据评估状态获取得分标签
+  const getScoreLabel = (evaluationStatus: string) => {
+    switch (evaluationStatus) {
+      case "completed":
+        return "最终得分"
+      default:
+        return "当前得分"
+    }
+  }
+
   // 检查是否可以进行某个操作
   const canPerformAction = (evaluation: KPIEvaluation, action: "self" | "manager" | "hr" | "confirm") => {
     if (!currentUser) return false
@@ -1406,12 +1416,12 @@ export default function EvaluationsPage() {
                                 <div className="text-2xl font-bold text-blue-600">
                                   {score.final_score || score.hr_score || score.manager_score || score.self_score || 0}
                                 </div>
-                                <div className="text-sm text-muted-foreground">当前得分</div>
+                                <div className="text-sm text-muted-foreground">{getScoreLabel(selectedEvaluation.status)}</div>
                               </div>
                             </div>
 
                             {/* 评分区域 */}
-                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                               {/* 自评区域 */}
                               <div className="space-y-2">
                                 <Label className="text-sm font-medium flex items-center h-6">
@@ -1638,99 +1648,6 @@ export default function EvaluationsPage() {
                                 )}
                               </div>
 
-                              {/* 最终得分区域 */}
-                              <div className="space-y-2">
-                                <Label className="text-sm font-medium flex items-center h-6">
-                                  最终得分
-                                  {canPerformAction(selectedEvaluation, "hr") && !score.final_score && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="ml-2 h-6 w-6 p-0"
-                                      onClick={() =>
-                                        handleStartEdit(score.id, score.manager_score, score.manager_comment)
-                                      }
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
-                                  )}
-                                </Label>
-
-                                {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
-                                  <div className="space-y-2">
-                                    <div className="space-y-2">
-                                      <div className="space-y-1">
-                                        <Input
-                                          ref={scoreInputRef}
-                                          type="number"
-                                          value={tempScore}
-                                          onChange={e =>
-                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
-                                          }
-                                          min={0}
-                                          max={score.item?.max_score}
-                                          step="0.1"
-                                          placeholder="最终评分"
-                                        />
-                                        <div className="text-xs text-gray-500">
-                                          评分范围：0 - {score.item?.max_score || 100}分
-                                        </div>
-                                      </div>
-                                      {/* HR最终评分参考 */}
-                                      <div className="text-xs text-muted-foreground bg-indigo-50/80 dark:bg-indigo-950/50 p-2 rounded border border-indigo-200 dark:border-indigo-800">
-                                        <div className="font-medium mb-1">最终评分参考：</div>
-                                        <div className="grid grid-cols-3 gap-2 text-xs">
-                                          <div>员工自评：{score.self_score || 0}分</div>
-                                          <div>主管评分：{score.manager_score || 0}分</div>
-                                          <div>HR评分：{score.hr_score || 0}分</div>
-                                        </div>
-                                        <div className="mt-2 text-indigo-700 dark:text-indigo-300">
-                                          💡 建议：优先采用HR评分，如无HR评分则采用主管评分
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <Textarea
-                                      value={tempComment}
-                                      onChange={e => setTempComment(e.target.value)}
-                                      placeholder="HR审核备注（可选）"
-                                      rows={2}
-                                    />
-                                    <div className="flex space-x-2">
-                                      <Button
-                                        size="sm"
-                                        onClick={() => {
-                                          // HR确认最终得分
-                                          handleSaveScore(score.id, "manager") // 临时使用manager类型，实际应该是final
-                                        }}
-                                      >
-                                        <Save className="w-3 h-3 mr-1" />
-                                        确认最终得分
-                                      </Button>
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                        <X className="w-3 h-3 mr-1" />
-                                        取消
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div>
-                                    {score.final_score || score.hr_score || score.manager_score ? (
-                                      <div className="text-2xl font-bold text-green-600">
-                                        {score.final_score || score.hr_score || score.manager_score}
-                                      </div>
-                                    ) : (
-                                      <div className="text-lg font-bold text-green-600">未评分</div>
-                                    )}
-                                    <div className="text-sm text-muted-foreground mt-1">
-                                      {score.final_score
-                                        ? "已确认"
-                                        : canPerformAction(selectedEvaluation, "hr")
-                                          ? "待HR确认"
-                                          : "等待确认"}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                           </div>
                         </CardContent>
