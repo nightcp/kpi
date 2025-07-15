@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,7 +21,6 @@ import {
   Star,
   Edit2,
   Save,
-  X,
   MessageCircle,
   Lock,
   Globe,
@@ -62,13 +62,11 @@ export default function EvaluationsPage() {
   const [selectedEvaluation, setSelectedEvaluation] = useState<KPIEvaluation | null>(null)
   const [scores, setScores] = useState<KPIScore[]>([])
   const [activeTab, setActiveTab] = useState("details")
-  const [editingScore, setEditingScore] = useState<number | null>(null)
-  const [tempScore, setTempScore] = useState<string>("")
-  const [tempComment, setTempComment] = useState<string>("")
+
   const [isSubmittingSelfEvaluation, setIsSubmittingSelfEvaluation] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const scoreInputRef = useRef<HTMLInputElement>(null)
+
 
   // 分页相关状态
   const [paginationData, setPaginationData] = useState<PaginatedResponse<KPIEvaluation> | null>(null)
@@ -102,6 +100,9 @@ export default function EvaluationsPage() {
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null) // 正在编辑的评论ID
   const [editingCommentContent, setEditingCommentContent] = useState<string>("") // 编辑中的评论内容
   const [editingCommentPrivate, setEditingCommentPrivate] = useState<boolean>(false) // 编辑中的评论是否私有
+  
+  // Popover 状态控制
+  const [openPopovers, setOpenPopovers] = useState<{[key: string]: boolean}>({}) // 控制每个Popover的开关状态
   const [formData, setFormData] = useState({
     employee_ids: [] as string[],
     template_id: "",
@@ -254,19 +255,7 @@ export default function EvaluationsPage() {
     }
   }
 
-  // 开始编辑评分
-  const handleStartEdit = (scoreId: number, currentScore?: number, currentComment?: string) => {
-    setEditingScore(scoreId)
-    setTempScore(currentScore ? currentScore.toString() : "")
-    setTempComment(currentComment || "")
-  }
 
-  // 取消编辑评分
-  const handleCancelEdit = () => {
-    setEditingScore(null)
-    setTempScore("")
-    setTempComment("")
-  }
 
   // 验证评分范围
   const validateScore = (score: string, maxScore: number): { isValid: boolean; message?: string } => {
@@ -290,22 +279,7 @@ export default function EvaluationsPage() {
     return { isValid: true }
   }
 
-  // 处理输入值变化
-  const handleScoreChange = (value: string, maxScore: number) => {
-    setTempScore(value)
 
-    // 实时验证并限制输入
-    if (value !== "") {
-      const numValue = parseFloat(value)
-      if (!isNaN(numValue)) {
-        if (numValue < 0) {
-          setTempScore("0")
-        } else if (numValue > maxScore) {
-          setTempScore(maxScore.toString())
-        }
-      }
-    }
-  }
 
   // 找到下一个未评分的项目
   const findNextUnscored = (currentScoreId: number, type: "self" | "manager" | "hr"): number | null => {
@@ -354,7 +328,7 @@ export default function EvaluationsPage() {
     }
 
     // 使用 setTimeout 确保DOM已更新
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       const element = detailsRef.current?.querySelector(`[data-score-id="${nextUnscored}"]`) as HTMLElement
       if (!element) {
         return
@@ -364,11 +338,22 @@ export default function EvaluationsPage() {
         block: "center",
         inline: "nearest",
       })
-    })
+    }, 100)
   }
 
-  // 保存评分
-  const handleSaveScore = async (scoreId: number, type: "self" | "manager" | "hr") => {
+  // 验证评分输入
+  const handleScoreInputValidation = (e: React.FormEvent<HTMLInputElement>, maxScore: number) => {
+    const input = e.target as HTMLInputElement
+    const value = parseFloat(input.value)
+    if (value > maxScore) {
+      input.value = maxScore.toString()
+    } else if (value < 0) {
+      input.value = "0"
+    }
+  }
+
+  // 从 Popover 保存评分
+  const handleSaveScoreFromPopover = async (scoreId: number, type: "self" | "manager" | "hr", scoreValue: string, commentValue: string) => {
     try {
       // 获取当前编辑的评分项目
       const currentScore = scores.find(s => s.id === scoreId)
@@ -378,20 +363,20 @@ export default function EvaluationsPage() {
       }
 
       const maxScore = currentScore.item?.max_score || 100
-      const validation = validateScore(tempScore, maxScore)
+      const validation = validateScore(scoreValue, maxScore)
 
       if (!validation.isValid) {
         Alert("输入错误", validation.message || "评分输入无效")
         return
       }
 
-      const scoreValue = parseFloat(tempScore)
+      const numericScore = parseFloat(scoreValue)
       if (type === "self") {
-        await scoreApi.updateSelf(scoreId, { self_score: scoreValue, self_comment: tempComment })
+        await scoreApi.updateSelf(scoreId, { self_score: numericScore, self_comment: commentValue })
       } else if (type === "manager") {
-        await scoreApi.updateManager(scoreId, { manager_score: scoreValue, manager_comment: tempComment })
+        await scoreApi.updateManager(scoreId, { manager_score: numericScore, manager_comment: commentValue })
       } else if (type === "hr") {
-        await scoreApi.updateHR(scoreId, { hr_score: scoreValue, hr_comment: tempComment })
+        await scoreApi.updateHR(scoreId, { hr_score: numericScore, hr_comment: commentValue })
       }
 
       if (selectedEvaluation) {
@@ -399,15 +384,26 @@ export default function EvaluationsPage() {
         fetchEvaluations()
       }
 
-      setEditingScore(null)
-      setTempScore("")
-      setTempComment("")
-      scrollToNextUnscored(scoreId, type)
+      // 关闭 Popover
+      const popoverKey = `${scoreId}-${type}`
+      setOpenPopovers(prev => ({
+        ...prev,
+        [popoverKey]: false
+      }))
+
+      // 延迟执行 scrollToNextUnscored，确保 Popover 关闭动画完成
+      setTimeout(() => {
+        scrollToNextUnscored(scoreId, type)
+      }, 100)
+      
+      toast.success("评分保存成功")
     } catch (error) {
       console.error("更新评分失败:", error)
       Alert("保存失败", "更新评分失败，请重试")
     }
   }
+
+
 
   // 完成阶段
   const handleCompleteStage = async (evaluationId: number, stage: string) => {
@@ -459,7 +455,7 @@ export default function EvaluationsPage() {
     // HR审核阶段的特殊处理
     if (stage === "hr") {
       // 检查是否所有项目都已确定最终得分
-      const unconfirmedItems = scores.filter(score => !score.final_score && !score.manager_score)
+      const unconfirmedItems = scores.filter(score => !score.hr_score || score.hr_score === 0)
       if (unconfirmedItems.length > 0) {
         await Alert("HR审核", `请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`)
         scrollToNextUnscored(unconfirmedItems[0].id)
@@ -550,6 +546,7 @@ export default function EvaluationsPage() {
           status: finalStatus,
           total_score: finalTotalScore,
         })
+        await fetchEvaluationScores(selectedEvaluation.id)
       }
 
       // 成功提示
@@ -577,12 +574,7 @@ export default function EvaluationsPage() {
     }
   }
 
-  // 当编辑状态变化时，自动聚焦到分数输入框
-  useEffect(() => {
-    if (editingScore !== null && scoreInputRef.current) {
-      scoreInputRef.current.focus()
-    }
-  }, [editingScore])
+
 
   // 获取评论列表
   const fetchComments = useCallback(
@@ -1335,6 +1327,7 @@ export default function EvaluationsPage() {
                             <li>• 审核员工自评与上级评分的合理性和一致性</li>
                             <li>• 检查评分是否符合公司绩效标准和政策</li>
                             <li>• 确认最终评分并可进行必要的调整</li>
+                            <li>• 注意：如果员工无直属主管，主管评分会自动填入自评分数</li>
                             <li>• 完成审核后，评估将进入员工确认阶段</li>
                           </ul>
                         </div>
@@ -1427,59 +1420,83 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   自评分数
                                   {canPerformAction(selectedEvaluation, "self") && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="ml-2 h-6 w-6 p-0"
-                                      onClick={() => handleStartEdit(score.id, score.self_score, score.self_comment)}
+                                    <Popover 
+                                      open={openPopovers[`${score.id}-self`] || false}
+                                      onOpenChange={(open) => {
+                                        const popoverKey = `${score.id}-self`
+                                        setOpenPopovers(prev => ({
+                                          ...prev,
+                                          [popoverKey]: open
+                                        }))
+                                      }}
                                     >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="ml-2 h-6 w-6 p-0"
+                                        >
+                                          <Edit2 className="w-3 h-3" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80" align="start">
+                                        <div className="grid gap-4">
+                                          <div className="space-y-2">
+                                            <h4 className="leading-none font-medium">自评编辑</h4>
+                                            <p className="text-muted-foreground text-sm">
+                                              编辑您的自评分数和评价说明
+                                            </p>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <div className="grid grid-cols-3 items-center gap-4">
+                                              <Label htmlFor="self-score">评分</Label>
+                                              <Input
+                                                id="self-score"
+                                                type="number"
+                                                min={0}
+                                                max={score.item?.max_score}
+                                                step="0.1"
+                                                defaultValue={score.self_score?.toString() || ""}
+                                                className="col-span-2 h-8"
+                                                placeholder={`0-${score.item?.max_score || 100}`}
+                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                              />
+                                            </div>
+                                            <div className="grid grid-cols-3 items-start gap-4">
+                                              <Label htmlFor="self-comment">评价说明</Label>
+                                              <Textarea
+                                                id="self-comment"
+                                                defaultValue={score.self_comment || ""}
+                                                className="col-span-2 min-h-[60px] resize-none"
+                                                placeholder="请输入评价说明..."
+                                              />
+                                            </div>
+                                            <div className="flex justify-end space-x-2 pt-2">
+                                              <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                  const scoreInput = document.getElementById('self-score') as HTMLInputElement
+                                                  const commentInput = document.getElementById('self-comment') as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(score.id, 'self', scoreInput.value, commentInput.value)
+                                                }}
+                                              >
+                                                <Save className="w-3 h-3 mr-1" />
+                                                保存
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
                                   )}
                                 </Label>
 
-                                {editingScore === score.id && canPerformAction(selectedEvaluation, "self") ? (
-                                  <div className="space-y-2">
-                                    <div className="space-y-1">
-                                      <Input
-                                        ref={scoreInputRef}
-                                        type="number"
-                                        value={tempScore}
-                                        onChange={e => handleScoreChange(e.target.value, score.item?.max_score || 100)}
-                                        min={0}
-                                        max={score.item?.max_score}
-                                        step="0.1"
-                                        placeholder="评分"
-                                      />
-                                      <div className="text-xs text-muted-foreground">
-                                        评分范围：0 - {score.item?.max_score || 100}分
-                                      </div>
-                                    </div>
-                                    <Textarea
-                                      value={tempComment}
-                                      onChange={e => setTempComment(e.target.value)}
-                                      placeholder="评价说明"
-                                      rows={3}
-                                    />
-                                    <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "self")}>
-                                        <Save className="w-3 h-3 mr-1" />
-                                        保存
-                                      </Button>
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                        <X className="w-3 h-3 mr-1" />
-                                        取消
-                                      </Button>
-                                    </div>
+                                <div>
+                                  <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
+                                  <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
+                                    {score.self_comment || "暂无说明"}
                                   </div>
-                                ) : (
-                                  <div>
-                                    <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
-                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
-                                      {score.self_comment || "暂无说明"}
-                                    </div>
-                                  </div>
-                                )}
+                                </div>
                               </div>
 
                               {/* 主管评分区域 */}
@@ -1487,90 +1504,100 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   主管评分
                                   {canPerformAction(selectedEvaluation, "manager") && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="ml-2 h-6 w-6 p-0"
-                                      onClick={() =>
-                                        handleStartEdit(score.id, score.manager_score, score.manager_comment)
-                                      }
+                                    <Popover 
+                                      open={openPopovers[`${score.id}-manager`] || false}
+                                      onOpenChange={(open) => {
+                                        const popoverKey = `${score.id}-manager`
+                                        setOpenPopovers(prev => ({
+                                          ...prev,
+                                          [popoverKey]: open
+                                        }))
+                                      }}
                                     >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="ml-2 h-6 w-6 p-0"
+                                        >
+                                          <Edit2 className="w-3 h-3" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80" align="start">
+                                        <div className="grid gap-4">
+                                          <div className="space-y-2">
+                                            <h4 className="leading-none font-medium">主管评分编辑</h4>
+                                            <p className="text-muted-foreground text-sm">
+                                              编辑主管评分和评价说明
+                                            </p>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <div className="grid grid-cols-3 items-center gap-4">
+                                              <Label htmlFor="manager-score">评分</Label>
+                                              <Input
+                                                id="manager-score"
+                                                type="number"
+                                                min={0}
+                                                max={score.item?.max_score}
+                                                step="0.1"
+                                                defaultValue={score.manager_score?.toString() || ""}
+                                                className="col-span-2 h-8"
+                                                placeholder={`0-${score.item?.max_score || 100}`}
+                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                              />
+                                            </div>
+                                            <div className="grid grid-cols-3 items-start gap-4">
+                                              <Label htmlFor="manager-comment">评价说明</Label>
+                                              <Textarea
+                                                id="manager-comment"
+                                                defaultValue={score.manager_comment || ""}
+                                                className="col-span-2 min-h-[60px] resize-none"
+                                                placeholder="请输入评价说明..."
+                                              />
+                                            </div>
+                                            <div className="text-xs text-center mt-2">
+                                              <div className="text-blue-600">员工自评：{score.self_score || 0}分</div>
+                                              {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                                <div className="text-amber-600 mt-1">
+                                                  ⚠️ 此评分为系统自动填入，该员工无直属主管
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="flex justify-end space-x-2 pt-2">
+                                              <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                  const scoreInput = document.getElementById('manager-score') as HTMLInputElement
+                                                  const commentInput = document.getElementById('manager-comment') as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(score.id, 'manager', scoreInput.value, commentInput.value)
+                                                }}
+                                              >
+                                                <Save className="w-3 h-3 mr-1" />
+                                                保存
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
                                   )}
                                 </Label>
 
-                                {editingScore === score.id && canPerformAction(selectedEvaluation, "manager") ? (
-                                  <div className="space-y-2">
-                                    <div className="space-y-2">
-                                      <div className="space-y-1">
-                                        <Input
-                                          ref={scoreInputRef}
-                                          type="number"
-                                          value={tempScore}
-                                          onChange={e =>
-                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
-                                          }
-                                          min={0}
-                                          max={score.item?.max_score}
-                                          step="0.1"
-                                          placeholder="评分"
-                                        />
-                                        <div className="text-xs text-gray-500">
-                                          评分范围：0 - {score.item?.max_score || 100}分
-                                        </div>
-                                      </div>
-                                      {/* 评分参考标准 */}
-                                      <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                                        <div className="font-medium mb-1">评分参考：</div>
-                                        <div className="space-y-1">
-                                          <div>
-                                            优秀 ({Math.round((score.item?.max_score || 0) * 0.9)}-
-                                            {score.item?.max_score}
-                                            分)：超额完成目标，表现突出
-                                          </div>
-                                          <div>
-                                            良好 ({Math.round((score.item?.max_score || 0) * 0.7)}-
-                                            {Math.round((score.item?.max_score || 0) * 0.89)}
-                                            分)：较好完成目标，有一定亮点
-                                          </div>
-                                          <div>
-                                            合格 ({Math.round((score.item?.max_score || 0) * 0.6)}-
-                                            {Math.round((score.item?.max_score || 0) * 0.69)}分)：基本完成目标，符合要求
-                                          </div>
-                                          <div>
-                                            需改进 (0-{Math.round((score.item?.max_score || 0) * 0.59)}
-                                            分)：未达成目标，需要改进
-                                          </div>
-                                        </div>
-                                        <div className="mt-2 text-blue-600">员工自评：{score.self_score || 0}分</div>
-                                      </div>
-                                    </div>
-                                    <Textarea
-                                      value={tempComment}
-                                      onChange={e => setTempComment(e.target.value)}
-                                      placeholder="评价说明（请结合员工自评内容，提供具体的改进建议和发展方向）"
-                                      rows={4}
-                                    />
-                                    <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "manager")}>
-                                        <Save className="w-3 h-3 mr-1" />
-                                        保存
-                                      </Button>
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                        <X className="w-3 h-3 mr-1" />
-                                        取消
-                                      </Button>
-                                    </div>
+                                <div>
+                                  <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
+                                  <div className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
+                                    score.manager_comment && score.manager_comment.includes("系统自动填入") 
+                                      ? "border-amber-200 bg-amber-50/50" 
+                                      : ""
+                                  }`}>
+                                    {score.manager_comment || "暂无说明"}
                                   </div>
-                                ) : (
-                                  <div>
-                                    <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
-                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
-                                      {score.manager_comment || "暂无说明"}
+                                  {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                    <div className="text-xs text-amber-600 mt-1">
+                                      ⚠️ 系统自动填入的评分
                                     </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
 
                               {/* HR评分区域 */}
@@ -1578,74 +1605,91 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   HR评分
                                   {canPerformAction(selectedEvaluation, "hr") && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="ml-2 h-6 w-6 p-0"
-                                      onClick={() => handleStartEdit(score.id, score.hr_score, score.hr_comment)}
+                                    <Popover 
+                                      open={openPopovers[`${score.id}-hr`] || false}
+                                      onOpenChange={(open) => {
+                                        const popoverKey = `${score.id}-hr`
+                                        setOpenPopovers(prev => ({
+                                          ...prev,
+                                          [popoverKey]: open
+                                        }))
+                                      }}
                                     >
-                                      <Edit2 className="w-3 h-3" />
-                                    </Button>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="ml-2 h-6 w-6 p-0"
+                                        >
+                                          <Edit2 className="w-3 h-3" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80" align="start">
+                                        <div className="grid gap-4">
+                                          <div className="space-y-2">
+                                            <h4 className="leading-none font-medium">HR评分编辑</h4>
+                                            <p className="text-muted-foreground text-sm">
+                                              编辑HR评分和评价说明
+                                            </p>
+                                          </div>
+                                          <div className="grid gap-2">
+                                            <div className="grid grid-cols-3 items-center gap-4">
+                                              <Label htmlFor="hr-score">评分</Label>
+                                              <Input
+                                                id="hr-score"
+                                                type="number"
+                                                min={0}
+                                                max={score.item?.max_score}
+                                                step="0.1"
+                                                defaultValue={score.hr_score?.toString() || ""}
+                                                className="col-span-2 h-8"
+                                                placeholder={`0-${score.item?.max_score || 100}`}
+                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                              />
+                                            </div>
+                                            <div className="grid grid-cols-3 items-start gap-4">
+                                              <Label htmlFor="hr-comment">评价说明</Label>
+                                              <Textarea
+                                                id="hr-comment"
+                                                defaultValue={score.hr_comment || ""}
+                                                className="col-span-2 min-h-[60px] resize-none"
+                                                placeholder="请输入评价说明..."
+                                              />
+                                            </div>
+                                            <div className="text-xs text-center mt-2">
+                                              <div className="text-blue-600">员工自评：{score.self_score || 0}分 | 主管评分：{score.manager_score || 0}分</div>
+                                              {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                                <div className="text-amber-600 mt-1">
+                                                  ⚠️ 主管评分为系统自动填入，该员工无直属主管
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="flex justify-end space-x-2 pt-2">
+                                              <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                  const scoreInput = document.getElementById('hr-score') as HTMLInputElement
+                                                  const commentInput = document.getElementById('hr-comment') as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(score.id, 'hr', scoreInput.value, commentInput.value)
+                                                }}
+                                              >
+                                                <Save className="w-3 h-3 mr-1" />
+                                                保存
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
                                   )}
                                 </Label>
 
-                                {editingScore === score.id && canPerformAction(selectedEvaluation, "hr") ? (
-                                  <div className="space-y-2">
-                                    <div className="space-y-2">
-                                      <div className="space-y-1">
-                                        <Input
-                                          ref={scoreInputRef}
-                                          type="number"
-                                          value={tempScore}
-                                          onChange={e =>
-                                            handleScoreChange(e.target.value, score.item?.max_score || 100)
-                                          }
-                                          min={0}
-                                          max={score.item?.max_score}
-                                          step="0.1"
-                                          placeholder="HR评分"
-                                        />
-                                        <div className="text-xs text-gray-500">
-                                          评分范围：0 - {score.item?.max_score || 100}分
-                                        </div>
-                                      </div>
-                                      {/* HR评分参考标准 */}
-                                      <div className="text-xs text-muted-foreground bg-indigo-50/80 dark:bg-indigo-950/50 p-2 rounded border border-indigo-200 dark:border-indigo-800">
-                                        <div className="font-medium mb-1">HR评分参考：</div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                          <div>员工自评：{score.self_score || 0}分</div>
-                                          <div>主管评分：{score.manager_score || 0}分</div>
-                                        </div>
-                                        <div className="mt-2 text-indigo-700 dark:text-indigo-300">
-                                          💡 建议：基于员工自评和主管评分，结合公司标准给出客观评价
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <Textarea
-                                      value={tempComment}
-                                      onChange={e => setTempComment(e.target.value)}
-                                      placeholder="HR评价说明（请说明调整原因和改进建议）"
-                                      rows={4}
-                                    />
-                                    <div className="flex space-x-2">
-                                      <Button size="sm" onClick={() => handleSaveScore(score.id, "hr")}>
-                                        <Save className="w-3 h-3 mr-1" />
-                                        保存
-                                      </Button>
-                                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                                        <X className="w-3 h-3 mr-1" />
-                                        取消
-                                      </Button>
-                                    </div>
+                                <div>
+                                  <div className="text-sm font-medium">{score.hr_score || "未评分"}</div>
+                                  <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
+                                    {score.hr_comment || "暂无说明"}
                                   </div>
-                                ) : (
-                                  <div>
-                                    <div className="text-sm font-medium">{score.hr_score || "未评分"}</div>
-                                    <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
-                                      {score.hr_comment || "暂无说明"}
-                                    </div>
-                                  </div>
-                                )}
+                                </div>
                               </div>
 
                             </div>

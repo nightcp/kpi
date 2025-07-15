@@ -324,6 +324,21 @@ func UpdateEvaluation(c *gin.Context) {
 		if evaluation.Employee.ManagerID == nil {
 			// 如果没有主管，直接将状态改为manager_evaluated
 			updateData.Status = "manager_evaluated"
+
+			// 自动填入主管评分：将自评分数复制到主管评分
+			var scores []models.KPIScore
+			if err := models.DB.Where("evaluation_id = ?", evaluation.ID).Find(&scores).Error; err == nil {
+				for _, score := range scores {
+					if score.SelfScore != nil {
+						// 将自评分数复制到主管评分
+						comment := "（系统自动填入：该员工无直属主管，此分数来源于员工自评）"
+						models.DB.Model(&score).Updates(map[string]interface{}{
+							"manager_score":   *score.SelfScore,
+							"manager_comment": comment,
+						})
+					}
+				}
+			}
 		}
 	}
 
@@ -343,7 +358,9 @@ func UpdateEvaluation(c *gin.Context) {
 			total := 0.0
 			for _, s := range scores {
 				var final float64
-				if s.ManagerScore != nil {
+				if s.HRScore != nil {
+					final = *s.HRScore
+				} else if s.ManagerScore != nil {
 					final = *s.ManagerScore
 				} else if s.SelfScore != nil {
 					final = *s.SelfScore
