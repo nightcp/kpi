@@ -357,10 +357,6 @@ export default function EvaluationsPage() {
         block: "center",
         inline: "nearest",
       })
-      // 添加一个视觉提示
-      element.style.transition = "box-shadow 1s ease"
-      setTimeout(() => (element.style.boxShadow = "rgb(255 87 34 / 50%) 0px 0px 10px 0px"), 500)
-      setTimeout(() => (element.style.boxShadow = ""), 3000)
     })
   }
 
@@ -1182,12 +1178,15 @@ export default function EvaluationsPage() {
                 </div>
 
                 {/* 标签页 */}
-                <Tabs value={activeTab} onValueChange={value => {
-                  setActiveTab(value)
-                  if (value === "summary" && comments.length === 0) {
-                    fetchComments(selectedEvaluation.id)
-                  }
-                }}>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={value => {
+                    setActiveTab(value)
+                    if (value === "summary" && comments.length === 0) {
+                      fetchComments(selectedEvaluation.id)
+                    }
+                  }}
+                >
                   <TabsList className="grid w-full grid-cols-2 mb-2">
                     <TabsTrigger value="details">评分详情</TabsTrigger>
                     <TabsTrigger value="summary">总结汇总</TabsTrigger>
