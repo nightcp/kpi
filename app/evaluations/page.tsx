@@ -695,6 +695,14 @@ export default function EvaluationsPage() {
     setEditingCommentPrivate(false)
   }, [])
 
+  // 删除评估
+  const handleDelete = async (evaluationId: number) => {
+    const confirmed = await Confirm("确认删除", "确定要删除这条评估吗？此操作无法撤销。")
+    if (!confirmed) return
+    await evaluationApi.delete(evaluationId)
+    fetchEvaluations()
+  }
+
   // 当选中的评估或评论分页参数变化时，重新获取评论
   useEffect(() => {
     if (selectedEvaluation) {
@@ -1103,6 +1111,11 @@ export default function EvaluationsPage() {
                         <Button variant="outline" size="sm" onClick={() => handleViewDetails(evaluation)}>
                           <Eye className="w-4 h-4" />
                         </Button>
+                        {isHR && (
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(evaluation.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1832,11 +1845,11 @@ export default function EvaluationsPage() {
                         {/* 评论列表 */}
                         {comments.length === 0 ? (
                           isLoadingComments ? (
-                            <div className="text-center py-8 text-muted-foreground">
+                            <div className="h-32 flex flex-col items-center justify-center text-muted-foreground">
                               <p className="text-sm">加载评论中...</p>
                             </div>
                           ) : (
-                            <div className="text-center py-8 text-muted-foreground">
+                            <div className="h-32 flex flex-col items-center justify-center text-muted-foreground">
                               <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted/50" />
                               <p className="text-sm">暂无评论</p>
                               <p className="text-xs mt-1">点击&quot;添加评论&quot;按钮来记录您的想法</p>
