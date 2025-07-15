@@ -1384,7 +1384,9 @@ export default function EvaluationsPage() {
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                               <div className="flex-1">
                                 <h4 className="font-medium text-lg">{score.item?.name}</h4>
-                                <p className="text-sm text-muted-foreground">{score.item?.description}</p>
+                                <pre className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
+                                  {score.item?.description}
+                                </pre>
                                 <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
                               </div>
                               <div className="text-center">
