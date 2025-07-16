@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, FileText, Settings, Shield, MessageCircle, BookOpen, Building } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
+import { scrollToElement } from "@/lib/utils"
 
 type HelpSection = "overview" | "roles" | "evaluation" | "hr-features" | "settings" | "faq"
 
@@ -13,6 +14,18 @@ export default function HelpPage() {
   const router = useRouter()
   const { isHR } = useAuth()
   const [activeSection, setActiveSection] = useState<HelpSection>("overview")
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // 只有当内容头部不可见时才滚动
+    if (contentRef.current) {
+      const rect = contentRef.current.getBoundingClientRect()
+      const isTopVisible = rect.top >= 0 && rect.top < window.innerHeight
+      if (!isTopVisible) {
+        scrollToElement(contentRef.current, 24)
+      }
+    }
+  }, [activeSection])
 
   // 帮助主题配置
   const helpSections = [
@@ -75,6 +88,7 @@ export default function HelpPage() {
           <h4 className="font-medium mb-2">🎯 系统主要功能</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• <strong>考核管理</strong>：创建、填写和管理绩效考核</li>
+            <li>• <strong>邀请评分</strong>：邀请同事参与评分，获得多角度评价</li>
             <li>• <strong>部门管理</strong>：组织架构和部门信息管理</li>
             <li>• <strong>员工管理</strong>：员工信息和权限管理</li>
             <li>• <strong>模板管理</strong>：KPI 考核模板的创建和维护</li>
@@ -101,7 +115,13 @@ export default function HelpPage() {
             <div className="p-3 bg-muted/50 rounded-lg">
               <h5 className="font-medium text-sm">HR 用户</h5>
               <p className="text-xs text-muted-foreground mt-1">
-                拥有完整的系统管理权限，可管理所有功能模块
+                拥有完整的系统管理权限，可管理所有功能模块并发起邀请评分
+              </p>
+            </div>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <h5 className="font-medium text-sm">被邀请评分人员</h5>
+              <p className="text-xs text-muted-foreground mt-1">
+                接收邀请对同事进行评分，提供多角度的评价参考
               </p>
             </div>
           </div>
@@ -161,18 +181,30 @@ export default function HelpPage() {
                 <div className="text-xs text-muted-foreground">个性化和配置</div>
               </div>
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="justify-start h-auto p-3"
-              onClick={() => setActiveSection("faq")}
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              <div className="text-left">
-                <div className="font-medium text-sm">常见问题</div>
-                <div className="text-xs text-muted-foreground">快速解决问题</div>
-              </div>
-            </Button>
+                          <Button 
+                variant="outline" 
+                size="sm" 
+                className="justify-start h-auto p-3"
+                onClick={() => router.push('/invitations')}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                <div className="text-left">
+                  <div className="font-medium text-sm">邀请评分</div>
+                  <div className="text-xs text-muted-foreground">查看邀请评分任务</div>
+                </div>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="justify-start h-auto p-3"
+                onClick={() => setActiveSection("faq")}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                <div className="text-left">
+                  <div className="font-medium text-sm">常见问题</div>
+                  <div className="text-xs text-muted-foreground">快速解决问题</div>
+                </div>
+              </Button>
           </div>
         </div>
 
@@ -182,6 +214,7 @@ export default function HelpPage() {
             <li>• 首次使用建议先阅读&quot;角色权限&quot;了解功能范围</li>
             <li>• 遇到问题可查看&quot;常见问题&quot;或联系系统管理员</li>
             <li>• 定期检查考核任务，确保及时完成</li>
+            <li>• 收到邀请评分时请及时响应，认真客观地进行评价</li>
           </ul>
         </div>
       </CardContent>
@@ -241,6 +274,15 @@ export default function HelpPage() {
                 <li>• 创建和编辑考核模板</li>
                 <li>• 设置考核指标和权重</li>
                 <li>• 启用或禁用模板</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">🤝 邀请评分</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 邀请其他人员参与员工评分</li>
+                <li>• 管理和监控邀请评分进展</li>
+                <li>• 查看邀请评分结果</li>
               </ul>
             </div>
             
@@ -315,6 +357,16 @@ export default function HelpPage() {
                 <li>• 查看分配给自己的考核任务</li>
                 <li>• 填写自评内容</li>
                 <li>• 提交考核表单</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">🤝 邀请评分</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 接收并查看邀请评分通知</li>
+                <li>• 接受或拒绝邀请评分</li>
+                <li>• 对其他员工进行客观评分</li>
+                <li>• 提交邀请评分结果</li>
               </ul>
             </div>
             
@@ -394,12 +446,19 @@ export default function HelpPage() {
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-primary">4</div>
               <div>
+                <h5 className="font-medium text-sm">邀请评分（可选）</h5>
+                <p className="text-sm text-muted-foreground">HR可邀请其他人员对员工进行评分，获取多方面评价</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-primary">5</div>
+              <div>
                 <h5 className="font-medium text-sm">HR审核</h5>
                 <p className="text-sm text-muted-foreground">HR审核评估结果，确认最终评分</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-primary">5</div>
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-primary">6</div>
               <div>
                 <h5 className="font-medium text-sm">员工确认</h5>
                 <p className="text-sm text-muted-foreground">员工确认最终得分，考核流程完成</p>
@@ -430,6 +489,18 @@ export default function HelpPage() {
                 <li>• 使用状态筛选查看不同阶段的考核</li>
                 <li>• 查看考核统计数据和完成率</li>
                 <li>• 在统计分析中导出考核数据和报表</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">邀请评分（可选）</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 在主管评估完成后点击&quot;邀请评分&quot;按钮</li>
+                <li>• 选择要邀请的人员（可多选）</li>
+                <li>• 输入邀请消息说明评分要求</li>
+                <li>• 发送邀请并监控评分进展</li>
+                <li>• 查看和管理邀请评分结果</li>
+                <li>• 可以撤销未完成的邀请</li>
               </ul>
             </div>
             
@@ -501,6 +572,43 @@ export default function HelpPage() {
           </div>
         </div>
 
+        {/* 被邀请人员操作指南 */}
+        <div className="border rounded-lg p-4">
+          <h4 className="font-semibold mb-3">🤝 被邀请人员操作指南</h4>
+          <div className="space-y-4">
+            <div>
+              <h5 className="font-medium text-sm mb-2">接收邀请</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 在&quot;邀请评分&quot;页面查看收到的邀请</li>
+                <li>• 阅读邀请消息了解评分要求</li>
+                <li>• 查看被评估员工的基本信息</li>
+                <li>• 根据自己对该员工的了解决定是否接受邀请</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">进行评分</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 点击&quot;接受邀请&quot;后进入评分界面</li>
+                <li>• 根据对该员工的了解进行客观评分</li>
+                <li>• 评分范围为0到各项目的最高分</li>
+                <li>• 在评价说明中详细描述评分依据</li>
+                <li>• 完成所有项目评分后点击&quot;完成评分&quot;</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">评分原则</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 基于客观事实和个人观察进行评分</li>
+                <li>• 避免个人偏见，保持公正客观</li>
+                <li>• 如果对某项指标不太了解，可以适当说明</li>
+                <li>• 提供具体的改进建议和正面反馈</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* 考核状态说明 */}
         <div className="border rounded-lg p-4">
           <h4 className="font-semibold mb-3">📊 考核状态说明</h4>
@@ -541,6 +649,40 @@ export default function HelpPage() {
               <p className="text-xs text-muted-foreground">考核流程已全部完成</p>
             </div>
           </div>
+          
+          <div className="mt-4">
+            <h5 className="font-medium text-sm mb-3">🤝 邀请评分状态</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                  <span className="font-medium text-sm">待接受</span>
+                </div>
+                <p className="text-xs text-muted-foreground">邀请已发送，等待对方响应</p>
+              </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                  <span className="font-medium text-sm">进行中</span>
+                </div>
+                <p className="text-xs text-muted-foreground">邀请已接受，正在进行评分</p>
+              </div>
+              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  <span className="font-medium text-sm">已完成</span>
+                </div>
+                <p className="text-xs text-muted-foreground">评分已完成并提交</p>
+              </div>
+              <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                  <span className="font-medium text-sm">已拒绝</span>
+                </div>
+                <p className="text-xs text-muted-foreground">邀请被拒绝</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="p-4 bg-muted/50 rounded-lg">
@@ -550,6 +692,8 @@ export default function HelpPage() {
             <li>• 自评时要诚实，避免过高或过低估计</li>
             <li>• 主管评估时要提供具体的改进建议</li>
             <li>• 如果员工没有直接主管，自评后会直接进入HR审核</li>
+            <li>• 邀请评分可以提供多角度的评价，帮助形成更全面的考核</li>
+            <li>• 被邀请评分时要基于客观事实，避免个人偏见</li>
             <li>• 定期回顾考核结果，持续改进工作表现</li>
           </ul>
         </div>
@@ -676,6 +820,53 @@ export default function HelpPage() {
           </div>
         </div>
 
+        {/* 邀请评分管理 */}
+        <div className="border rounded-lg p-4">
+          <h4 className="font-semibold mb-3">🤝 邀请评分管理</h4>
+          <div className="space-y-4">
+            <div>
+              <h5 className="font-medium text-sm mb-2">发起邀请</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 在考核详情页面，主管评估完成后可发起邀请</li>
+                <li>• 选择需要邀请的人员（可多选）</li>
+                <li>• 编写邀请消息，说明评分要求和背景</li>
+                <li>• 发送邀请后系统会自动通知被邀请人</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">邀请管理</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 在邀请列表中查看所有邀请状态</li>
+                <li>• 监控邀请的进展和完成情况</li>
+                <li>• 对于未响应的邀请可以发送催促通知</li>
+                <li>• 在必要时可以撤销未完成的邀请</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">评分查看</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 查看已完成的邀请评分结果</li>
+                <li>• 分析不同评分人的评价差异</li>
+                <li>• 将邀请评分作为HR审核的参考</li>
+                <li>• 导出邀请评分数据进行分析</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">邀请状态</h5>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• 待接受：邀请已发送，等待对方响应</li>
+                <li>• 进行中：邀请已接受，正在进行评分</li>
+                <li>• 已完成：评分已完成并提交</li>
+                <li>• 已拒绝：邀请被拒绝</li>
+                <li>• 已撤销：邀请已被撤销</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* 统计分析 */}
         <div className="border rounded-lg p-4">
           <h4 className="font-semibold mb-3">📊 统计分析</h4>
@@ -743,6 +934,8 @@ export default function HelpPage() {
             <li>• 及时处理员工角色变更</li>
             <li>• 根据业务需求调整 KPI 模板</li>
             <li>• 定期分析绩效数据，优化考核流程</li>
+            <li>• 合理使用邀请评分功能，获得多角度评价</li>
+            <li>• 选择合适的人员进行邀请评分，确保评价质量</li>
             <li>• 保持系统数据的准确性和完整性</li>
           </ul>
         </div>
@@ -779,15 +972,24 @@ export default function HelpPage() {
               <Settings className="w-3 h-3 mr-1" />
               打开设置页面
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/evaluations')}
-              className="text-xs"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              查看考核任务
-            </Button>
+                          <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/evaluations')}
+                className="text-xs"
+              >
+                <FileText className="w-3 h-3 mr-1" />
+                查看考核任务
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/invitations')}
+                className="text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                邀请评分
+              </Button>
             {isHR && (
               <>
                 <Button
@@ -892,6 +1094,7 @@ export default function HelpPage() {
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• 根据使用环境选择合适的主题模式</li>
             <li>• 定期检查系统设置是否符合需求</li>
+            <li>• 及时查看邀请评分通知，避免错过重要任务</li>
             <li>• 保持良好的账户安全习惯</li>
           </ul>
         </div>
@@ -1037,6 +1240,47 @@ export default function HelpPage() {
           </div>
         </div>
 
+        {/* 邀请评分问题 */}
+        <div className="border rounded-lg p-4">
+          <h4 className="font-semibold mb-3">🤝 邀请评分问题</h4>
+          <div className="space-y-4">
+            <div>
+              <h5 className="font-medium text-sm mb-2">Q: 为什么我收到了邀请评分？</h5>
+              <p className="text-sm text-muted-foreground ml-4">
+                A: HR 认为您对被评估员工有一定了解，邀请您参与评分以获得更全面的评价。您可以选择接受或拒绝邀请。
+              </p>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">Q: 邀请评分是否匿名？</h5>
+              <p className="text-sm text-muted-foreground ml-4">
+                A: 邀请评分不是匿名的，您的评分和评价会显示评分人信息，但仅 HR 可以查看完整的评分详情。
+              </p>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">Q: 如果我对某个员工不够了解怎么办？</h5>
+              <p className="text-sm text-muted-foreground ml-4">
+                A: 如果您对该员工的工作表现不够了解，建议拒绝邀请。如果只是对某些指标不太了解，可以在评价说明中注明。
+              </p>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">Q: 邀请评分提交后能否修改？</h5>
+              <p className="text-sm text-muted-foreground ml-4">
+                A: 邀请评分提交后无法修改。请在提交前仔细检查所有评分和评价说明。
+              </p>
+            </div>
+            
+            <div>
+              <h5 className="font-medium text-sm mb-2">Q: 邀请评分的结果会如何使用？</h5>
+              <p className="text-sm text-muted-foreground ml-4">
+                A: 邀请评分作为 HR 审核的重要参考，帮助形成更全面客观的评价，但不会直接影响最终的考核结果。
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* 操作问题 */}
         <div className="border rounded-lg p-4">
           <h4 className="font-semibold mb-3">⚙️ 操作问题</h4>
@@ -1061,6 +1305,7 @@ export default function HelpPage() {
           <h4 className="font-medium mb-2">🆘 获取帮助</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• 如果问题未在此解答，请联系您的主管或 HR</li>
+            <li>• 邀请评分相关问题可直接联系发起邀请的 HR</li>
             <li>• 技术问题可联系系统管理员</li>
             <li>• 紧急情况请通过内部通讯工具联系相关负责人</li>
           </ul>
@@ -1132,7 +1377,7 @@ export default function HelpPage() {
         </div>
 
         {/* 右侧内容区域 */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3" ref={contentRef}>
           {renderContent()}
         </div>
       </div>
