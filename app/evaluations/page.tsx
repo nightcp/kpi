@@ -27,6 +27,7 @@ import {
   Trash2,
   RefreshCcw,
   Loader2,
+  XCircle,
 } from "lucide-react"
 import {
   evaluationApi,
@@ -45,7 +46,7 @@ import {
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
-import { getPeriodValue } from "@/lib/utils"
+import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
 import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
@@ -216,6 +217,15 @@ export default function EvaluationsPage() {
       return
     }
 
+    // 检查是否有重复邀请
+    const existingInviteeIds = invitations.map(inv => inv.invitee_id)
+    const duplicateIds = invitationForm.invitee_ids.filter(id => existingInviteeIds.includes(id))
+    
+    if (duplicateIds.length > 0) {
+      Alert("创建失败", "选择的人员中包含已邀请过的人员，请重新选择")
+      return
+    }
+
     try {
       setIsCreatingInvitation(true)
       await invitationApi.create(selectedEvaluation.id, invitationForm)
@@ -236,6 +246,40 @@ export default function EvaluationsPage() {
       Alert("创建失败", "创建邀请失败，请重试")
     } finally {
       setIsCreatingInvitation(false)
+    }
+  }
+
+  // 撤销邀请
+  const handleCancelInvitation = async (invitationId: number) => {
+    if (!selectedEvaluation) return
+    
+    const confirmed = await Confirm("确认撤销", "确定要撤销这个邀请吗？")
+    if (!confirmed) return
+
+    try {
+      await invitationApi.cancel(invitationId)
+      await fetchInvitations(selectedEvaluation.id)
+      toast.success("邀请已撤销")
+    } catch (error) {
+      console.error("撤销邀请失败:", error)
+      Alert("撤销失败", "撤销邀请失败，请重试")
+    }
+  }
+
+  // 重新邀请
+  const handleReinvite = async (invitationId: number) => {
+    if (!selectedEvaluation) return
+    
+    const confirmed = await Confirm("确认重新邀请", "确定要重新邀请这个人吗？")
+    if (!confirmed) return
+
+    try {
+      await invitationApi.reinvite(invitationId)
+      await fetchInvitations(selectedEvaluation.id)
+      toast.success("重新邀请成功")
+    } catch (error) {
+      console.error("重新邀请失败:", error)
+      Alert("重新邀请失败", "重新邀请失败，请重试")
     }
   }
 
@@ -332,8 +376,6 @@ export default function EvaluationsPage() {
     return { isValid: true }
   }
 
-
-
   // 找到下一个未评分的项目
   const findNextUnscored = (currentScoreId: number, type: "self" | "manager" | "hr"): number | null => {
     const currentIndex = scores.findIndex(s => s.id === currentScoreId)
@@ -392,17 +434,6 @@ export default function EvaluationsPage() {
         inline: "nearest",
       })
     }, 100)
-  }
-
-  // 验证评分输入
-  const handleScoreInputValidation = (e: React.FormEvent<HTMLInputElement>, maxScore: number) => {
-    const input = e.target as HTMLInputElement
-    const value = parseFloat(input.value)
-    if (value > maxScore) {
-      input.value = maxScore.toString()
-    } else if (value < 0) {
-      input.value = "0"
-    }
   }
 
   // 从 Popover 保存评分
@@ -1482,6 +1513,22 @@ export default function EvaluationsPage() {
                                   <DialogTitle>邀请评分</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4">
+                                  {/* 已邀请人员提示 */}
+                                  {invitations.length > 0 && (
+                                    <div className="bg-blue-50/50 dark:bg-blue-950/50 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                      <div className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                                        已邀请 {invitations.length} 人：
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {invitations.map(invitation => (
+                                          <span key={invitation.id} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                                            {invitation.invitee?.name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
                                   <div className="flex flex-col gap-2">
                                     <Label>选择邀请人员</Label>
                                     <EmployeeSelector
@@ -1496,6 +1543,11 @@ export default function EvaluationsPage() {
                                       placeholder="选择要邀请的人员..."
                                       maxDisplayTags={3}
                                     />
+                                    {invitations.length > 0 && (
+                                      <div className="text-xs text-amber-600 dark:text-amber-400">
+                                        ⚠️ 请勿重复邀请上述人员
+                                      </div>
+                                    )}
                                   </div>
                                   <div className="flex flex-col gap-2">
                                     <Label>邀请消息</Label>
@@ -1563,10 +1615,39 @@ export default function EvaluationsPage() {
                                           已拒绝
                                         </span>
                                       )}
+                                      {invitation.status === "cancelled" && (
+                                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-full">
+                                          已撤销
+                                        </span>
+                                      )}
                                       {invitation.status === "completed" && (
                                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
                                           已完成
                                         </span>
+                                      )}
+                                    </div>
+                                    
+                                    {/* 操作按钮 */}
+                                    <div className="flex items-center space-x-1">
+                                      {invitation.status === "pending" && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCancelInvitation(invitation.id)}
+                                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                        >
+                                          <XCircle className="w-3 h-3" />
+                                        </Button>
+                                      )}
+                                      {invitation.status === "declined" && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleReinvite(invitation.id)}
+                                          className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                                        >
+                                          <RefreshCcw className="w-3 h-3" />
+                                        </Button>
                                       )}
                                     </div>
                                   </div>
@@ -1692,7 +1773,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.self_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1776,7 +1857,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.manager_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1877,7 +1958,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.hr_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => handleScoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">

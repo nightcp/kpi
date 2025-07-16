@@ -122,7 +122,7 @@ export interface EvaluationInvitation {
   evaluation_id: number
   inviter_id: number
   invitee_id: number
-  status: "pending" | "accepted" | "declined" | "completed"
+  status: "pending" | "accepted" | "declined" | "completed" | "cancelled"
   message: string
   created_at: string
   updated_at: string
@@ -523,6 +523,14 @@ export const invitationApi = {
   // 获取邀请评分
   getScores: (invitationId: number): Promise<{ data: InvitedScore[] }> =>
     api.get(`/invitations/${invitationId}/scores`),
+
+  // 撤销邀请
+  cancel: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
+    api.put(`/invitations/${invitationId}/cancel`),
+
+  // 重新邀请
+  reinvite: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
+    api.put(`/invitations/${invitationId}/reinvite`),
 }
 
 // 邀请评分记录API

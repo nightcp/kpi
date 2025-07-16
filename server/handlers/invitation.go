@@ -537,3 +537,113 @@ func GetInvitationDetails(c *gin.Context) {
 		"data": invitation,
 	})
 }
+
+// 撤销邀请
+func CancelInvitation(c *gin.Context) {
+	// 获取邀请ID
+	inviteIDParam := c.Param("id")
+	inviteID, err := strconv.ParseUint(inviteIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "邀请ID格式错误"})
+		return
+	}
+
+	// 获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
+
+	// 验证用户是否为HR
+	var currentUser models.Employee
+	if err := models.DB.First(&currentUser, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	if currentUser.Role != "hr" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只有HR可以撤销邀请"})
+		return
+	}
+
+	// 验证邀请是否存在
+	var invitation models.EvaluationInvitation
+	if err := models.DB.Preload("Invitee").Preload("Inviter").First(&invitation, uint(inviteID)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "邀请不存在"})
+		return
+	}
+
+	// 只有待接受状态的邀请才可以撤销
+	if invitation.Status != "pending" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "只有待接受状态的邀请才可以撤销"})
+		return
+	}
+
+	// 更新邀请状态为已撤销
+	if err := models.DB.Model(&invitation).Update("status", "cancelled").Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "撤销邀请失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":    invitation,
+		"message": "邀请已撤销",
+	})
+}
+
+// 重新邀请
+func ReinviteInvitation(c *gin.Context) {
+	// 获取邀请ID
+	inviteIDParam := c.Param("id")
+	inviteID, err := strconv.ParseUint(inviteIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "邀请ID格式错误"})
+		return
+	}
+
+	// 获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
+
+	// 验证用户是否为HR
+	var currentUser models.Employee
+	if err := models.DB.First(&currentUser, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	if currentUser.Role != "hr" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只有HR可以重新邀请"})
+		return
+	}
+
+	// 验证邀请是否存在
+	var invitation models.EvaluationInvitation
+	if err := models.DB.Preload("Invitee").Preload("Inviter").First(&invitation, uint(inviteID)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "邀请不存在"})
+		return
+	}
+
+	// 只有已拒绝状态的邀请才可以重新邀请
+	if invitation.Status != "declined" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "只有已拒绝状态的邀请才可以重新邀请"})
+		return
+	}
+
+	// 更新邀请状态为待接受
+	if err := models.DB.Model(&invitation).Update("status", "pending").Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "重新邀请失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":    invitation,
+		"message": "重新邀请成功",
+	})
+}

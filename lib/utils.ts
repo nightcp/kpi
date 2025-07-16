@@ -25,3 +25,14 @@ export function getPeriodValue(evaluation: KPIEvaluation | RecentEvaluation) {
   if (evaluation.quarter) values.push(`年Q${evaluation.quarter}`)
   return values.join(" ")
 }
+
+// 评分输入验证
+export function scoreInputValidation(e: React.FormEvent<HTMLInputElement>, maxScore: number) {
+  const input = e.target as HTMLInputElement
+  const value = parseFloat(input.value)
+  if (value > maxScore) {
+    input.value = maxScore.toString()
+  } else if (value < 0) {
+    input.value = "0"
+  }
+}

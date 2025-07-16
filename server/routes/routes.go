@@ -114,12 +114,14 @@ func SetupRoutes(r *gin.RouterGroup) {
 		// 邀请评分管理
 		invitationRoutes := protected.Group("/invitations")
 		{
-			invitationRoutes.GET("/my", handlers.GetMyInvitations)             // 获取我的邀请列表
-			invitationRoutes.GET("/:id", handlers.GetInvitationDetails)        // 获取邀请详情
-			invitationRoutes.PUT("/:id/accept", handlers.AcceptInvitation)     // 接受邀请
-			invitationRoutes.PUT("/:id/decline", handlers.DeclineInvitation)   // 拒绝邀请
-			invitationRoutes.PUT("/:id/complete", handlers.CompleteInvitation) // 完成邀请评分
-			invitationRoutes.GET("/:id/scores", handlers.GetInvitationScores)  // 获取邀请评分
+			invitationRoutes.GET("/my", handlers.GetMyInvitations)                                            // 获取我的邀请列表
+			invitationRoutes.GET("/:id", handlers.GetInvitationDetails)                                       // 获取邀请详情
+			invitationRoutes.PUT("/:id/accept", handlers.AcceptInvitation)                                    // 接受邀请
+			invitationRoutes.PUT("/:id/decline", handlers.DeclineInvitation)                                  // 拒绝邀请
+			invitationRoutes.PUT("/:id/complete", handlers.CompleteInvitation)                                // 完成邀请评分
+			invitationRoutes.GET("/:id/scores", handlers.GetInvitationScores)                                 // 获取邀请评分
+			invitationRoutes.PUT("/:id/cancel", handlers.RoleMiddleware("hr"), handlers.CancelInvitation)     // 撤销邀请
+			invitationRoutes.PUT("/:id/reinvite", handlers.RoleMiddleware("hr"), handlers.ReinviteInvitation) // 重新邀请
 		}
 
 		// 邀请评分记录管理

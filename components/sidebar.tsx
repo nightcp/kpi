@@ -45,6 +45,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
           items: [
             { name: "仪表板", href: "/", icon: Home },
             { name: "考核管理", href: "/evaluations", icon: FileText },
+            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: pendingCount > 0 ? pendingCount : undefined },
             { name: "统计分析", href: "/statistics", icon: BarChart3 },
           ],
         },

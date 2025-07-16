@@ -34,7 +34,7 @@ import {
 } from "@/lib/api"
 
 import { useAppContext } from "@/lib/app-context"
-import { getPeriodValue } from "@/lib/utils"
+import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
@@ -197,6 +197,8 @@ export default function InvitationsPage() {
         return <Badge variant="outline" className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400">进行中</Badge>
       case "declined":
         return <Badge variant="outline" className="text-red-600 border-red-600 dark:text-red-400 dark:border-red-400">已拒绝</Badge>
+      case "cancelled":
+        return <Badge variant="outline" className="text-gray-600 border-gray-600 dark:text-gray-400 dark:border-gray-400">已撤销</Badge>
       case "completed":
         return <Badge variant="outline" className="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400">已完成</Badge>
       default:
@@ -515,7 +517,7 @@ export default function InvitationsPage() {
                                     <Edit2 className="w-4 h-4" />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80" align="start">
+                                <PopoverContent className="w-80" align="end">
                                   <div className="grid gap-4">
                                     <div className="space-y-2">
                                       <h4 className="leading-none font-medium">评分编辑</h4>
@@ -535,6 +537,7 @@ export default function InvitationsPage() {
                                           defaultValue={score.score?.toString() || ""}
                                           className="col-span-2 h-8"
                                           placeholder={`0-${score.item?.max_score || 100}`}
+                                          onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
                                         />
                                       </div>
                                       <div className="grid grid-cols-3 items-start gap-4">
