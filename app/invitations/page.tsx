@@ -651,39 +651,43 @@ export default function InvitationsPage() {
                   </div>
                 )}
 
-                {/* 已完成的评分展示 */}
+                {/* 已完成评分的结果显示 */}
                 {selectedInvitation.status === "completed" && (
                   <div className="space-y-4">
                     <div className="bg-green-50/50 dark:bg-green-950/50 p-4 rounded-lg border border-green-200 dark:border-green-800">
                       <h4 className="font-medium text-green-800 dark:text-green-100 mb-2">✅ 评分已完成</h4>
                       <p className="text-sm text-green-700 dark:text-green-200">
-                        您已完成此次邀请评分，总分：{invitationScores.reduce((sum, score) => sum + (score.score || 0), 0)} 分
+                        您已完成对该员工的评分，感谢您的参与！
                       </p>
                     </div>
 
                     {/* 评分结果展示 */}
-                    {invitationScores.map(score => (
-                      <Card key={score.id} className="border">
-                        <CardContent className="px-4 py-3">
-                          <div className="flex items-center justify-between">
+                    <div className="bg-gray-50/50 dark:bg-gray-950/50 p-4 rounded-lg border border-gray-200 dark:border-gray-800">
+                      <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-3">📊 评分结果</h4>
+                      <div className="space-y-3">
+                        {invitationScores.map(score => (
+                          <div key={score.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded border">
                             <div className="flex-1">
-                              <h4 className="font-medium">{score.item?.name}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <div className="font-medium text-sm">{score.item?.name}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
                                 {score.comment || "暂无评价说明"}
-                              </p>
+                              </div>
                             </div>
-                            <div className="text-center">
-                              <div className="text-xl font-bold text-blue-600">
-                                {score.score || 0}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                / {score.item?.max_score || 0}
-                              </div>
+                            <div className="text-lg font-semibold text-blue-600">
+                              {score.score || 0} / {score.item?.max_score || 0}
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        ))}
+                      </div>
+                      <div className="mt-4 pt-3 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-800 dark:text-gray-100">总分：</span>
+                          <span className="text-2xl font-bold text-blue-600">
+                            {invitationScores.reduce((acc, score) => acc + (score.score || 0), 0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
