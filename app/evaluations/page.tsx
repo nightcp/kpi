@@ -33,10 +33,13 @@ import {
   scoreApi,
   templateApi,
   commentApi,
+  invitationApi,
   type KPIEvaluation,
   type KPIScore,
   type KPITemplate,
   type EvaluationComment,
+  type EvaluationInvitation,
+  type InvitedScore,
   type PaginatedResponse,
   type EvaluationPaginationParams,
 } from "@/lib/api"
@@ -100,6 +103,16 @@ export default function EvaluationsPage() {
   
   // Popover 状态控制
   const [openPopovers, setOpenPopovers] = useState<{[key: string]: boolean}>({}) // 控制每个Popover的开关状态
+  
+  // 邀请评分相关状态
+  const [invitations, setInvitations] = useState<EvaluationInvitation[]>([]) // 邀请列表
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false) // 邀请对话框开关
+  const [invitationScores, setInvitationScores] = useState<{[key: number]: InvitedScore[]}>({}) // 邀请评分结果
+  const [isCreatingInvitation, setIsCreatingInvitation] = useState(false) // 是否正在创建邀请
+  const [invitationForm, setInvitationForm] = useState({
+    invitee_ids: [] as number[],
+    message: ""
+  }) // 邀请表单
   const [formData, setFormData] = useState({
     employee_ids: [] as string[],
     template_id: "",
@@ -168,6 +181,61 @@ export default function EvaluationsPage() {
       setScores(response.data || [])
     } catch (error) {
       console.error("获取评估详情失败:", error)
+    }
+  }
+
+  // 获取邀请列表
+  const fetchInvitations = async (evaluationId: number) => {
+    try {
+      const response = await invitationApi.getByEvaluation(evaluationId)
+      setInvitations(response.data || [])
+      
+      // 获取每个邀请的评分结果
+      const scoresData: {[key: number]: InvitedScore[]} = {}
+      for (const invitation of response.data || []) {
+        if (invitation.status === "completed") {
+          try {
+            const scoresResponse = await invitationApi.getScores(invitation.id)
+            scoresData[invitation.id] = scoresResponse.data || []
+          } catch (error) {
+            console.error(`获取邀请${invitation.id}的评分失败:`, error)
+          }
+        }
+      }
+      setInvitationScores(scoresData)
+    } catch (error) {
+      console.error("获取邀请列表失败:", error)
+      setInvitations([])
+    }
+  }
+
+  // 创建邀请
+  const handleCreateInvitation = async () => {
+    if (!selectedEvaluation || invitationForm.invitee_ids.length === 0) {
+      Alert("创建失败", "请选择要邀请的人员")
+      return
+    }
+
+    try {
+      setIsCreatingInvitation(true)
+      await invitationApi.create(selectedEvaluation.id, invitationForm)
+      
+      // 刷新邀请列表
+      await fetchInvitations(selectedEvaluation.id)
+      
+      // 重置表单
+      setInvitationForm({
+        invitee_ids: [],
+        message: ""
+      })
+      setInvitationDialogOpen(false)
+      
+      toast.success("邀请创建成功")
+    } catch (error) {
+      console.error("创建邀请失败:", error)
+      Alert("创建失败", "创建邀请失败，请重试")
+    } finally {
+      setIsCreatingInvitation(false)
     }
   }
 
@@ -678,7 +746,21 @@ export default function EvaluationsPage() {
     setEditingCommentId(null)
     setEditingCommentContent("")
     setEditingCommentPrivate(false)
-  }, [])
+
+    // 如果是HR用户且评估状态为manager_evaluated，获取邀请列表
+    if (isHR && evaluation.status === "manager_evaluated") {
+      fetchInvitations(evaluation.id)
+    }
+
+    // 重置邀请状态
+    setInvitations([])
+    setInvitationScores({})
+    setInvitationDialogOpen(false)
+    setInvitationForm({
+      invitee_ids: [],
+      message: ""
+    })
+  }, [isHR])
 
   // 删除评估
   const handleDelete = async (evaluationId: number) => {
@@ -1379,6 +1461,167 @@ export default function EvaluationsPage() {
                               </div>
                             )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* 邀请评分功能 */}
+                    {canPerformAction(selectedEvaluation, "hr") && (
+                      <div className="space-y-4">
+                        <div className="bg-purple-50/80 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-purple-900 dark:text-purple-100">🤝 邀请评分</h4>
+                            <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  邀请评分
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
+                                <DialogHeader>
+                                  <DialogTitle>邀请评分</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="flex flex-col gap-2">
+                                    <Label>选择邀请人员</Label>
+                                    <EmployeeSelector
+                                      selectedEmployeeIds={invitationForm.invitee_ids.map(id => id.toString())}
+                                      onSelectionChange={employeeIds => 
+                                        setInvitationForm(prev => ({ 
+                                          ...prev, 
+                                          invitee_ids: employeeIds.map(id => parseInt(id)) 
+                                        }))
+                                      }
+                                      label=""
+                                      placeholder="选择要邀请的人员..."
+                                      maxDisplayTags={3}
+                                    />
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                    <Label>邀请消息</Label>
+                                    <Textarea
+                                      value={invitationForm.message}
+                                      onChange={e => setInvitationForm(prev => ({ ...prev, message: e.target.value }))}
+                                      placeholder="请输入邀请消息..."
+                                      className="min-h-[80px]"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end space-x-2">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => setInvitationDialogOpen(false)}
+                                    >
+                                      取消
+                                    </Button>
+                                    <Button
+                                      onClick={handleCreateInvitation}
+                                      disabled={isCreatingInvitation}
+                                    >
+                                      {isCreatingInvitation ? "创建中..." : "发送邀请"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                          
+                          {/* 邀请列表 */}
+                          {invitations.length > 0 ? (
+                            <div className="space-y-2">
+                              <div className="text-sm text-purple-800 dark:text-purple-200">
+                                已邀请 {invitations.length} 人进行评分
+                              </div>
+                              {invitations.map(invitation => (
+                                <div
+                                  key={invitation.id}
+                                  className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded border"
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div>
+                                      <div className="font-medium text-sm">
+                                        {invitation.invitee?.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {invitation.invitee?.position}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <div className="text-xs">
+                                      {invitation.status === "pending" && (
+                                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                                          待接受
+                                        </span>
+                                      )}
+                                      {invitation.status === "accepted" && (
+                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                          已接受
+                                        </span>
+                                      )}
+                                      {invitation.status === "declined" && (
+                                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full">
+                                          已拒绝
+                                        </span>
+                                      )}
+                                      {invitation.status === "completed" && (
+                                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                                          已完成
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-purple-800 dark:text-purple-200">
+                              暂无邀请评分，点击&quot;邀请评分&quot;按钮来邀请同事为此评估提供意见
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 邀请评分结果展示 */}
+                        {Object.keys(invitationScores).length > 0 && (
+                          <div className="bg-gray-50/80 dark:bg-gray-950/50 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">📊 邀请评分结果</h4>
+                            <div className="space-y-4">
+                              {Object.entries(invitationScores).map(([invitationId, scores]) => {
+                                const invitation = invitations.find(inv => inv.id === parseInt(invitationId))
+                                if (!invitation) return null
+                                
+                                const totalScore = scores.reduce((sum, score) => sum + (score.score || 0), 0)
+                                
+                                return (
+                                  <div key={invitationId} className="border rounded-lg p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="font-medium text-sm">
+                                        {invitation.invitee?.name} 的评分
+                                      </div>
+                                      <div className="text-lg font-semibold text-blue-600">
+                                        {totalScore} 分
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mb-2">
+                                      {invitation.invitee?.position} | 完成时间: {new Date(invitation.updated_at).toLocaleString()}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {scores.map(score => (
+                                        <div key={score.id} className="flex items-center justify-between text-sm">
+                                          <span className="text-muted-foreground">
+                                            {score.item?.name}
+                                          </span>
+                                          <span className="font-medium">
+                                            {score.score || 0} / {score.item?.max_score || 0}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

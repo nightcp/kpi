@@ -131,3 +131,36 @@ type SystemSetting struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// 评估邀请模型
+type EvaluationInvitation struct {
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	EvaluationID uint      `json:"evaluation_id"`
+	InviterID    uint      `json:"inviter_id"`                    // 邀请者ID（HR）
+	InviteeID    uint      `json:"invitee_id"`                    // 被邀请者ID
+	Status       string    `json:"status" gorm:"default:pending"` // pending, accepted, declined, completed
+	Message      string    `json:"message"`                       // 邀请消息
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+
+	// 关联关系
+	Evaluation KPIEvaluation  `json:"evaluation,omitempty" gorm:"foreignKey:EvaluationID"`
+	Inviter    Employee       `json:"inviter,omitempty" gorm:"foreignKey:InviterID"`
+	Invitee    Employee       `json:"invitee,omitempty" gorm:"foreignKey:InviteeID"`
+	Scores     []InvitedScore `json:"scores,omitempty" gorm:"foreignKey:InvitationID"`
+}
+
+// 邀请评分模型
+type InvitedScore struct {
+	ID           uint      `json:"id" gorm:"primaryKey"`
+	InvitationID uint      `json:"invitation_id"`
+	ItemID       uint      `json:"item_id"`
+	Score        *float64  `json:"score,omitempty"` // 邀请评分
+	Comment      string    `json:"comment"`         // 邀请评价说明
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+
+	// 关联关系
+	Invitation EvaluationInvitation `json:"invitation,omitempty" gorm:"foreignKey:InvitationID"`
+	Item       KPIItem              `json:"item,omitempty" gorm:"foreignKey:ItemID"`
+}

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X, HelpCircle } from "lucide-react"
+import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X, HelpCircle, MessageSquare } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
 import { closeApp } from "@dootask/tools"
 import { useDootaskContext } from "@/lib/dootask-context"
+import { useInvitations } from "@/lib/hooks/useInvitations"
 
 interface SidebarProps {
   isMobileMenuOpen: boolean
@@ -22,6 +23,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const router = useRouter()
   const { user: currentUser, isHR } = useAuth()
   const { isDootask } = useDootaskContext()
+  const { pendingCount } = useInvitations()
 
   // 根据用户角色生成角色徽章
   const getRoleBadge = (role: string) => {
@@ -66,7 +68,10 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
       menus = [
         {
           category: "我的功能",
-          items: [{ name: "考核管理", href: "/evaluations", icon: FileText }],
+          items: [
+            { name: "考核管理", href: "/evaluations", icon: FileText },
+            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: pendingCount > 0 ? pendingCount : undefined },
+          ],
         },
         {
           category: "系统功能",
@@ -81,7 +86,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
     return menus
       .map(menu => ({
         ...menu,
-        items: menu.items.filter(item => !item.hidden),
+        items: menu.items.filter(item => !(item as any).hidden),
       }))
       .filter(menu => menu.items.length > 0)
   }, [isHR, isDootask])
@@ -93,7 +98,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
   // 监听用户角色变化
   useEffect(() => {
-    if (!isHR && !["/evaluations", "/settings", "/help"].includes(pathname)) {
+    if (!isHR && !["/evaluations", "/invitations", "/settings", "/help"].includes(pathname)) {
       router.push("/evaluations")
     }
   }, [isHR, router, pathname])
@@ -165,14 +170,21 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                     href={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      "flex items-center px-6 py-3 text-sm font-medium transition-colors",
+                      "flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-sidebar-accent border-r-2 border-sidebar-primary"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     )}
                   >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    {item.name}
+                    <div className="flex items-center">
+                      <item.icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </div>
+                    {"badge" in item && item.badge && (
+                      <Badge variant="destructive" className="ml-2 min-w-[20px] h-5 flex items-center justify-center text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </Link>
                 )
               })}

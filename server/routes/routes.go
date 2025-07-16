@@ -105,6 +105,27 @@ func SetupRoutes(r *gin.RouterGroup) {
 			evaluationRoutes.POST("/:id/comments", handlers.CreateEvaluationComment)
 			evaluationRoutes.PUT("/:id/comments/:comment_id", handlers.UpdateEvaluationComment)
 			evaluationRoutes.DELETE("/:id/comments/:comment_id", handlers.DeleteEvaluationComment)
+
+			// 邀请评分管理（HR发起邀请）
+			evaluationRoutes.POST("/:id/invitations", handlers.RoleMiddleware("hr"), handlers.CreateInvitation)
+			evaluationRoutes.GET("/:id/invitations", handlers.RoleMiddleware("hr"), handlers.GetEvaluationInvitations)
+		}
+
+		// 邀请评分管理
+		invitationRoutes := protected.Group("/invitations")
+		{
+			invitationRoutes.GET("/my", handlers.GetMyInvitations)             // 获取我的邀请列表
+			invitationRoutes.GET("/:id", handlers.GetInvitationDetails)        // 获取邀请详情
+			invitationRoutes.PUT("/:id/accept", handlers.AcceptInvitation)     // 接受邀请
+			invitationRoutes.PUT("/:id/decline", handlers.DeclineInvitation)   // 拒绝邀请
+			invitationRoutes.PUT("/:id/complete", handlers.CompleteInvitation) // 完成邀请评分
+			invitationRoutes.GET("/:id/scores", handlers.GetInvitationScores)  // 获取邀请评分
+		}
+
+		// 邀请评分记录管理
+		invitedScoreRoutes := protected.Group("/invited-scores")
+		{
+			invitedScoreRoutes.PUT("/:id", handlers.UpdateInvitedScore) // 更新邀请评分
 		}
 
 		// KPI评分管理（所有认证用户）

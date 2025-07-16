@@ -116,6 +116,34 @@ export interface KPIScore {
   item?: KPIItem
 }
 
+// 邀请评分相关接口
+export interface EvaluationInvitation {
+  id: number
+  evaluation_id: number
+  inviter_id: number
+  invitee_id: number
+  status: "pending" | "accepted" | "declined" | "completed"
+  message: string
+  created_at: string
+  updated_at: string
+  evaluation?: KPIEvaluation
+  inviter?: Employee
+  invitee?: Employee
+  scores?: InvitedScore[]
+}
+
+export interface InvitedScore {
+  id: number
+  invitation_id: number
+  item_id: number
+  score?: number
+  comment: string
+  created_at: string
+  updated_at: string
+  invitation?: EvaluationInvitation
+  item?: KPIItem
+}
+
 export interface DashboardStats {
   total_employees: number
   total_departments: number
@@ -457,6 +485,54 @@ export const settingsApi = {
   // 更新系统设置
   update: (data: SystemSettingsRequest): Promise<{ data: SystemSettingsResponse; message: string }> =>
     api.put("/settings", data),
+}
+
+// 邀请评分API
+export const invitationApi = {
+  // 创建邀请
+  create: (
+    evaluationId: number,
+    data: { invitee_ids: number[]; message: string }
+  ): Promise<{ data: EvaluationInvitation[]; message: string }> =>
+    api.post(`/evaluations/${evaluationId}/invitations`, data),
+
+  // 获取评估的邀请列表
+  getByEvaluation: (evaluationId: number): Promise<{ data: EvaluationInvitation[] }> =>
+    api.get(`/evaluations/${evaluationId}/invitations`),
+
+  // 获取我的邀请列表
+  getMy: (params?: PaginationParams): Promise<PaginatedResponse<EvaluationInvitation>> =>
+    api.get("/invitations/my", { params }),
+
+  // 获取邀请详情
+  getDetails: (invitationId: number): Promise<{ data: EvaluationInvitation }> =>
+    api.get(`/invitations/${invitationId}`),
+
+  // 接受邀请
+  accept: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
+    api.put(`/invitations/${invitationId}/accept`),
+
+  // 拒绝邀请
+  decline: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
+    api.put(`/invitations/${invitationId}/decline`),
+
+  // 完成邀请评分
+  complete: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
+    api.put(`/invitations/${invitationId}/complete`),
+
+  // 获取邀请评分
+  getScores: (invitationId: number): Promise<{ data: InvitedScore[] }> =>
+    api.get(`/invitations/${invitationId}/scores`),
+}
+
+// 邀请评分记录API
+export const invitedScoreApi = {
+  // 更新邀请评分
+  update: (
+    scoreId: number,
+    data: { score?: number; comment: string }
+  ): Promise<{ data: InvitedScore; message: string }> =>
+    api.put(`/invited-scores/${scoreId}`, data),
 }
 
 export default api
