@@ -31,12 +31,10 @@ import {
 import {
   evaluationApi,
   scoreApi,
-  employeeApi,
   templateApi,
   commentApi,
   type KPIEvaluation,
   type KPIScore,
-  type Employee,
   type KPITemplate,
   type EvaluationComment,
   type PaginatedResponse,
@@ -45,7 +43,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
-import { EmployeeSelector } from "@/components/employee-selector"
+import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
@@ -55,7 +53,6 @@ export default function EvaluationsPage() {
   const { user: currentUser, isManager, isHR } = useAuth()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
   const [templates, setTemplates] = useState<KPITemplate[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false)
@@ -153,17 +150,6 @@ export default function EvaluationsPage() {
     }
   }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab])
 
-  // 获取员工列表
-  const fetchEmployees = async () => {
-    try {
-      const response = await employeeApi.getAll()
-      setEmployees(response.data || [])
-    } catch (error) {
-      console.error("获取员工列表失败:", error)
-      setEmployees([])
-    }
-  }
-
   // 获取模板列表
   const fetchTemplates = async () => {
     try {
@@ -190,7 +176,6 @@ export default function EvaluationsPage() {
   }, [fetchEvaluations])
 
   useEffect(() => {
-    fetchEmployees()
     fetchTemplates()
   }, [])
 
@@ -804,7 +789,6 @@ export default function EvaluationsPage() {
               </DialogHeader>
               <form onSubmit={handleCreateEvaluation} className="space-y-4">
                 <EmployeeSelector
-                  employees={employees}
                   selectedEmployeeIds={formData.employee_ids}
                   onSelectionChange={employeeIds => setFormData(prev => ({ ...prev, employee_ids: employeeIds }))}
                   label="员工"
@@ -1009,19 +993,12 @@ export default function EvaluationsPage() {
                 </SelectContent>
               </Select>
               {viewTab === "team" && (
-                <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-                  <SelectTrigger className="w-auto">
-                    <SelectValue placeholder="员工筛选" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部员工</SelectItem>
-                    {employees.map(employee => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <EmployeeCombobox
+                  value={employeeFilter}
+                  onValueChange={setEmployeeFilter}
+                  placeholder="员工筛选"
+                  className="min-w-24 justify-between"
+                />
               )}
               <Button
                 variant="outline"
