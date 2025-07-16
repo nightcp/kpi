@@ -122,6 +122,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			invitationRoutes.GET("/:id/scores", handlers.GetInvitationScores)                                 // 获取邀请评分
 			invitationRoutes.PUT("/:id/cancel", handlers.RoleMiddleware("hr"), handlers.CancelInvitation)     // 撤销邀请
 			invitationRoutes.PUT("/:id/reinvite", handlers.RoleMiddleware("hr"), handlers.ReinviteInvitation) // 重新邀请
+			invitationRoutes.DELETE("/:id", handlers.RoleMiddleware("hr"), handlers.DeleteInvitation)         // 删除邀请
 		}
 
 		// 邀请评分记录管理

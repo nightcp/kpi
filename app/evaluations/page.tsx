@@ -217,6 +217,12 @@ export default function EvaluationsPage() {
       return
     }
 
+    // 检查是否邀请自己
+    if (invitationForm.invitee_ids.includes(currentUser?.id || 0)) {
+      Alert("创建失败", "不能邀请自己进行评分")
+      return
+    }
+
     // 检查是否有重复邀请
     const existingInviteeIds = invitations.map(inv => inv.invitee_id)
     const duplicateIds = invitationForm.invitee_ids.filter(id => existingInviteeIds.includes(id))
@@ -280,6 +286,23 @@ export default function EvaluationsPage() {
     } catch (error) {
       console.error("重新邀请失败:", error)
       Alert("重新邀请失败", "重新邀请失败，请重试")
+    }
+  }
+
+  // 删除邀请
+  const handleDeleteInvitation = async (invitationId: number) => {
+    if (!selectedEvaluation) return
+    
+    const confirmed = await Confirm("确认删除", "确定要删除这个邀请吗？此操作无法撤销。")
+    if (!confirmed) return
+
+    try {
+      await invitationApi.delete(invitationId)
+      await fetchInvitations(selectedEvaluation.id)
+      toast.success("邀请删除成功")
+    } catch (error) {
+      console.error("删除邀请失败:", error)
+      Alert("删除失败", "删除邀请失败，请重试")
     }
   }
 
@@ -1542,12 +1565,8 @@ export default function EvaluationsPage() {
                                       label=""
                                       placeholder="选择要邀请的人员..."
                                       maxDisplayTags={3}
+                                      disabledEmployeeIds={[...invitations.map(inv => inv.invitee_id), currentUser?.id].filter(Boolean) as number[]}
                                     />
-                                    {invitations.length > 0 && (
-                                      <div className="text-xs text-amber-600 dark:text-amber-400">
-                                        ⚠️ 请勿重复邀请上述人员
-                                      </div>
-                                    )}
                                   </div>
                                   <div className="flex flex-col gap-2">
                                     <Label>邀请消息</Label>
@@ -1649,6 +1668,15 @@ export default function EvaluationsPage() {
                                           <RefreshCcw className="w-3 h-3" />
                                         </Button>
                                       )}
+                                      {/* 删除按钮 - 对所有状态都显示 */}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteInvitation(invitation.id)}
+                                        className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>

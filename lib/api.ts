@@ -531,6 +531,10 @@ export const invitationApi = {
   // 重新邀请
   reinvite: (invitationId: number): Promise<{ data: EvaluationInvitation; message: string }> =>
     api.put(`/invitations/${invitationId}/reinvite`),
+
+  // 删除邀请
+  delete: (invitationId: number): Promise<{ message: string }> =>
+    api.delete(`/invitations/${invitationId}`),
 }
 
 // 邀请评分记录API

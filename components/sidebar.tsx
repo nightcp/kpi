@@ -87,10 +87,10 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
     return menus
       .map(menu => ({
         ...menu,
-        items: menu.items.filter(item => !(item as any).hidden),
+        items: menu.items.filter(item => !('hidden' in item && item.hidden)),
       }))
       .filter(menu => menu.items.length > 0)
-  }, [isHR, isDootask])
+  }, [isHR, isDootask, pendingCount])
 
   // 点击导航项时关闭移动端菜单
   const handleNavClick = () => {

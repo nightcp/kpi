@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { Check, ChevronsUpDown, Loader2, Search, Users } from "lucide-react"
+import { Check, ChevronsUpDown, CircleMinus, Loader2, Search, Users } from "lucide-react"
 import { Checkbox } from "./ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "./ui/command"
@@ -31,6 +31,7 @@ interface EmployeeSelectorProps {
   className?: string
   disabled?: boolean
   maxDisplayTags?: number
+  disabledEmployeeIds?: number[]
 }
 
 export function EmployeeSelector({
@@ -41,6 +42,7 @@ export function EmployeeSelector({
   className,
   disabled = false,
   maxDisplayTags = 2,
+  disabledEmployeeIds = [],
 }: EmployeeSelectorProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -135,7 +137,7 @@ export function EmployeeSelector({
     } else {
       // 如果未全选，则选择该部门的所有员工
       const newSelection = [...new Set([...selectedEmployeeIds, ...departmentIds])]
-      onSelectionChange(newSelection)
+      onSelectionChange(newSelection.filter(id => !disabledEmployeeIds.includes(parseInt(id))))
     }
   }
 
@@ -300,11 +302,18 @@ export function EmployeeSelector({
                     </div>
                     <div className="divide-y">
                       {employees.map(employee => (
-                        <Label key={employee.id} className="pl-8 pr-4 py-3 hover:bg-muted/50">
-                          <Checkbox
-                            checked={selectedEmployeeIds.includes(employee.id.toString())}
-                            onCheckedChange={() => handleEmployeeSelect(employee.id.toString())}
-                          />
+                        <Label key={employee.id} className={cn(
+                          "pl-8 pr-4 py-3 hover:bg-muted/50",
+                          disabledEmployeeIds.includes(employee.id) && "opacity-50"
+                        )}>
+                          {disabledEmployeeIds.includes(employee.id) ? (
+                            <CircleMinus className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <Checkbox
+                              checked={selectedEmployeeIds.includes(employee.id.toString())}
+                              onCheckedChange={() => handleEmployeeSelect(employee.id.toString())}
+                            />
+                          )}
                           <div className="flex-1 min-w-0 flex items-center justify-between">
                             <div className="text-foreground truncate">{employee.name}</div>
                             <div className="text-sm text-muted-foreground/80 font-normal truncate">

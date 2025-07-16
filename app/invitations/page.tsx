@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +41,7 @@ import { toast } from "sonner"
 
 export default function InvitationsPage() {
   const { Alert, Confirm } = useAppContext()
+  const detailsRef = useRef<HTMLDivElement>(null)
   const [invitations, setInvitations] = useState<EvaluationInvitation[]>([])
   const [selectedInvitation, setSelectedInvitation] = useState<EvaluationInvitation | null>(null)
   const [invitationScores, setInvitationScores] = useState<InvitedScore[]>([])
@@ -85,10 +86,56 @@ export default function InvitationsPage() {
       console.error("获取邀请评分失败:", error)
       setInvitationScores([])
     }
+  } 
+  
+  // 找到下一个未评分的项目
+  const findNextUnscored = (currentScoreId: number): number | null => {
+    const currentIndex = invitationScores.findIndex(s => s.id === currentScoreId)
+    if (currentIndex === -1) return null
+
+    // 从当前项目的下一个开始查找
+    for (let i = currentIndex + 1; i < invitationScores.length; i++) {
+      const score = invitationScores[i]
+      if (!score.score || score.score === 0) {
+        return score.id
+      }
+    }
+
+    // 如果没找到，从头开始查找
+    for (let i = 0; i < currentIndex; i++) {
+      const score = invitationScores[i]
+      if (!score.score || score.score === 0) {
+        return score.id
+      }
+    }
+
+    return null
+  }
+
+  // 滚动到指定的评分项目
+  const scrollToNextUnscored = (currentScoreId: number, isNext: boolean = false) => {
+    const nextUnscored = isNext ? currentScoreId : findNextUnscored(currentScoreId)
+    if (!nextUnscored) {
+      return
+    }
+
+    // 使用 setTimeout 确保DOM已更新
+    setTimeout(() => {
+      const element = detailsRef.current?.querySelector(`[data-score-id="${nextUnscored}"]`) as HTMLElement
+      if (!element) {
+        return
+      }
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      })
+    }, 100)
   }
 
   useEffect(() => {
     fetchInvitations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize])
 
   // 接受邀请
@@ -96,6 +143,17 @@ export default function InvitationsPage() {
     try {
       await invitationApi.accept(invitationId)
       fetchInvitations()
+      
+      // 如果是在详情弹窗中操作，更新selectedInvitation
+      if (selectedInvitation && selectedInvitation.id === invitationId) {
+        setSelectedInvitation({
+          ...selectedInvitation,
+          status: "accepted"
+        })
+        // 获取评分详情
+        fetchInvitationScores(invitationId)
+      }
+      
       toast.success("邀请接受成功")
     } catch (error) {
       console.error("接受邀请失败:", error)
@@ -111,6 +169,17 @@ export default function InvitationsPage() {
     try {
       await invitationApi.decline(invitationId)
       fetchInvitations()
+      
+      // 如果是在详情弹窗中操作，更新selectedInvitation或关闭弹窗
+      if (selectedInvitation && selectedInvitation.id === invitationId) {
+        setSelectedInvitation({
+          ...selectedInvitation,
+          status: "declined"
+        })
+        // 可以选择关闭弹窗
+        setDialogOpen(false)
+      }
+      
       toast.success("邀请已拒绝")
     } catch (error) {
       console.error("拒绝邀请失败:", error)
@@ -158,6 +227,11 @@ export default function InvitationsPage() {
         [scoreId]: false
       }))
 
+      // 滚动到下一个未评分的项目
+      setTimeout(() => {
+        scrollToNextUnscored(scoreId)
+      }, 100)
+
       toast.success("评分保存成功")
     } catch (error) {
       console.error("保存评分失败:", error)
@@ -171,6 +245,7 @@ export default function InvitationsPage() {
     const uncompletedItems = invitationScores.filter(score => !score.score || score.score === 0)
     if (uncompletedItems.length > 0) {
       await Alert("评分未完成", `请先完成所有项目的评分。还有 ${uncompletedItems.length} 个项目未评分。`)
+      scrollToNextUnscored(uncompletedItems[0].id, true)
       return
     }
 
@@ -187,6 +262,8 @@ export default function InvitationsPage() {
       Alert("提交失败", "完成邀请评分失败，请重试")
     }
   }
+
+
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
@@ -285,9 +362,9 @@ export default function InvitationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>评估信息</TableHead>
-                <TableHead>邀请人</TableHead>
                 <TableHead>评估对象</TableHead>
+                <TableHead>邀请人</TableHead>
+                <TableHead>评估信息</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>创建时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -305,10 +382,11 @@ export default function InvitationsPage() {
                   <TableRow key={invitation.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{invitation.evaluation?.template?.name}</div>
+                          <div className="font-medium">{invitation.evaluation?.employee?.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {invitation.evaluation && getPeriodValue(invitation.evaluation)}
+                            {invitation.evaluation?.employee?.department?.name}
                           </div>
                         </div>
                       </div>
@@ -324,11 +402,10 @@ export default function InvitationsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Building className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{invitation.evaluation?.employee?.name}</div>
+                          <div className="font-medium">{invitation.evaluation?.template?.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {invitation.evaluation?.employee?.department?.name}
+                            {invitation.evaluation && getPeriodValue(invitation.evaluation)}
                           </div>
                         </div>
                       </div>
@@ -404,7 +481,7 @@ export default function InvitationsPage() {
           </DialogHeader>
           {selectedInvitation && (
             <>
-              <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6 pb-2">
+              <div className="flex-1 overflow-y-auto space-y-4 -mx-6 px-6 pb-2" ref={detailsRef}>
                 {/* 基本信息 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="bg-muted/50 p-3 rounded">
@@ -473,7 +550,7 @@ export default function InvitationsPage() {
 
                     {/* 评分项目 */}
                     {invitationScores.map(score => (
-                      <Card key={score.id} className="border">
+                      <Card key={score.id} className="border" data-score-id={score.id}>
                         <CardContent className="px-4 py-3">
                           <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">

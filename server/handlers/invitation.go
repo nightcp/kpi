@@ -203,7 +203,7 @@ func GetMyInvitations(c *gin.Context) {
 	// 分页查询
 	var invitations []models.EvaluationInvitation
 	offset := (page - 1) * pageSize
-	if err := models.DB.Preload("Evaluation.Employee").Preload("Evaluation.Template").
+	if err := models.DB.Preload("Evaluation.Employee.Department").Preload("Evaluation.Employee").Preload("Evaluation.Template").
 		Preload("Inviter").Where("invitee_id = ?", userID).
 		Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&invitations).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取邀请列表失败"})
@@ -506,7 +506,7 @@ func GetInvitationDetails(c *gin.Context) {
 
 	// 验证邀请是否存在
 	var invitation models.EvaluationInvitation
-	if err := models.DB.Preload("Evaluation.Employee").Preload("Evaluation.Template").
+	if err := models.DB.Preload("Evaluation.Employee.Department").Preload("Evaluation.Employee").Preload("Evaluation.Template").
 		Preload("Inviter").Preload("Invitee").First(&invitation, inviteID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "邀请不存在"})
 		return
@@ -645,5 +645,74 @@ func ReinviteInvitation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data":    invitation,
 		"message": "重新邀请成功",
+	})
+}
+
+// 删除邀请
+func DeleteInvitation(c *gin.Context) {
+	// 获取邀请ID
+	inviteIDParam := c.Param("id")
+	inviteID, err := strconv.ParseUint(inviteIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "邀请ID格式错误"})
+		return
+	}
+
+	// 获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
+
+	// 验证用户是否为HR
+	var currentUser models.Employee
+	if err := models.DB.First(&currentUser, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	if currentUser.Role != "hr" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只有HR可以删除邀请"})
+		return
+	}
+
+	// 验证邀请是否存在
+	var invitation models.EvaluationInvitation
+	if err := models.DB.First(&invitation, uint(inviteID)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "邀请不存在"})
+		return
+	}
+
+	// 开始事务
+	tx := models.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "开始事务失败"})
+		return
+	}
+
+	// 删除相关的评分记录
+	if err := tx.Where("invitation_id = ?", inviteID).Delete(&models.InvitedScore{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除评分记录失败"})
+		return
+	}
+
+	// 删除邀请记录
+	if err := tx.Delete(&invitation).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除邀请失败"})
+		return
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "提交事务失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "邀请删除成功",
 	})
 }
