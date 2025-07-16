@@ -331,10 +331,11 @@ func UpdateEvaluation(c *gin.Context) {
 				for _, score := range scores {
 					if score.SelfScore != nil {
 						// 将自评分数复制到主管评分
-						comment := "（系统自动填入：该员工无直属主管，此分数来源于员工自评）"
+						comment := "（自评分数）"
 						models.DB.Model(&score).Updates(map[string]interface{}{
 							"manager_score":   *score.SelfScore,
 							"manager_comment": comment,
+							"manager_auto":    true,
 						})
 					}
 				}

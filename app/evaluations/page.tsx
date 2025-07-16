@@ -437,12 +437,9 @@ export default function EvaluationsPage() {
 
   // 滚动到指定的评分项目
   const scrollToNextUnscored = (currentScoreId: number, type?: "self" | "manager" | "hr") => {
-    let nextUnscored: number | null = currentScoreId
-    if (type) {
-      nextUnscored = findNextUnscored(currentScoreId, type)
-      if (!nextUnscored) {
-        return
-      }
+    const nextUnscored = !type ? currentScoreId : findNextUnscored(currentScoreId, type)
+    if (!nextUnscored) {
+      return
     }
 
     // 使用 setTimeout 确保DOM已更新
@@ -1899,7 +1896,7 @@ export default function EvaluationsPage() {
                                             </div>
                                             <div className="text-xs text-center mt-2">
                                               <div className="text-blue-600">员工自评：{score.self_score || 0}分</div>
-                                              {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                              {score.manager_auto && (
                                                 <div className="text-amber-600 mt-1">
                                                   ⚠️ 此评分为系统自动填入，该员工无直属主管
                                                 </div>
@@ -1928,13 +1925,13 @@ export default function EvaluationsPage() {
                                 <div>
                                   <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
                                   <div className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
-                                    score.manager_comment && score.manager_comment.includes("系统自动填入") 
+                                    score.manager_auto 
                                       ? "border-amber-200 bg-amber-50/50" 
                                       : ""
                                   }`}>
                                     {score.manager_comment || "暂无说明"}
                                   </div>
-                                  {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                  {score.manager_auto && (
                                     <div className="text-xs text-amber-600 mt-1">
                                       ⚠️ 系统自动填入的评分
                                     </div>
@@ -2000,7 +1997,7 @@ export default function EvaluationsPage() {
                                             </div>
                                             <div className="text-xs text-center mt-2">
                                               <div className="text-blue-600">员工自评：{score.self_score || 0}分 | 主管评分：{score.manager_score || 0}分</div>
-                                              {score.manager_comment && score.manager_comment.includes("系统自动填入") && (
+                                              {score.manager_auto && (
                                                 <div className="text-amber-600 mt-1">
                                                   ⚠️ 主管评分为系统自动填入，该员工无直属主管
                                                 </div>

@@ -227,7 +227,7 @@ export default function InvitationsPage() {
         [scoreId]: false
       }))
 
-      // 滚动到下一个未评分的项目
+      // 延迟执行 scrollToNextUnscored，确保 Popover 关闭动画完成
       setTimeout(() => {
         scrollToNextUnscored(scoreId)
       }, 100)

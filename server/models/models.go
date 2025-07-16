@@ -91,14 +91,15 @@ type KPIScore struct {
 	ID             uint      `json:"id" gorm:"primaryKey"`
 	EvaluationID   uint      `json:"evaluation_id"`
 	ItemID         uint      `json:"item_id"`
-	SelfScore      *float64  `json:"self_score,omitempty"`    // 自评分数
-	SelfComment    string    `json:"self_comment"`            // 自评评价
-	ManagerScore   *float64  `json:"manager_score,omitempty"` // 上级评分
-	ManagerComment string    `json:"manager_comment"`         // 上级评价
-	HRScore        *float64  `json:"hr_score,omitempty"`      // HR评分
-	HRComment      string    `json:"hr_comment"`              // HR评价
-	FinalScore     *float64  `json:"final_score,omitempty"`   // 最终得分
-	FinalComment   string    `json:"final_comment"`           // 最终得分说明
+	SelfScore      *float64  `json:"self_score,omitempty"`              // 自评分数
+	SelfComment    string    `json:"self_comment"`                      // 自评评价
+	ManagerScore   *float64  `json:"manager_score,omitempty"`           // 上级评分
+	ManagerComment string    `json:"manager_comment"`                   // 上级评价
+	ManagerAuto    bool      `json:"manager_auto" gorm:"default:false"` // 是否自动填入上级评分
+	HRScore        *float64  `json:"hr_score,omitempty"`                // HR评分
+	HRComment      string    `json:"hr_comment"`                        // HR评价
+	FinalScore     *float64  `json:"final_score,omitempty"`             // 最终得分
+	FinalComment   string    `json:"final_comment"`                     // 最终得分说明
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 

@@ -108,6 +108,7 @@ export interface KPIScore {
   self_comment: string
   manager_score?: number
   manager_comment: string
+  manager_auto: boolean
   hr_score?: number
   hr_comment: string
   final_score?: number
