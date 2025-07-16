@@ -131,7 +131,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             {currentUser && (
               <div className="text-sm text-sidebar-foreground/70 flex items-center gap-2">
                 <div>
-                  {currentUser.name} - {currentUser.department?.name || "未知部门"}
+                  {[currentUser.name, currentUser.department?.name].filter(Boolean).join(" - ")}
                 </div>
                 <div>{getRoleBadge(currentUser.role)}</div>
               </div>

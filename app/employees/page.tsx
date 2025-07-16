@@ -160,10 +160,10 @@ export default function EmployeesPage() {
 
   const getRoleBadge = (role: string) => {
     switch (role) {
+      case "hr":
+        return <Badge variant="destructive">HR</Badge>
       case "manager":
         return <Badge variant="default">主管</Badge>
-      case "hr":
-        return <Badge variant="secondary">HR</Badge>
       default:
         return <Badge variant="outline">员工</Badge>
     }
