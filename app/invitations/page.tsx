@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,7 +32,7 @@ import {
   type InvitedScore,
   type PaginatedResponse,
 } from "@/lib/api"
-import { useAuth } from "@/lib/auth-context"
+
 import { useAppContext } from "@/lib/app-context"
 import { getPeriodValue } from "@/lib/utils"
 import { Pagination, usePagination } from "@/components/pagination"
@@ -41,12 +41,10 @@ import { toast } from "sonner"
 
 export default function InvitationsPage() {
   const { Alert, Confirm } = useAppContext()
-  const { user: currentUser } = useAuth()
   const [invitations, setInvitations] = useState<EvaluationInvitation[]>([])
   const [selectedInvitation, setSelectedInvitation] = useState<EvaluationInvitation | null>(null)
   const [invitationScores, setInvitationScores] = useState<InvitedScore[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("details")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -125,7 +123,6 @@ export default function InvitationsPage() {
     setSelectedInvitation(invitation)
     fetchInvitationScores(invitation.id)
     setDialogOpen(true)
-    setActiveTab("details")
   }
 
   // 保存评分
@@ -195,13 +192,13 @@ export default function InvitationsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-200">待接受</Badge>
+        return <Badge variant="outline" className="text-yellow-600 border-yellow-600 dark:text-yellow-400 dark:border-yellow-400">待接受</Badge>
       case "accepted":
-        return <Badge variant="outline" className="text-blue-600 border-blue-200">进行中</Badge>
+        return <Badge variant="outline" className="text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400">进行中</Badge>
       case "declined":
-        return <Badge variant="outline" className="text-red-600 border-red-200">已拒绝</Badge>
+        return <Badge variant="outline" className="text-red-600 border-red-600 dark:text-red-400 dark:border-red-400">已拒绝</Badge>
       case "completed":
-        return <Badge variant="outline" className="text-green-600 border-green-200">已完成</Badge>
+        return <Badge variant="outline" className="text-green-600 border-green-600 dark:text-green-400 dark:border-green-400">已完成</Badge>
       default:
         return <Badge variant="outline">未知状态</Badge>
     }
@@ -269,8 +266,8 @@ export default function InvitationsPage() {
 
       {/* 错误提示 */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="text-red-800 text-sm">⚠️ {error}</div>
+        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="text-red-800 dark:text-red-200 text-sm">⚠️ {error}</div>
         </div>
       )}
 
@@ -424,35 +421,35 @@ export default function InvitationsPage() {
 
                 {/* 邀请消息 */}
                 {selectedInvitation.message && (
-                  <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-200">
-                    <Label className="text-sm text-blue-800 font-medium">邀请消息</Label>
-                    <p className="text-sm text-blue-700 mt-1">{selectedInvitation.message}</p>
+                  <div className="bg-blue-50/50 dark:bg-blue-950/50 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <Label className="text-sm text-blue-800 dark:text-blue-100 font-medium">邀请消息</Label>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">{selectedInvitation.message}</p>
                   </div>
                 )}
 
                 {/* 评分区域 */}
                 {selectedInvitation.status === "accepted" && (
                   <div className="space-y-4">
-                    <div className="bg-green-50/50 p-4 rounded-lg border border-green-200">
-                      <h4 className="font-medium text-green-800 mb-2">📝 评分指导</h4>
-                      <ul className="text-sm text-green-700 space-y-1">
+                    <div className="bg-green-50/50 dark:bg-green-950/50 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                      <h4 className="font-medium text-green-800 dark:text-green-100 mb-2">📝 评分指导</h4>
+                      <ul className="text-sm text-green-700 dark:text-green-200 space-y-1">
                         <li>• 请根据您对该员工的了解进行客观评分</li>
                         <li>• 评分范围为0到各项目满分，请结合实际情况评分</li>
                         <li>• 在评价说明中详细描述您的评分依据</li>
-                        <li>• 完成所有项目评分后，点击"完成评分"提交</li>
+                        <li>• 完成所有项目评分后，点击&quot;完成评分&quot;提交</li>
                       </ul>
                     </div>
 
                     {/* 评分进度 */}
-                    <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-200">
-                      <h4 className="font-medium text-gray-800 mb-2">📊 评分进度</h4>
+                    <div className="bg-gray-50/50 dark:bg-gray-950/50 p-4 rounded-lg border border-gray-200 dark:border-gray-800">
+                      <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-2">📊 评分进度</h4>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-gray-700 dark:text-gray-200">
                           已完成 {invitationScores.filter(s => s.score && s.score > 0).length} / {invitationScores.length} 项
                         </span>
-                        <div className="flex-1 mx-4 bg-gray-200 rounded-full h-2">
+                        <div className="flex-1 mx-4 bg-gray-200 dark:bg-gray-800 rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
                             style={{
                               width: `${invitationScores.length > 0
                                   ? (invitationScores.filter(s => s.score && s.score > 0).length / invitationScores.length) * 100
@@ -461,7 +458,7 @@ export default function InvitationsPage() {
                             }}
                           />
                         </div>
-                        <span className="text-sm font-medium text-gray-800">
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
                           {invitationScores.length > 0
                             ? Math.round(
                               (invitationScores.filter(s => s.score && s.score > 0).length / invitationScores.length) * 100
@@ -577,9 +574,9 @@ export default function InvitationsPage() {
                 {/* 已完成的评分展示 */}
                 {selectedInvitation.status === "completed" && (
                   <div className="space-y-4">
-                    <div className="bg-green-50/50 p-4 rounded-lg border border-green-200">
-                      <h4 className="font-medium text-green-800 mb-2">✅ 评分已完成</h4>
-                      <p className="text-sm text-green-700">
+                    <div className="bg-green-50/50 dark:bg-green-950/50 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                      <h4 className="font-medium text-green-800 dark:text-green-100 mb-2">✅ 评分已完成</h4>
+                      <p className="text-sm text-green-700 dark:text-green-200">
                         您已完成此次邀请评分，总分：{invitationScores.reduce((sum, score) => sum + (score.score || 0), 0)} 分
                       </p>
                     </div>
