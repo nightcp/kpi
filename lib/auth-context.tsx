@@ -6,6 +6,7 @@ import { useDootaskContext } from "./dootask-context"
 
 interface AuthContextType {
   user: AuthUser | null
+  userId: number | null
   loading: boolean
   isAuthenticated: boolean
   login: (data: LoginRequest) => Promise<void>
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { loading: dooTaskLoading } = useDootaskContext()
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [userId, setUserId] = useState<number>(0)
   const [loading, setLoading] = useState(true)
 
   // 初始化时检查用户状态
@@ -61,6 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
   }, [dooTaskLoading])
+
+  useEffect(() => {
+    setUserId(user?.id || 0)
+  }, [user])
 
   const login = async (data: LoginRequest) => {
     try {
@@ -109,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextType = {
     user,
+    userId,
     loading,
     isAuthenticated: !!user,
     login,

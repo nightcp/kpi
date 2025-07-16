@@ -99,6 +99,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			evaluationRoutes.DELETE("/:id", handlers.RoleMiddleware("hr"), handlers.DeleteEvaluation)
 			evaluationRoutes.GET("/employee/:employeeId", handlers.GetEmployeeEvaluations)
 			evaluationRoutes.GET("/pending/:employeeId", handlers.GetPendingEvaluations)
+			evaluationRoutes.GET("/pending/count", handlers.GetPendingCountEvaluations)
 
 			// 评论管理（所有认证用户）
 			evaluationRoutes.GET("/:id/comments", handlers.GetEvaluationComments)
@@ -123,6 +124,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			invitationRoutes.PUT("/:id/cancel", handlers.RoleMiddleware("hr"), handlers.CancelInvitation)     // 撤销邀请
 			invitationRoutes.PUT("/:id/reinvite", handlers.RoleMiddleware("hr"), handlers.ReinviteInvitation) // 重新邀请
 			invitationRoutes.DELETE("/:id", handlers.RoleMiddleware("hr"), handlers.DeleteInvitation)         // 删除邀请
+			invitationRoutes.GET("/pending/count", handlers.GetPendingCountInvitations)                       // 获取待确认邀请数量
 		}
 
 		// 邀请评分记录管理

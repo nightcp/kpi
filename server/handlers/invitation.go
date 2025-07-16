@@ -716,3 +716,27 @@ func DeleteInvitation(c *gin.Context) {
 		"message": "邀请删除成功",
 	})
 }
+
+// 获取待确认邀请数量
+func GetPendingCountInvitations(c *gin.Context) {
+	// 获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+
+	userID := currentUserID.(uint)
+
+	var count int64
+	if err := models.DB.Model(&models.EvaluationInvitation{}).
+		Where("invitee_id = ? AND status = ?", userID, "pending").
+		Count(&count).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取待确认邀请数量失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"count": count,
+	})
+}

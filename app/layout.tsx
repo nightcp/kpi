@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth-context"
 import { ThemeProvider } from "@/lib/theme-context"
 import { DootaskProvider } from "@/lib/dootask-context"
 import { LayoutProvider } from "@/lib/layout-context"
+import { UnreadProvider } from "@/lib/unread-context"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -33,7 +34,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AppProvider>
             <DootaskProvider>
               <AuthProvider>
-                <LayoutProvider>{children}</LayoutProvider>
+                <UnreadProvider>
+                  <LayoutProvider>{children}</LayoutProvider>
+                </UnreadProvider>
               </AuthProvider>
             </DootaskProvider>
           </AppProvider>

@@ -466,6 +466,23 @@ func GetPendingEvaluations(c *gin.Context) {
 	})
 }
 
+// 获取待确认评估数量
+func GetPendingCountEvaluations(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var count int64
+	if err := models.DB.Model(&models.KPIEvaluation{}).
+		Where("employee_id = ? AND status = ?", userID, "pending").
+		Count(&count).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取待确认评估数量失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"count": count,
+	})
+}
+
 // 获取评估的评分记录
 func GetEvaluationScores(c *gin.Context) {
 	evaluationId := c.Param("evaluationId")

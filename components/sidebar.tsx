@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
 import { closeApp } from "@dootask/tools"
 import { useDootaskContext } from "@/lib/dootask-context"
-import { useInvitations } from "@/lib/hooks/useInvitations"
+import { useUnreadContext } from "@/lib/unread-context"
 
 interface SidebarProps {
   isMobileMenuOpen: boolean
@@ -23,7 +23,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
   const router = useRouter()
   const { user: currentUser, isHR } = useAuth()
   const { isDootask } = useDootaskContext()
-  const { pendingCount } = useInvitations()
+  const { unreadInvitations, unreadEvaluations } = useUnreadContext()
 
   // 根据用户角色生成角色徽章
   const getRoleBadge = (role: string) => {
@@ -44,8 +44,8 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
           category: "核心功能",
           items: [
             { name: "仪表板", href: "/", icon: Home },
-            { name: "考核管理", href: "/evaluations", icon: FileText },
-            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: pendingCount > 0 ? pendingCount : undefined },
+            { name: "考核管理", href: "/evaluations", icon: FileText, badge: unreadEvaluations > 0 ? unreadEvaluations : undefined },
+            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: unreadInvitations > 0 ? unreadInvitations : undefined },
             { name: "统计分析", href: "/statistics", icon: BarChart3 },
           ],
         },
@@ -70,8 +70,8 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         {
           category: "我的功能",
           items: [
-            { name: "考核管理", href: "/evaluations", icon: FileText },
-            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: pendingCount > 0 ? pendingCount : undefined },
+            { name: "考核管理", href: "/evaluations", icon: FileText, badge: unreadEvaluations > 0 ? unreadEvaluations : undefined },
+            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: unreadInvitations > 0 ? unreadInvitations : undefined },
           ],
         },
         {
@@ -90,7 +90,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         items: menu.items.filter(item => !('hidden' in item && item.hidden)),
       }))
       .filter(menu => menu.items.length > 0)
-  }, [isHR, isDootask, pendingCount])
+  }, [isHR, isDootask, unreadInvitations, unreadEvaluations])
 
   // 点击导航项时关闭移动端菜单
   const handleNavClick = () => {
@@ -171,9 +171,9 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                     href={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      "flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors",
+                      "flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors border-r-2 border-transparent",
                       isActive
-                        ? "bg-sidebar-accent border-r-2 border-sidebar-primary"
+                        ? "bg-sidebar-accent border-sidebar-primary"
                         : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     )}
                   >
@@ -200,12 +200,17 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 // 移动端头部组件
 export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const { isDootask } = useDootaskContext()
-
+  const { unreadEvaluations, unreadInvitations } = useUnreadContext()
   return (
     <div className="lg:hidden bg-background shadow-sm border-b border-border flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-2">
-        <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-accent">
+        <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-accent relative">
           <Menu className="w-6 h-6 text-muted-foreground" />
+          {(unreadEvaluations + unreadInvitations) > 0 && (
+            <div className="absolute top-0 left-5.5 min-w-6 h-5 px-1.5 flex items-center justify-center text-xs bg-destructive/90 text-white rounded-md scale-95">
+              {unreadEvaluations + unreadInvitations}
+            </div>
+          )}
         </button>
         <h1 className="text-lg font-semibold text-foreground">KPI考核系统</h1>
         {isDootask ? (

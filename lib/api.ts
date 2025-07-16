@@ -348,6 +348,7 @@ export const evaluationApi = {
     api.get(`/evaluations/employee/${employeeId}`),
   getPending: (employeeId: number): Promise<{ data: KPIEvaluation[]; total: number }> =>
     api.get(`/evaluations/pending/${employeeId}`),
+  getPendingCount: (): Promise<{ count: number }> => api.get("/evaluations/pending/count"),
 }
 
 // KPI评分API
@@ -504,6 +505,9 @@ export const invitationApi = {
   // 获取我的邀请列表
   getMy: (params?: PaginationParams): Promise<PaginatedResponse<EvaluationInvitation>> =>
     api.get("/invitations/my", { params }),
+
+  // 获取待确认邀请数量
+  getPendingCount: (): Promise<{ count: number }> => api.get("/invitations/pending/count"),
 
   // 获取邀请详情
   getDetails: (invitationId: number): Promise<{ data: EvaluationInvitation }> =>

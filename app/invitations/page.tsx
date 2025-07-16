@@ -34,6 +34,7 @@ import {
 } from "@/lib/api"
 
 import { useAppContext } from "@/lib/app-context"
+import { useUnreadContext } from "@/lib/unread-context"
 import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
@@ -41,6 +42,7 @@ import { toast } from "sonner"
 
 export default function InvitationsPage() {
   const { Alert, Confirm } = useAppContext()
+  const { refreshUnreadInvitations } = useUnreadContext()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [invitations, setInvitations] = useState<EvaluationInvitation[]>([])
   const [selectedInvitation, setSelectedInvitation] = useState<EvaluationInvitation | null>(null)
@@ -67,6 +69,7 @@ export default function InvitationsPage() {
       })
       setInvitations(response.data || [])
       setPaginationData(response)
+      refreshUnreadInvitations()
     } catch (error) {
       console.error("获取邀请列表失败:", error)
       setError("获取邀请列表失败，请刷新重试")

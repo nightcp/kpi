@@ -46,6 +46,7 @@ import {
 } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
+import { useUnreadContext } from "@/lib/unread-context"
 import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
 import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
@@ -54,6 +55,7 @@ import { toast } from "sonner"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
+  const { refreshUnreadEvaluations } = useUnreadContext()
   const { user: currentUser, isManager, isHR } = useAuth()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([])
@@ -154,6 +156,7 @@ export default function EvaluationsPage() {
       const response = await evaluationApi.getAll(params)
       setEvaluations(response.data || [])
       setPaginationData(response)
+      refreshUnreadEvaluations()
     } catch (error) {
       console.error("获取评估列表失败:", error)
       setError("获取评估列表失败，请刷新重试")
@@ -162,7 +165,7 @@ export default function EvaluationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab])
+  }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab, refreshUnreadEvaluations])
 
   // 获取模板列表
   const fetchTemplates = async () => {
