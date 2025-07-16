@@ -1,6 +1,6 @@
 "use client"
 
-import { DooTaskUserInfo, getUserInfo } from "@dootask/tools"
+import { DooTaskUserInfo, getUserInfo, isMainElectron as isMainElectronTool } from "@dootask/tools"
 import { createContext, useContext, useEffect } from "react"
 import { useState } from "react"
 import { authApi, settingsApi } from "./api"
@@ -9,6 +9,7 @@ interface DootaskContextType {
   loading: boolean
   error: string | null
   isDootask: boolean
+  isMainElectron: boolean
   dooTaskUser: DooTaskUserInfo | null
 }
 
@@ -18,6 +19,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isDootask, setIsDootask] = useState(false)
+  const [isMainElectron, setIsMainElectron] = useState(false)
   const [dooTaskUser, setDooTaskUser] = useState<DooTaskUserInfo | null>(null)
 
   useEffect(() => {
@@ -48,6 +50,12 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
       }
     }
+
+    const checkMainElectron = async () => {
+      setIsMainElectron(await isMainElectronTool())
+    }
+
+    checkMainElectron()
     fetchSystemMode()
   }, [])
 
@@ -57,6 +65,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
         loading,
         error,
         isDootask,
+        isMainElectron,
         dooTaskUser,
       }}
     >
