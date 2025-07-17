@@ -405,6 +405,9 @@ func DeleteEvaluation(c *gin.Context) {
 	// 删除相关的评分记录
 	models.DB.Where("evaluation_id = ?", evaluationId).Delete(&models.KPIScore{})
 
+	// 删除相关的邀请记录
+	models.DB.Where("evaluation_id = ?", evaluationId).Delete(&models.EvaluationInvitation{})
+
 	result := models.DB.Delete(&models.KPIEvaluation{}, evaluationId)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
