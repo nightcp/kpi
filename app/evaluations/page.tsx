@@ -2115,12 +2115,12 @@ export default function EvaluationsPage() {
                     {/* 绩效评论卡片 */}
                     <Card className="mt-4">
                       <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
+                        <CardTitle className="flex flex-wrap items-center justify-between gap-4">
                           <div className="flex items-center">
                             <MessageCircle className="w-5 h-5 mr-2" />
                             绩效评论 ({comments.length})
                           </div>
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex flex-wrap items-center justify-end gap-3">
                             {!isAddingComment && (
                               <Button variant="outline" size="sm" onClick={() => setIsAddingComment(true)}>
                                 <Plus className="w-4 h-4 mr-1" />

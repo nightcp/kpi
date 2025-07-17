@@ -185,11 +185,11 @@ export default function SettingsPage() {
                 </div>
               </div>
               {/* 名称区 */}
-              <div className="flex flex-col items-center py-3">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col items-center py-3 max-w-full overflow-x-auto">
+                <div className="flex items-center gap-1.5 px-2">
                   {theme === "system"
-                    ? <CircleCheck className="w-4 h-4 text-primary" />
-                    : <Circle className="w-4 h-4 text-muted-foreground" />}
+                    ? <CircleCheck className="w-4 h-4 text-primary shrink-0" />
+                    : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />}
                   <span className="font-medium text-sm text-foreground">跟随系统</span>
                 </div>
               </div>

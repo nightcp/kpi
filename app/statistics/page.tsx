@@ -271,7 +271,7 @@ export default function StatisticsPage() {
 
       {/* 数据分析图表 */}
       <Tabs defaultValue="departments" className="space-y-4">
-        <TabsList className="gap-1">
+        <TabsList className="gap-1 max-w-full overflow-x-auto justify-start">
           <TabsTrigger value="departments">部门分析</TabsTrigger>
           <TabsTrigger value="trends">趋势分析</TabsTrigger>
           <TabsTrigger value="distribution">分数分布</TabsTrigger>

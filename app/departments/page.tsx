@@ -186,7 +186,7 @@ export default function DepartmentsPage() {
                   placeholder="搜索部门..."
                   value={search}
                   onChange={e => handleSearchChange(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-48 sm:w-64"
                 />
               </div>
             </div>

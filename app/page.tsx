@@ -168,10 +168,10 @@ export default function Dashboard() {
                     key={evaluation.id}
                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted/50 rounded-lg space-y-2 sm:space-y-0"
                   >
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                        <span className="font-medium">{evaluation.employee?.name}</span>
-                        <span className="text-sm text-muted-foreground">
+                    <div className="flex-1 sm:w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                        <span className="font-medium truncate">{evaluation.employee?.name}</span>
+                        <span className="text-sm text-muted-foreground truncate">
                           {evaluation.employee?.department?.name} - {evaluation.employee?.position}
                         </span>
                       </div>
@@ -179,11 +179,11 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between sm:justify-end sm:space-x-2">
                       <div className="text-right">
                         <div className="flex items-center justify-end">
-                          <div className="text-xs text-muted-foreground">得分</div>
-                          <div className="text-lg font-semibold ml-1">{evaluation.total_score}</div>
+                          <div className="text-xs text-muted-foreground truncate">得分</div>
+                          <div className="text-lg font-semibold ml-1 truncate">{evaluation.total_score}</div>
                         </div>
                       </div>
-                      <div className="sm:ml-2">{getStatusBadge(evaluation.status)}</div>
+                      <div className="sm:ml-2 truncate">{getStatusBadge(evaluation.status)}</div>
                     </div>
                   </div>
                 ))}

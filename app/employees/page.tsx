@@ -305,7 +305,7 @@ export default function EmployeesPage() {
                   placeholder="搜索员工姓名、邮箱或职位..."
                   value={searchQuery}
                   onChange={e => handleSearch(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-48 sm:w-64"
                 />
               </div>
             </div>

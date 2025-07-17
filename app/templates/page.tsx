@@ -250,7 +250,7 @@ export default function TemplatesPage() {
       </div>
 
       <Tabs className="w-full" value={templateTabValue} onValueChange={setTemplateTabValue}>
-        <TabsList className="gap-1 mb-2">
+        <TabsList className="gap-1 mb-2 max-w-full overflow-x-auto justify-start">
           <TabsTrigger value="templates">模板列表</TabsTrigger>
           {selectedTemplate && (
             <TabsTrigger value="items">KPI项目 {selectedTemplate && `(${selectedTemplate.name})`}</TabsTrigger>
