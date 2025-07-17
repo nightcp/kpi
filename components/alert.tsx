@@ -57,38 +57,33 @@ const AlertLayout = forwardRef<AlertLayoutRef, AlertLayoutProps>(
       return null
     }
 
+    const handleClose = () => {
+      currentAlert.onClose?.()
+      setCurrentAlert(null)
+    }
+
+    const handleConfirm = () => {
+      currentAlert.onConfirm?.()
+      setCurrentAlert(null)
+    }
+
     return (
-      <AlertDialog
-        open={!!currentAlert}
-        onOpenChange={() => {
-          currentAlert.onClose?.()
-          setCurrentAlert(null)
-        }}
-      >
-        <AlertDialogContent>
+      <AlertDialog open={!!currentAlert} onOpenChange={handleClose}>
+        <AlertDialogContent
+          onEscapeKeyDown={e => {
+            e.preventDefault()
+          }}
+        >
+          <div className="hidden" data-slot="dialog-close" onClick={handleClose}></div>
           <AlertDialogHeader>
             <AlertDialogTitle>{currentAlert.title}</AlertDialogTitle>
             <AlertDialogDescription>{currentAlert.message}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {currentAlert.type === "confirm" && (
-              <AlertDialogCancel
-                onClick={() => {
-                  currentAlert.onClose?.()
-                  setCurrentAlert(null)
-                }}
-              >
-                {currentAlert.cancelText || cancelText}
-              </AlertDialogCancel>
+              <AlertDialogCancel onClick={handleClose}>{currentAlert.cancelText || cancelText}</AlertDialogCancel>
             )}
-            <AlertDialogAction
-              onClick={() => {
-                currentAlert.onConfirm?.()
-                setCurrentAlert(null)
-              }}
-            >
-              {currentAlert.confirmText || confirmText}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirm}>{currentAlert.confirmText || confirmText}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,7 +1,7 @@
 "use client"
 
-import { DooTaskUserInfo, getUserInfo, isMainElectron as isMainElectronTool } from "@dootask/tools"
-import { createContext, useContext, useEffect } from "react"
+import { DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool } from "@dootask/tools"
+import { createContext, useCallback, useContext, useEffect } from "react"
 import { useState } from "react"
 import { authApi, settingsApi } from "./api"
 
@@ -21,6 +21,32 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [isDootask, setIsDootask] = useState(false)
   const [isMainElectron, setIsMainElectron] = useState(false)
   const [dooTaskUser, setDooTaskUser] = useState<DooTaskUserInfo | null>(null)
+
+  const preventBack = useCallback(async () => {
+    const interceptor = await interceptBack(() => {
+      if (typeof window === "undefined") return false
+
+      try {
+        // 查找是否有 data-slot="dialog-close" 的元素
+        const dialogClose = document.querySelector("[data-slot='dialog-close']") as HTMLButtonElement
+        if (dialogClose) {
+          dialogClose.click()
+          return true
+        }
+      } catch {
+        // 如果找不到，则返回 false
+      }
+
+      return false
+    })
+    return () => {
+      interceptor()
+    }
+  }, [])
+
+  useEffect(() => {
+    preventBack()
+  }, [preventBack])
 
   useEffect(() => {
     const fetchSystemMode = async () => {
