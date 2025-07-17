@@ -70,7 +70,6 @@ export default function EvaluationsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
   // 分页相关状态
   const [paginationData, setPaginationData] = useState<PaginatedResponse<KPIEvaluation> | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -103,18 +102,18 @@ export default function EvaluationsPage() {
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null) // 正在编辑的评论ID
   const [editingCommentContent, setEditingCommentContent] = useState<string>("") // 编辑中的评论内容
   const [editingCommentPrivate, setEditingCommentPrivate] = useState<boolean>(false) // 编辑中的评论是否私有
-  
+
   // Popover 状态控制
-  const [openPopovers, setOpenPopovers] = useState<{[key: string]: boolean}>({}) // 控制每个Popover的开关状态
-  
+  const [openPopovers, setOpenPopovers] = useState<{ [key: string]: boolean }>({}) // 控制每个Popover的开关状态
+
   // 邀请评分相关状态
   const [invitations, setInvitations] = useState<EvaluationInvitation[]>([]) // 邀请列表
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false) // 邀请对话框开关
-  const [invitationScores, setInvitationScores] = useState<{[key: number]: InvitedScore[]}>({}) // 邀请评分结果
+  const [invitationScores, setInvitationScores] = useState<{ [key: number]: InvitedScore[] }>({}) // 邀请评分结果
   const [isCreatingInvitation, setIsCreatingInvitation] = useState(false) // 是否正在创建邀请
   const [invitationForm, setInvitationForm] = useState({
     invitee_ids: [] as number[],
-    message: ""
+    message: "",
   }) // 邀请表单
   const [formData, setFormData] = useState({
     employee_ids: [] as string[],
@@ -193,9 +192,9 @@ export default function EvaluationsPage() {
     try {
       const response = await invitationApi.getByEvaluation(evaluationId)
       setInvitations(response.data || [])
-      
+
       // 获取每个邀请的评分结果
-      const scoresData: {[key: number]: InvitedScore[]} = {}
+      const scoresData: { [key: number]: InvitedScore[] } = {}
       for (const invitation of response.data || []) {
         if (invitation.status === "completed") {
           try {
@@ -229,7 +228,7 @@ export default function EvaluationsPage() {
     // 检查是否有重复邀请
     const existingInviteeIds = invitations.map(inv => inv.invitee_id)
     const duplicateIds = invitationForm.invitee_ids.filter(id => existingInviteeIds.includes(id))
-    
+
     if (duplicateIds.length > 0) {
       Alert("创建失败", "选择的人员中包含已邀请过的人员，请重新选择")
       return
@@ -238,17 +237,17 @@ export default function EvaluationsPage() {
     try {
       setIsCreatingInvitation(true)
       await invitationApi.create(selectedEvaluation.id, invitationForm)
-      
+
       // 刷新邀请列表
       await fetchInvitations(selectedEvaluation.id)
-      
+
       // 重置表单
       setInvitationForm({
         invitee_ids: [],
-        message: ""
+        message: "",
       })
       setInvitationDialogOpen(false)
-      
+
       toast.success("邀请创建成功")
     } catch (error) {
       console.error("创建邀请失败:", error)
@@ -261,7 +260,7 @@ export default function EvaluationsPage() {
   // 撤销邀请
   const handleCancelInvitation = async (invitationId: number) => {
     if (!selectedEvaluation) return
-    
+
     const confirmed = await Confirm("确认撤销", "确定要撤销这个邀请吗？")
     if (!confirmed) return
 
@@ -278,7 +277,7 @@ export default function EvaluationsPage() {
   // 重新邀请
   const handleReinvite = async (invitationId: number) => {
     if (!selectedEvaluation) return
-    
+
     const confirmed = await Confirm("确认重新邀请", "确定要重新邀请这个人吗？")
     if (!confirmed) return
 
@@ -295,7 +294,7 @@ export default function EvaluationsPage() {
   // 删除邀请
   const handleDeleteInvitation = async (invitationId: number) => {
     if (!selectedEvaluation) return
-    
+
     const confirmed = await Confirm("确认删除", "确定要删除这个邀请吗？此操作无法撤销。")
     if (!confirmed) return
 
@@ -378,8 +377,6 @@ export default function EvaluationsPage() {
     }
   }
 
-
-
   // 验证评分范围
   const validateScore = (score: string, maxScore: number): { isValid: boolean; message?: string } => {
     if (score === "") {
@@ -460,7 +457,12 @@ export default function EvaluationsPage() {
   }
 
   // 从 Popover 保存评分
-  const handleSaveScoreFromPopover = async (scoreId: number, type: "self" | "manager" | "hr", scoreValue: string, commentValue: string) => {
+  const handleSaveScoreFromPopover = async (
+    scoreId: number,
+    type: "self" | "manager" | "hr",
+    scoreValue: string,
+    commentValue: string
+  ) => {
     try {
       // 获取当前编辑的评分项目
       const currentScore = scores.find(s => s.id === scoreId)
@@ -495,22 +497,20 @@ export default function EvaluationsPage() {
       const popoverKey = `${scoreId}-${type}`
       setOpenPopovers(prev => ({
         ...prev,
-        [popoverKey]: false
+        [popoverKey]: false,
       }))
 
       // 延迟执行 scrollToNextUnscored，确保 Popover 关闭动画完成
       setTimeout(() => {
         scrollToNextUnscored(scoreId, type)
       }, 100)
-      
+
       toast.success("评分保存成功")
     } catch (error) {
       console.error("更新评分失败:", error)
       Alert("保存失败", "更新评分失败，请重试")
     }
   }
-
-
 
   // 完成阶段
   const handleCompleteStage = async (evaluationId: number, stage: string) => {
@@ -623,7 +623,10 @@ export default function EvaluationsPage() {
         case "hr":
         case "confirm":
           // HR审核或员工确认最终得分后，总分为最终得分总和
-          totalScore = scores.reduce((acc, score) => acc + (score.final_score || score.hr_score || score.manager_score || 0), 0)
+          totalScore = scores.reduce(
+            (acc, score) => acc + (score.final_score || score.hr_score || score.manager_score || 0),
+            0
+          )
           break
       }
 
@@ -680,8 +683,6 @@ export default function EvaluationsPage() {
       }
     }
   }
-
-
 
   // 获取评论列表
   const fetchComments = useCallback(
@@ -785,36 +786,39 @@ export default function EvaluationsPage() {
   }
 
   // 查看详情
-  const handleViewDetails = useCallback((evaluation: KPIEvaluation) => {
-    setSelectedEvaluation(evaluation)
-    fetchEvaluationScores(evaluation.id)
-    setScoreDialogOpen(true)
-    setActiveTab("details")
+  const handleViewDetails = useCallback(
+    (evaluation: KPIEvaluation) => {
+      setSelectedEvaluation(evaluation)
+      fetchEvaluationScores(evaluation.id)
+      setScoreDialogOpen(true)
+      setActiveTab("details")
 
-    // 重置评论状态
-    setComments([])
-    setCommentsPaginationData(null)
-    setNewComment("")
-    setNewCommentPrivate(false)
-    setIsAddingComment(false)
-    setEditingCommentId(null)
-    setEditingCommentContent("")
-    setEditingCommentPrivate(false)
+      // 重置评论状态
+      setComments([])
+      setCommentsPaginationData(null)
+      setNewComment("")
+      setNewCommentPrivate(false)
+      setIsAddingComment(false)
+      setEditingCommentId(null)
+      setEditingCommentContent("")
+      setEditingCommentPrivate(false)
 
-    // 如果是HR用户且评估状态为manager_evaluated，获取邀请列表
-    if (isHR && evaluation.status === "manager_evaluated") {
-      fetchInvitations(evaluation.id)
-    }
+      // 如果是HR用户且评估状态为manager_evaluated，获取邀请列表
+      if (["manager_evaluated", "pending_confirm", "completed"].includes(evaluation.status) && isHR) {
+        fetchInvitations(evaluation.id)
+      }
 
-    // 重置邀请状态
-    setInvitations([])
-    setInvitationScores({})
-    setInvitationDialogOpen(false)
-    setInvitationForm({
-      invitee_ids: [],
-      message: ""
-    })
-  }, [isHR])
+      // 重置邀请状态
+      setInvitations([])
+      setInvitationScores({})
+      setInvitationDialogOpen(false)
+      setInvitationForm({
+        invitee_ids: [],
+        message: "",
+      })
+    },
+    [isHR]
+  )
 
   // 删除评估
   const handleDelete = async (evaluationId: number) => {
@@ -848,7 +852,7 @@ export default function EvaluationsPage() {
   }
 
   // 检查是否可以进行某个操作
-  const canPerformAction = (evaluation: KPIEvaluation, action: "self" | "manager" | "hr" | "confirm") => {
+  const canPerformAction = (evaluation: KPIEvaluation, action: "self" | "manager" | "hr" | "invite" | "confirm") => {
     if (!currentUser) return false
 
     switch (action) {
@@ -864,8 +868,13 @@ export default function EvaluationsPage() {
           evaluation.employee_id !== currentUser.id
         )
       case "hr":
+        // HR只能审核主管评估的考核
         return evaluation.status === "manager_evaluated" && isHR
+      case "invite":
+        // HR可以邀请员工进行考核
+        return ["manager_evaluated", "pending_confirm", "completed"].includes(evaluation.status) && isHR
       case "confirm":
+        // HR可以确认员工考核
         return evaluation.status === "pending_confirm" && evaluation.employee_id === currentUser.id
       default:
         return false
@@ -1090,8 +1099,8 @@ export default function EvaluationsPage() {
             <div className="text-xl sm:text-2xl font-bold">
               {getFilteredEvaluations.length > 0
                 ? Math.round(
-                  getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length
-                )
+                    getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length
+                  )
                 : 0}
             </div>
             <p className="text-xs text-muted-foreground">总体考核平均分</p>
@@ -1361,19 +1370,20 @@ export default function EvaluationsPage() {
                               <div
                                 className="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-300"
                                 style={{
-                                  width: `${scores.length > 0
+                                  width: `${
+                                    scores.length > 0
                                       ? (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) *
-                                      100
+                                        100
                                       : 0
-                                    }%`,
+                                  }%`,
                                 }}
                               />
                             </div>
                             <span className="text-sm font-medium text-green-900 dark:text-green-100">
                               {scores.length > 0
                                 ? Math.round(
-                                  (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
-                                )
+                                    (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
+                                  )
                                 : 0}
                               %
                             </span>
@@ -1418,10 +1428,10 @@ export default function EvaluationsPage() {
                               <span className="text-xs font-medium text-orange-900 dark:text-orange-100">
                                 {scores.length > 0
                                   ? Math.round(
-                                    (scores.filter(s => s.manager_score && s.manager_score > 0).length /
-                                      scores.length) *
-                                    100
-                                  )
+                                      (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                                        scores.length) *
+                                        100
+                                    )
                                   : 0}
                                 %
                               </span>
@@ -1430,12 +1440,13 @@ export default function EvaluationsPage() {
                               <div
                                 className="bg-orange-600 dark:bg-orange-400 h-2 rounded-full transition-all duration-300"
                                 style={{
-                                  width: `${scores.length > 0
+                                  width: `${
+                                    scores.length > 0
                                       ? (scores.filter(s => s.manager_score && s.manager_score > 0).length /
-                                        scores.length) *
-                                      100
+                                          scores.length) *
+                                        100
                                       : 0
-                                    }%`,
+                                  }%`,
                                 }}
                               />
                             </div>
@@ -1471,8 +1482,8 @@ export default function EvaluationsPage() {
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                    scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
-                                  ).toFixed(1)
+                                      scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
+                                    ).toFixed(1)
                                   : 0}
                               </div>
                             </div>
@@ -1485,8 +1496,8 @@ export default function EvaluationsPage() {
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
-                                  ).toFixed(1)
+                                      scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
+                                    ).toFixed(1)
                                   : 0}
                               </div>
                             </div>
@@ -1495,7 +1506,7 @@ export default function EvaluationsPage() {
                               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {Math.abs(
                                   scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                                  scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                                 ).toFixed(1)}
                               </div>
                               <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
@@ -1505,97 +1516,102 @@ export default function EvaluationsPage() {
                           {/* 差异分析提示 */}
                           {Math.abs(
                             scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                            scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                              scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
                           ) > 10 && (
-                              <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
-                                <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                                  ⚠️ <strong>注意：</strong>
-                                  员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
-                                </div>
+                            <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
+                              <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                                ⚠️ <strong>注意：</strong>
+                                员工自评与主管评分存在较大差异，建议重点关注并在最终评分中做出合理调整。
                               </div>
-                            )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
 
                     {/* 邀请评分功能 */}
-                    {canPerformAction(selectedEvaluation, "hr") && (
+                    {canPerformAction(selectedEvaluation, "invite") && (
                       <div className="space-y-4">
                         <div className="bg-purple-50/80 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <h4 className="font-medium text-purple-900 dark:text-purple-100">🤝 邀请评分</h4>
-                            <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Plus className="w-4 h-4 mr-1" />
-                                  邀请评分
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
-                                <DialogHeader>
-                                  <DialogTitle>邀请评分</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  {/* 已邀请人员提示 */}
-                                  {invitations.length > 0 && (
-                                    <div className="bg-blue-50/50 dark:bg-blue-950/50 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                                      <div className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                                        已邀请 {invitations.length} 人：
+                            {canPerformAction(selectedEvaluation, "hr") && (
+                              <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    邀请评分
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="w-[95vw] sm:max-w-md mx-auto">
+                                  <DialogHeader>
+                                    <DialogTitle>邀请评分</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    {/* 已邀请人员提示 */}
+                                    {invitations.length > 0 && (
+                                      <div className="bg-blue-50/50 dark:bg-blue-950/50 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                        <div className="text-sm text-blue-800 dark:text-blue-200 mb-2">
+                                          已邀请 {invitations.length} 人：
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                          {invitations.map(invitation => (
+                                            <span
+                                              key={invitation.id}
+                                              className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded"
+                                            >
+                                              {invitation.invitee?.name}
+                                            </span>
+                                          ))}
+                                        </div>
                                       </div>
-                                      <div className="flex flex-wrap gap-2">
-                                        {invitations.map(invitation => (
-                                          <span key={invitation.id} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                                            {invitation.invitee?.name}
-                                          </span>
-                                        ))}
-                                      </div>
+                                    )}
+
+                                    <div className="flex flex-col gap-2">
+                                      <Label>选择邀请人员</Label>
+                                      <EmployeeSelector
+                                        selectedEmployeeIds={invitationForm.invitee_ids.map(id => id.toString())}
+                                        onSelectionChange={employeeIds =>
+                                          setInvitationForm(prev => ({
+                                            ...prev,
+                                            invitee_ids: employeeIds.map(id => parseInt(id)),
+                                          }))
+                                        }
+                                        label=""
+                                        placeholder="选择要邀请的人员..."
+                                        maxDisplayTags={3}
+                                        disabledEmployeeIds={
+                                          [...invitations.map(inv => inv.invitee_id), currentUser?.id].filter(
+                                            Boolean
+                                          ) as number[]
+                                        }
+                                      />
                                     </div>
-                                  )}
-                                  
-                                  <div className="flex flex-col gap-2">
-                                    <Label>选择邀请人员</Label>
-                                    <EmployeeSelector
-                                      selectedEmployeeIds={invitationForm.invitee_ids.map(id => id.toString())}
-                                      onSelectionChange={employeeIds => 
-                                        setInvitationForm(prev => ({ 
-                                          ...prev, 
-                                          invitee_ids: employeeIds.map(id => parseInt(id)) 
-                                        }))
-                                      }
-                                      label=""
-                                      placeholder="选择要邀请的人员..."
-                                      maxDisplayTags={3}
-                                      disabledEmployeeIds={[...invitations.map(inv => inv.invitee_id), currentUser?.id].filter(Boolean) as number[]}
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                      <Label>邀请消息</Label>
+                                      <Textarea
+                                        value={invitationForm.message}
+                                        onChange={e =>
+                                          setInvitationForm(prev => ({ ...prev, message: e.target.value }))
+                                        }
+                                        placeholder="请输入邀请消息..."
+                                        className="min-h-[80px]"
+                                      />
+                                    </div>
+                                    <div className="flex justify-end space-x-2">
+                                      <Button variant="outline" onClick={() => setInvitationDialogOpen(false)}>
+                                        取消
+                                      </Button>
+                                      <Button onClick={handleCreateInvitation} disabled={isCreatingInvitation}>
+                                        {isCreatingInvitation ? "创建中..." : "发送邀请"}
+                                      </Button>
+                                    </div>
                                   </div>
-                                  <div className="flex flex-col gap-2">
-                                    <Label>邀请消息</Label>
-                                    <Textarea
-                                      value={invitationForm.message}
-                                      onChange={e => setInvitationForm(prev => ({ ...prev, message: e.target.value }))}
-                                      placeholder="请输入邀请消息..."
-                                      className="min-h-[80px]"
-                                    />
-                                  </div>
-                                  <div className="flex justify-end space-x-2">
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => setInvitationDialogOpen(false)}
-                                    >
-                                      取消
-                                    </Button>
-                                    <Button
-                                      onClick={handleCreateInvitation}
-                                      disabled={isCreatingInvitation}
-                                    >
-                                      {isCreatingInvitation ? "创建中..." : "发送邀请"}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                                </DialogContent>
+                              </Dialog>
+                            )}
                           </div>
-                          
+
                           {/* 邀请列表 */}
                           {invitations.length > 0 ? (
                             <div className="space-y-2">
@@ -1609,9 +1625,7 @@ export default function EvaluationsPage() {
                                 >
                                   <div className="flex items-center space-x-3">
                                     <div>
-                                      <div className="font-medium text-sm">
-                                        {invitation.invitee?.name}
-                                      </div>
+                                      <div className="font-medium text-sm">{invitation.invitee?.name}</div>
                                       <div className="text-xs text-muted-foreground">
                                         {invitation.invitee?.position}
                                       </div>
@@ -1645,7 +1659,7 @@ export default function EvaluationsPage() {
                                         </span>
                                       )}
                                     </div>
-                                    
+
                                     {/* 操作按钮 */}
                                     <div className="flex items-center space-x-1">
                                       {invitation.status === "pending" && (
@@ -1697,28 +1711,25 @@ export default function EvaluationsPage() {
                               {Object.entries(invitationScores).map(([invitationId, scores]) => {
                                 const invitation = invitations.find(inv => inv.id === parseInt(invitationId))
                                 if (!invitation) return null
-                                
+
                                 const totalScore = scores.reduce((sum, score) => sum + (score.score || 0), 0)
-                                
+
                                 return (
                                   <div key={invitationId} className="border rounded-lg p-3 bg-card">
                                     <div className="flex items-center justify-between mb-2">
-                                      <div className="font-medium text-sm">
-                                        {invitation.invitee?.name} 的评分
-                                      </div>
+                                      <div className="font-medium text-sm">{invitation.invitee?.name} 的评分</div>
                                       <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                                         {totalScore} 分
                                       </div>
                                     </div>
                                     <div className="text-xs text-muted-foreground mb-2">
-                                      {invitation.invitee?.position} | 完成时间: {new Date(invitation.updated_at).toLocaleString()}
+                                      {invitation.invitee?.position} | 完成时间:{" "}
+                                      {new Date(invitation.updated_at).toLocaleString()}
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
                                       {scores.map(score => (
                                         <div key={score.id} className="flex items-center justify-between text-sm">
-                                          <span className="text-muted-foreground">
-                                            {score.item?.name}
-                                          </span>
+                                          <span className="text-muted-foreground">{score.item?.name}</span>
                                           <span className="font-medium">
                                             {score.score || 0} / {score.item?.max_score || 0}
                                           </span>
@@ -1751,7 +1762,9 @@ export default function EvaluationsPage() {
                                 <div className="text-2xl font-bold text-blue-600">
                                   {score.final_score || score.hr_score || score.manager_score || score.self_score || 0}
                                 </div>
-                                <div className="text-sm text-muted-foreground">{getScoreLabel(selectedEvaluation.status)}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {getScoreLabel(selectedEvaluation.status)}
+                                </div>
                               </div>
                             </div>
 
@@ -1762,22 +1775,18 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   自评分数
                                   {canPerformAction(selectedEvaluation, "self") && (
-                                    <Popover 
+                                    <Popover
                                       open={openPopovers[`${score.id}-self`] || false}
-                                      onOpenChange={(open) => {
+                                      onOpenChange={open => {
                                         const popoverKey = `${score.id}-self`
                                         setOpenPopovers(prev => ({
                                           ...prev,
-                                          [popoverKey]: open
+                                          [popoverKey]: open,
                                         }))
                                       }}
                                     >
                                       <PopoverTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="ml-2 h-6 w-6 p-0"
-                                        >
+                                        <Button variant="ghost" size="sm" className="ml-2 h-6 w-6 p-0">
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
@@ -1785,9 +1794,7 @@ export default function EvaluationsPage() {
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">自评编辑</h4>
-                                            <p className="text-muted-foreground text-sm">
-                                              编辑您的自评分数和评价说明
-                                            </p>
+                                            <p className="text-muted-foreground text-sm">编辑您的自评分数和评价说明</p>
                                           </div>
                                           <div className="grid gap-2">
                                             <div className="grid grid-cols-3 items-center gap-4">
@@ -1801,7 +1808,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.self_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1817,9 +1824,18 @@ export default function EvaluationsPage() {
                                               <Button
                                                 size="sm"
                                                 onClick={() => {
-                                                  const scoreInput = document.getElementById('self-score') as HTMLInputElement
-                                                  const commentInput = document.getElementById('self-comment') as HTMLTextAreaElement
-                                                  handleSaveScoreFromPopover(score.id, 'self', scoreInput.value, commentInput.value)
+                                                  const scoreInput = document.getElementById(
+                                                    "self-score"
+                                                  ) as HTMLInputElement
+                                                  const commentInput = document.getElementById(
+                                                    "self-comment"
+                                                  ) as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(
+                                                    score.id,
+                                                    "self",
+                                                    scoreInput.value,
+                                                    commentInput.value
+                                                  )
                                                 }}
                                               >
                                                 <Save className="w-3 h-3 mr-1" />
@@ -1846,22 +1862,18 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   主管评分
                                   {canPerformAction(selectedEvaluation, "manager") && (
-                                    <Popover 
+                                    <Popover
                                       open={openPopovers[`${score.id}-manager`] || false}
-                                      onOpenChange={(open) => {
+                                      onOpenChange={open => {
                                         const popoverKey = `${score.id}-manager`
                                         setOpenPopovers(prev => ({
                                           ...prev,
-                                          [popoverKey]: open
+                                          [popoverKey]: open,
                                         }))
                                       }}
                                     >
                                       <PopoverTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="ml-2 h-6 w-6 p-0"
-                                        >
+                                        <Button variant="ghost" size="sm" className="ml-2 h-6 w-6 p-0">
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
@@ -1869,9 +1881,7 @@ export default function EvaluationsPage() {
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">主管评分编辑</h4>
-                                            <p className="text-muted-foreground text-sm">
-                                              编辑主管评分和评价说明
-                                            </p>
+                                            <p className="text-muted-foreground text-sm">编辑主管评分和评价说明</p>
                                           </div>
                                           <div className="grid gap-2">
                                             <div className="grid grid-cols-3 items-center gap-4">
@@ -1885,7 +1895,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.manager_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1909,9 +1919,18 @@ export default function EvaluationsPage() {
                                               <Button
                                                 size="sm"
                                                 onClick={() => {
-                                                  const scoreInput = document.getElementById('manager-score') as HTMLInputElement
-                                                  const commentInput = document.getElementById('manager-comment') as HTMLTextAreaElement
-                                                  handleSaveScoreFromPopover(score.id, 'manager', scoreInput.value, commentInput.value)
+                                                  const scoreInput = document.getElementById(
+                                                    "manager-score"
+                                                  ) as HTMLInputElement
+                                                  const commentInput = document.getElementById(
+                                                    "manager-comment"
+                                                  ) as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(
+                                                    score.id,
+                                                    "manager",
+                                                    scoreInput.value,
+                                                    commentInput.value
+                                                  )
                                                 }}
                                               >
                                                 <Save className="w-3 h-3 mr-1" />
@@ -1927,17 +1946,15 @@ export default function EvaluationsPage() {
 
                                 <div>
                                   <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
-                                  <div className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
-                                    score.manager_auto 
-                                      ? "border-amber-200 bg-amber-50/50" 
-                                      : ""
-                                  }`}>
+                                  <div
+                                    className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
+                                      score.manager_auto ? "border-amber-200 bg-amber-50/50" : ""
+                                    }`}
+                                  >
                                     {score.manager_comment || "暂无说明"}
                                   </div>
                                   {score.manager_auto && (
-                                    <div className="text-xs text-amber-600 mt-1">
-                                      ⚠️ 系统自动填入的评分
-                                    </div>
+                                    <div className="text-xs text-amber-600 mt-1">⚠️ 系统自动填入的评分</div>
                                   )}
                                 </div>
                               </div>
@@ -1947,22 +1964,18 @@ export default function EvaluationsPage() {
                                 <Label className="text-sm font-medium flex items-center h-6">
                                   HR评分
                                   {canPerformAction(selectedEvaluation, "hr") && (
-                                    <Popover 
+                                    <Popover
                                       open={openPopovers[`${score.id}-hr`] || false}
-                                      onOpenChange={(open) => {
+                                      onOpenChange={open => {
                                         const popoverKey = `${score.id}-hr`
                                         setOpenPopovers(prev => ({
                                           ...prev,
-                                          [popoverKey]: open
+                                          [popoverKey]: open,
                                         }))
                                       }}
                                     >
                                       <PopoverTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="ml-2 h-6 w-6 p-0"
-                                        >
+                                        <Button variant="ghost" size="sm" className="ml-2 h-6 w-6 p-0">
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
@@ -1970,9 +1983,7 @@ export default function EvaluationsPage() {
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">HR评分编辑</h4>
-                                            <p className="text-muted-foreground text-sm">
-                                              编辑HR评分和评价说明
-                                            </p>
+                                            <p className="text-muted-foreground text-sm">编辑HR评分和评价说明</p>
                                           </div>
                                           <div className="grid gap-2">
                                             <div className="grid grid-cols-3 items-center gap-4">
@@ -1986,7 +1997,7 @@ export default function EvaluationsPage() {
                                                 defaultValue={score.hr_score?.toString() || ""}
                                                 className="col-span-2 h-8"
                                                 placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1999,7 +2010,10 @@ export default function EvaluationsPage() {
                                               />
                                             </div>
                                             <div className="text-xs text-center mt-2">
-                                              <div className="text-blue-600">员工自评：{score.self_score || 0}分 | 主管评分：{score.manager_score || 0}分</div>
+                                              <div className="text-blue-600">
+                                                员工自评：{score.self_score || 0}分 | 主管评分：
+                                                {score.manager_score || 0}分
+                                              </div>
                                               {score.manager_auto && (
                                                 <div className="text-amber-600 mt-1">
                                                   ⚠️ 主管评分为系统自动填入，该员工无直属主管
@@ -2010,9 +2024,18 @@ export default function EvaluationsPage() {
                                               <Button
                                                 size="sm"
                                                 onClick={() => {
-                                                  const scoreInput = document.getElementById('hr-score') as HTMLInputElement
-                                                  const commentInput = document.getElementById('hr-comment') as HTMLTextAreaElement
-                                                  handleSaveScoreFromPopover(score.id, 'hr', scoreInput.value, commentInput.value)
+                                                  const scoreInput = document.getElementById(
+                                                    "hr-score"
+                                                  ) as HTMLInputElement
+                                                  const commentInput = document.getElementById(
+                                                    "hr-comment"
+                                                  ) as HTMLTextAreaElement
+                                                  handleSaveScoreFromPopover(
+                                                    score.id,
+                                                    "hr",
+                                                    scoreInput.value,
+                                                    commentInput.value
+                                                  )
                                                 }}
                                               >
                                                 <Save className="w-3 h-3 mr-1" />
@@ -2033,7 +2056,6 @@ export default function EvaluationsPage() {
                                   </div>
                                 </div>
                               </div>
-
                             </div>
                           </div>
                         </CardContent>
@@ -2050,7 +2072,8 @@ export default function EvaluationsPage() {
                             <div className="text-4xl font-bold text-blue-600 mt-2">
                               {scores.reduce(
                                 (acc, score) =>
-                                  acc + (score.final_score || score.hr_score || score.manager_score || score.self_score || 0),
+                                  acc +
+                                  (score.final_score || score.hr_score || score.manager_score || score.self_score || 0),
                                 0
                               )}
                             </div>
