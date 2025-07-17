@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"dootask-kpi-server/models"
+	"dootask-kpi-server/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -256,11 +257,11 @@ func CreateEvaluation(c *gin.Context) {
 
 	tx.Commit()
 
-	// TODO: 发送 DooTask 机器人通知
+	// 发送 DooTask 机器人通知
 	models.SendBotMessage(c, evaluation.Employee.DooTaskUserID, fmt.Sprintf(
-		"**您有新的考核任务，请及时处理。**\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **考核时间：** %s",
+		"**您有新的考核任务，请及时处理。**\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **考核时间：** %s\n\n> 请前往「应用 - 绩效考核」中查看详情。",
 		evaluation.Template.Name,
-		evaluation.Period,
+		utils.GetPeriodValue(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter),
 		evaluation.CreatedAt.Format("2006-01-02"),
 	))
 

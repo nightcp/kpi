@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"dootask-kpi-server/models"
+	"dootask-kpi-server/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,7 +50,7 @@ func CreateInvitation(c *gin.Context) {
 
 	// 验证评估是否存在且状态为manager_evaluated
 	var evaluation models.KPIEvaluation
-	if err := models.DB.Preload("Template").First(&evaluation, evalID).Error; err != nil {
+	if err := models.DB.Preload("Template").Preload("Employee").First(&evaluation, evalID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "评估不存在"})
 		return
 	}
@@ -123,7 +125,22 @@ func CreateInvitation(c *gin.Context) {
 
 	tx.Commit()
 
-	// TODO: 发送 DooTask 机器人通知
+	// 为每个被邀请人发送 DooTask 机器人通知
+	for _, invitation := range createdInvitations {
+		// 获取被邀请人信息
+		var invitee models.Employee
+		if err := models.DB.First(&invitee, invitation.InviteeID).Error; err == nil {
+			// 发送邀请通知
+			models.SendBotMessage(c, invitee.DooTaskUserID, fmt.Sprintf(
+				"**您收到了一个绩效评分邀请，请及时处理。**\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n- **邀请消息：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情并进行评分。",
+				evaluation.Employee.Name,
+				evaluation.Template.Name,
+				utils.GetPeriodValue(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter),
+				currentUser.Name,
+				req.Message,
+			))
+		}
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "邀请创建成功",
@@ -627,7 +644,7 @@ func ReinviteInvitation(c *gin.Context) {
 
 	// 验证邀请是否存在
 	var invitation models.EvaluationInvitation
-	if err := models.DB.Preload("Invitee").Preload("Inviter").First(&invitation, uint(inviteID)).Error; err != nil {
+	if err := models.DB.Preload("Invitee").Preload("Inviter").Preload("Evaluation.Employee").Preload("Evaluation.Template").First(&invitation, uint(inviteID)).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "邀请不存在"})
 		return
 	}
@@ -644,7 +661,14 @@ func ReinviteInvitation(c *gin.Context) {
 		return
 	}
 
-	// TODO: 发送 DooTask 机器人通知
+	// 发送 DooTask 机器人通知
+	models.SendBotMessage(c, invitation.Invitee.DooTaskUserID, fmt.Sprintf(
+		"**您的绩效评分邀请已重新发送，请及时处理。**\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情。",
+		invitation.Evaluation.Employee.Name,
+		invitation.Evaluation.Template.Name,
+		utils.GetPeriodValue(invitation.Evaluation.Period, invitation.Evaluation.Year, invitation.Evaluation.Month, invitation.Evaluation.Quarter),
+		invitation.Inviter.Name,
+	))
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":    invitation,
