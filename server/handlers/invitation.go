@@ -128,16 +128,21 @@ func CreateInvitation(c *gin.Context) {
 	// 为每个被邀请人发送 DooTask 机器人通知
 	for _, invitation := range createdInvitations {
 		// 获取被邀请人信息
+		message := req.Message
+		if message == "" {
+			message = "-"
+		}
 		var invitee models.Employee
 		if err := models.DB.First(&invitee, invitation.InviteeID).Error; err == nil {
 			// 发送邀请通知
-			models.SendBotMessage(c, invitee.DooTaskUserID, fmt.Sprintf(
-				"**您收到了一个绩效评分邀请，请及时处理。**\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n- **邀请消息：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情并进行评分。",
+			dooTaskClient := utils.NewDooTaskClient(c.GetHeader("DooTaskAuth"))
+			dooTaskClient.SendBotMessage(invitee.DooTaskUserID, fmt.Sprintf(
+				"### 📩 您收到了一个绩效评分邀请，请及时处理。\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n- **邀请消息：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情并进行评分。",
 				evaluation.Employee.Name,
 				evaluation.Template.Name,
 				utils.GetPeriodValue(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter),
-				currentUser.Name,
-				req.Message,
+				c.GetString("user_name"),
+				message,
 			))
 		}
 	}
@@ -662,12 +667,13 @@ func ReinviteInvitation(c *gin.Context) {
 	}
 
 	// 发送 DooTask 机器人通知
-	models.SendBotMessage(c, invitation.Invitee.DooTaskUserID, fmt.Sprintf(
-		"**您的绩效评分邀请已重新发送，请及时处理。**\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情。",
+	dooTaskClient := utils.NewDooTaskClient(c.GetHeader("DooTaskAuth"))
+	dooTaskClient.SendBotMessage(invitation.Invitee.DooTaskUserID, fmt.Sprintf(
+		"### 📩 【重新邀请】您收到了一个绩效评分邀请，请及时处理。\n\n- **被评估员工：** %s\n- **考核模板：** %s\n- **考核周期：** %s\n- **邀请人：** %s\n\n> 请前往「应用 - 绩效考核 - 邀请评分」中查看详情。",
 		invitation.Evaluation.Employee.Name,
 		invitation.Evaluation.Template.Name,
 		utils.GetPeriodValue(invitation.Evaluation.Period, invitation.Evaluation.Year, invitation.Evaluation.Month, invitation.Evaluation.Quarter),
-		invitation.Inviter.Name,
+		c.GetString("user_name"),
 	))
 
 	c.JSON(http.StatusOK, gin.H{

@@ -10,8 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"dootask-kpi-server/models"
-
-	dootask "github.com/dootask/tools/server/go"
+	"dootask-kpi-server/utils"
 )
 
 // JWT密钥 - 生产环境中应该使用环境变量
@@ -225,8 +224,8 @@ func LoginByDooTaskToken(c *gin.Context) {
 	}
 
 	// 连接 DooTask
-	dooTaskClient := dootask.NewClient(req.Token)
-	dooTaskUser, err := dooTaskClient.GetUserInfo()
+	dooTaskClient := utils.NewDooTaskClient(req.Token)
+	dooTaskUser, err := dooTaskClient.Client.GetUserInfo()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "验证身份失败"})
 		return
@@ -249,7 +248,7 @@ func LoginByDooTaskToken(c *gin.Context) {
 		}
 
 		// 检测部门
-		if departments, err := dooTaskClient.GetUserDepartments(); err == nil {
+		if departments, err := dooTaskClient.Client.GetUserDepartments(); err == nil {
 			if len(departments) > 0 {
 				var existingDepartment models.Department
 				if err := models.DB.Where("name = ?", departments[0].Name).First(&existingDepartment).Error; err != nil {
@@ -414,6 +413,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("user_email", claims.Email)
 		c.Set("user_role", claims.Role)
+		c.Set("user_name", user.Name)
 		c.Next()
 	}
 }

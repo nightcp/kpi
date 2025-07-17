@@ -257,16 +257,18 @@ func CreateEvaluation(c *gin.Context) {
 
 	tx.Commit()
 
+	// 获取完整的评估信息
+	models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").First(&evaluation, evaluation.ID)
+
 	// 发送 DooTask 机器人通知
-	models.SendBotMessage(c, evaluation.Employee.DooTaskUserID, fmt.Sprintf(
-		"**您有新的考核任务，请及时处理。**\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **考核时间：** %s\n\n> 请前往「应用 - 绩效考核」中查看详情。",
+	dooTaskClient := utils.NewDooTaskClient(c.GetHeader("DooTaskAuth"))
+	dooTaskClient.SendBotMessage(evaluation.Employee.DooTaskUserID, fmt.Sprintf(
+		"### 📋 您有新的考核任务，请及时处理。\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **考核时间：** %s\n- **发起人：** %s\n\n> 请前往「应用 - 绩效考核」中查看详情。",
 		evaluation.Template.Name,
 		utils.GetPeriodValue(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter),
 		evaluation.CreatedAt.Format("2006-01-02"),
+		c.GetString("user_name"),
 	))
-
-	// 获取完整的评估信息
-	models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").First(&evaluation, evaluation.ID)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "评估创建成功",

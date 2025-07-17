@@ -20,10 +20,10 @@ export function getPeriodLabel(period: string) {
 
 // 获取考核周期值
 export function getPeriodValue(evaluation: KPIEvaluation | RecentEvaluation) {
-  const values = [getPeriodLabel(evaluation.period), evaluation.year]
+  const values = [`${evaluation.year}`]
   if (evaluation.month) values.push(`年${evaluation.month}月`)
   if (evaluation.quarter) values.push(`年Q${evaluation.quarter}`)
-  return values.join(" ")
+  return getPeriodLabel(evaluation.period) + " " + values.join("")
 }
 
 // 评分输入验证
