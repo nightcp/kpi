@@ -47,6 +47,10 @@ func main() {
 	api := r.Group("/api")
 	routes.SetupRoutes(api)
 
+	// 启动自动清理任务
+	handlers.StartSSECleanupTask()
+	handlers.CleanupExportFiles()
+
 	log.Println("KPI系统服务器启动在端口 :8080")
 	log.Fatal(r.Run(":8080"))
 }

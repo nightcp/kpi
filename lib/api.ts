@@ -563,4 +563,26 @@ export const invitedScoreApi = {
     api.put(`/invited-scores/${scoreId}`, data),
 }
 
+// SSE状态接口
+export interface SSEStatus {
+  user_id: number
+  is_online: boolean
+  online_count: number
+}
+
+// SSE API
+export const sseApi = {
+  // 获取SSE状态
+  getStatus: (): Promise<SSEStatus> => api.get('/events/status'),
+
+  // 获取SSE流
+  getStream: (): EventSource => {
+    const token = localStorage.getItem("auth_token")
+    if (!token) {
+      throw new Error("No auth token found")
+    }
+    return new EventSource(`${API_BASE_URL}/events/stream?token=${encodeURIComponent(token)}`)
+  },
+}
+
 export default api

@@ -17,6 +17,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const (
+	// 导出文件目录
+	ExportDir = "./public/exports"
+)
+
 // 格式化周期显示
 func formatPeriodDisplay(period string, year int, month *int, quarter *int) string {
 	switch period {
@@ -203,8 +208,7 @@ func ExportEvaluationToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "G", "G", 10)
 
 	// 创建公共导出目录
-	exportDir := "./public/exports"
-	if err := os.MkdirAll(exportDir, 0755); err != nil {
+	if err := os.MkdirAll(ExportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
 		})
@@ -217,7 +221,7 @@ func ExportEvaluationToExcel(c *gin.Context) {
 		evaluation.Employee.Name,
 		periodForFileName,
 		time.Now().Unix())
-	filePath := filepath.Join(exportDir, fileName)
+	filePath := filepath.Join(ExportDir, fileName)
 
 	// 保存文件
 	if err := f.SaveAs(filePath); err != nil {
@@ -385,8 +389,7 @@ func ExportDepartmentToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "H", "H", 20)
 
 	// 创建公共导出目录
-	exportDir := "./public/exports"
-	if err := os.MkdirAll(exportDir, 0755); err != nil {
+	if err := os.MkdirAll(ExportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
 		})
@@ -397,7 +400,7 @@ func ExportDepartmentToExcel(c *gin.Context) {
 	fileName := fmt.Sprintf("部门评估汇总-%s-%d.xlsx",
 		department.Name,
 		time.Now().Unix())
-	filePath := filepath.Join(exportDir, fileName)
+	filePath := filepath.Join(ExportDir, fileName)
 
 	// 保存文件
 	if err := f.SaveAs(filePath); err != nil {
@@ -582,8 +585,7 @@ func ExportPeriodToExcel(c *gin.Context) {
 	f.SetColWidth(sheetName, "I", "I", 20)
 
 	// 创建公共导出目录
-	exportDir := "./public/exports"
-	if err := os.MkdirAll(exportDir, 0755); err != nil {
+	if err := os.MkdirAll(ExportDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建导出目录失败",
 		})
@@ -594,7 +596,7 @@ func ExportPeriodToExcel(c *gin.Context) {
 	fileName := fmt.Sprintf("周期评估统计-%s-%d.xlsx",
 		fileNamePeriod,
 		time.Now().Unix())
-	filePath := filepath.Join(exportDir, fileName)
+	filePath := filepath.Join(ExportDir, fileName)
 
 	// 保存文件
 	if err := f.SaveAs(filePath); err != nil {
@@ -645,7 +647,7 @@ func DownloadFile(c *gin.Context) {
 		})
 		return
 	}
-	filePath := filepath.Join("./public/exports", fileName.(string))
+	filePath := filepath.Join(ExportDir, fileName.(string))
 
 	// 检查文件是否存在
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -680,4 +682,29 @@ func getStatusText(status string) string {
 	default:
 		return "未知状态"
 	}
+}
+
+// 定期清理导出文件
+func CleanupExportFiles() {
+	ticker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for range ticker.C {
+			// 清理导出文件
+			files, err := os.ReadDir(ExportDir)
+			if err != nil {
+				continue
+			}
+
+			cutoffTime := time.Now().Add(-1 * time.Hour)
+
+			for _, file := range files {
+				filePath := filepath.Join(ExportDir, file.Name())
+				if info, err := file.Info(); err == nil {
+					if info.ModTime().Before(cutoffTime) {
+						os.Remove(filePath)
+					}
+				}
+			}
+		}
+	}()
 }

@@ -41,6 +41,13 @@ func SetupRoutes(r *gin.RouterGroup) {
 		downloadRoutes.GET("/exports/:randomKey", handlers.DownloadFile)
 	}
 
+	// SSE事件流（所有认证用户）
+	sseRoutes := r.Group("/events")
+	{
+		sseRoutes.GET("/stream", handlers.SSEHandler)                              // SSE事件流，通过URL参数token认证
+		sseRoutes.GET("/status", handlers.AuthMiddleware(), handlers.GetSSEStatus) // 获取连接状态，所有认证用户
+	}
+
 	// 需要认证的路由
 	protected := r.Group("/")
 	protected.Use(handlers.AuthMiddleware())

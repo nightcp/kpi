@@ -147,6 +147,12 @@ func CreateInvitation(c *gin.Context) {
 		}
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	for _, invitation := range createdInvitations {
+		GetNotificationService().SendNotification(operatorID, EventInvitationCreated, &invitation)
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "邀请创建成功",
 		"data":    createdInvitations,
@@ -289,6 +295,10 @@ func AcceptInvitation(c *gin.Context) {
 		return
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationStatusChange, &invitation)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "邀请接受成功",
 		"data":    invitation,
@@ -335,6 +345,10 @@ func DeclineInvitation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新邀请状态失败"})
 		return
 	}
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationStatusChange, &invitation)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "邀请拒绝成功",
@@ -445,6 +459,10 @@ func UpdateInvitedScore(c *gin.Context) {
 		return
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitedScoreUpdated, &score)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "评分更新成功",
 		"data":    score,
@@ -504,6 +522,10 @@ func CompleteInvitation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新邀请状态失败"})
 		return
 	}
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationStatusChange, &invitation)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "邀请评分完成",
@@ -611,6 +633,10 @@ func CancelInvitation(c *gin.Context) {
 		return
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationStatusChange, &invitation)
+
 	c.JSON(http.StatusOK, gin.H{
 		"data":    invitation,
 		"message": "邀请已撤销",
@@ -675,6 +701,10 @@ func ReinviteInvitation(c *gin.Context) {
 		utils.GetPeriodValue(invitation.Evaluation.Period, invitation.Evaluation.Year, invitation.Evaluation.Month, invitation.Evaluation.Quarter),
 		c.GetString("user_name"),
 	))
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationStatusChange, &invitation)
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":    invitation,
@@ -745,6 +775,10 @@ func DeleteInvitation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "提交事务失败"})
 		return
 	}
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventInvitationDeleted, &invitation)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "邀请删除成功",

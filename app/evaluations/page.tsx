@@ -47,6 +47,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { useUnreadContext } from "@/lib/unread-context"
+import { useNotification } from "@/lib/notification-context"
 import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
 import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
@@ -57,6 +58,7 @@ export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
   const { refreshUnreadEvaluations } = useUnreadContext()
   const { user: currentUser, isManager, isHR } = useAuth()
+  const { onMessage } = useNotification()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [evaluations, setEvaluations] = useState<KPIEvaluation[]>([])
   const [templates, setTemplates] = useState<KPITemplate[]>([])
@@ -123,6 +125,60 @@ export default function EvaluationsPage() {
     month: new Date().getMonth() + 1,
     quarter: Math.floor(new Date().getMonth() / 3) + 1,
   })
+
+  // 监听实时通知消息
+  useEffect(() => {
+    const unsubscribe = onMessage((message) => {
+      if (message.type === "connected" || message.type === "heartbeat") {
+        return
+      }
+
+      const messageType = message.type
+      const eventData = message.data
+
+      // 只有业务通知消息才有这些属性
+      if (messageType.includes("evaluation")) {
+        // 刷新评估列表
+        fetchEvaluations()
+        
+        // 如果当前正在查看的评估被更新，刷新详情
+        if (selectedEvaluation && 'id' in eventData && eventData.id === selectedEvaluation.id) {
+          fetchEvaluationScores(selectedEvaluation.id)
+          // 更新选中的评估状态
+          if ('payload' in eventData) {
+            setSelectedEvaluation(prev => prev ? { ...prev, ...eventData.payload } : null)
+          }
+        }
+      }
+
+      // 处理邀请相关通知
+      if (messageType.includes("invitation")) {
+        // 如果正在查看评估详情且涉及邀请，刷新邀请数据
+        if (selectedEvaluation && 'employee_id' in eventData && eventData.employee_id === selectedEvaluation.employee_id) {
+          fetchInvitations(selectedEvaluation.id)
+        }
+        
+        // 刷新评估列表（因为邀请状态可能影响评估显示）
+        fetchEvaluations()
+      }
+
+      // 处理评分相关通知
+      if (messageType.includes("score")) {
+        // 如果正在查看评估详情，刷新评分数据
+        if (selectedEvaluation && 'employee_id' in eventData && eventData.employee_id === selectedEvaluation.employee_id) {
+          fetchEvaluationScores(selectedEvaluation.id)
+        }
+        
+        // 刷新评估列表
+        fetchEvaluations()
+      }
+    })
+
+    return unsubscribe
+    
+    // 移除fetchEvaluations依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onMessage, selectedEvaluation])
 
   // 获取评估列表
   const fetchEvaluations = useCallback(async () => {

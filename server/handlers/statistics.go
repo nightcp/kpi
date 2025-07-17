@@ -646,11 +646,12 @@ func GetStatisticsData(c *gin.Context) {
 			Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
 			Where("employees.department_id = ?", dept.ID)
 
-		if period == "monthly" {
+		switch period {
+		case "monthly":
 			query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.month = ?", "monthly", year, month)
-		} else if period == "quarterly" {
+		case "quarterly":
 			query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.quarter = ?", "quarterly", year, quarter)
-		} else {
+		default:
 			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
 			query = query.Where("(kpi_evaluations.period = ? OR kpi_evaluations.period = ?) AND kpi_evaluations.year = ?", "yearly", year, year)
 		}
@@ -728,11 +729,12 @@ func GetStatisticsData(c *gin.Context) {
 		query := models.DB.Model(&models.KPIEvaluation{}).
 			Where("status = ? AND total_score >= ? AND total_score <= ?", "completed", scoreRange.min, scoreRange.max)
 
-		if period == "monthly" {
+		switch period {
+		case "monthly":
 			query = query.Where("period = ? AND year = ? AND month = ?", "monthly", year, month)
-		} else if period == "quarterly" {
+		case "quarterly":
 			query = query.Where("period = ? AND year = ? AND quarter = ?", "quarterly", year, quarter)
-		} else {
+		default:
 			// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
 			query = query.Where("(period = ? OR period = ?) AND year = ?", "yearly", year, year)
 		}
@@ -761,11 +763,12 @@ func GetStatisticsData(c *gin.Context) {
 		Joins("JOIN departments ON employees.department_id = departments.id").
 		Where("kpi_evaluations.status = ?", "completed")
 
-	if period == "monthly" {
+	switch period {
+	case "monthly":
 		query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.month = ?", "monthly", year, month)
-	} else if period == "quarterly" {
+	case "quarterly":
 		query = query.Where("kpi_evaluations.period = ? AND kpi_evaluations.year = ? AND kpi_evaluations.quarter = ?", "quarterly", year, quarter)
-	} else {
+	default:
 		// 兼容历史数据格式，支持 period="yearly" 和 period="年份"
 		query = query.Where("(kpi_evaluations.period = ? OR kpi_evaluations.period = ?) AND kpi_evaluations.year = ?", "yearly", year, year)
 	}

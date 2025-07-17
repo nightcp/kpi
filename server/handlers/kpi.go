@@ -270,6 +270,10 @@ func CreateEvaluation(c *gin.Context) {
 		c.GetString("user_name"),
 	))
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventEvaluationCreated, &evaluation)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "评估创建成功",
 		"data":    evaluation,
@@ -388,6 +392,16 @@ func UpdateEvaluation(c *gin.Context) {
 	// 重新加载更新后的数据
 	models.DB.Preload("Employee").First(&evaluation, evaluationId)
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	if updateData.Status != "" {
+		// 状态变更通知
+		GetNotificationService().SendNotification(operatorID, EventEvaluationStatusChange, &evaluation)
+	} else {
+		// 一般更新通知
+		GetNotificationService().SendNotification(operatorID, EventEvaluationUpdated, &evaluation)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "评估更新成功",
 		"data":    evaluation,
@@ -401,6 +415,15 @@ func DeleteEvaluation(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "无效的评估ID",
+		})
+		return
+	}
+
+	// 在删除前获取评估信息用于通知
+	var evaluation models.KPIEvaluation
+	if err := models.DB.Preload("Employee").First(&evaluation, evaluationId).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "评估不存在",
 		})
 		return
 	}
@@ -419,6 +442,10 @@ func DeleteEvaluation(c *gin.Context) {
 		})
 		return
 	}
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventEvaluationDeleted, &evaluation)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "评估删除成功",
@@ -571,6 +598,10 @@ func UpdateSelfScore(c *gin.Context) {
 		return
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventSelfScoreUpdated, &score)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "自评分数更新成功",
 		"data":    score,
@@ -623,6 +654,10 @@ func UpdateManagerScore(c *gin.Context) {
 		return
 	}
 
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventManagerScoreUpdated, &score)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "上级评分更新成功",
 		"data":    score,
@@ -674,6 +709,10 @@ func UpdateHRScore(c *gin.Context) {
 		})
 		return
 	}
+
+	// 发送实时通知
+	operatorID := c.GetUint("user_id")
+	GetNotificationService().SendNotification(operatorID, EventHRScoreUpdated, &score)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "HR评分更新成功",
