@@ -41,9 +41,11 @@ import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse 
 import { getPeriodValue } from "@/lib/utils"
 import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
+import { useNotification } from "@/lib/notification-context"
 
 export default function StatisticsPage() {
   const { getStatusBadge } = useAppContext()
+  const { onMessage } = useNotification()
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -132,6 +134,18 @@ export default function StatisticsPage() {
       console.error("导出失败:", error)
     }
   }
+
+  // 监听实时通知事件
+  useEffect(() => {
+    const unsubscribe = onMessage((message) => {
+      // 当收到评估相关事件时，重新获取统计数据
+      if (message.type.includes('evaluation') || message.type.includes('score')) {
+        fetchStatisticsData()
+      }
+    })
+
+    return unsubscribe
+  }, [onMessage, fetchStatisticsData])
 
   if (loading) {
     return <LoadingInline className="py-8" message="加载中..." />

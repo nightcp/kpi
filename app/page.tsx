@@ -9,11 +9,13 @@ import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
 import { Button } from "@/components/ui/button"
 import { useDootaskContext } from "@/lib/dootask-context"
+import { useNotification } from "@/lib/notification-context"
 import { popoutWindow } from "@dootask/tools"
 
 export default function Dashboard() {
   const { getStatusBadge } = useAppContext()
   const { isMainElectron } = useDootaskContext()
+  const { onMessage } = useNotification()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -31,6 +33,18 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardStats()
   }, [])
+
+  // 监听实时通知事件
+  useEffect(() => {
+    const unsubscribe = onMessage((message) => {
+      // 当收到评估相关事件时，重新获取统计数据
+      if (message.type.includes('evaluation') || message.type.includes('score')) {
+        fetchDashboardStats()
+      }
+    })
+
+    return unsubscribe
+  }, [onMessage])
 
   if (loading) {
     return <LoadingInline className="py-8" message="加载中..." />
