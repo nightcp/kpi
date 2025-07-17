@@ -18,17 +18,18 @@ type Department struct {
 
 // 员工模型
 type Employee struct {
-	ID           uint      `json:"id" gorm:"primaryKey"`
-	Name         string    `json:"name" gorm:"not null"`
-	Email        string    `json:"email" gorm:"unique;not null"`
-	Password     string    `json:"-" gorm:"not null"` // 密码，JSON中不返回
-	Position     string    `json:"position"`
-	DepartmentID uint      `json:"department_id"`
-	ManagerID    *uint     `json:"manager_id"`                   // 直属上级ID，可以为空
-	Role         string    `json:"role" gorm:"default:employee"` // employee, manager, hr
-	IsActive     bool      `json:"is_active" gorm:"default:true"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	Name          string    `json:"name" gorm:"not null"`
+	Email         string    `json:"email" gorm:"unique;not null"`
+	DooTaskUserID *uint     `json:"-"`                 // DooTask用户ID，JSON中不返回
+	Password      string    `json:"-" gorm:"not null"` // 密码，JSON中不返回
+	Position      string    `json:"position"`
+	DepartmentID  uint      `json:"department_id"`
+	ManagerID     *uint     `json:"manager_id"`                   // 直属上级ID，可以为空
+	Role          string    `json:"role" gorm:"default:employee"` // employee, manager, hr
+	IsActive      bool      `json:"is_active" gorm:"default:true"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 
 	// 关联关系
 	Department   Department `json:"department,omitempty" gorm:"foreignKey:DepartmentID"`

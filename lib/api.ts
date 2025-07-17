@@ -15,9 +15,15 @@ const api = axios.create({
 // 添加请求拦截器，自动附加token
 api.interceptors.request.use(
   config => {
+    // 添加Authorization
     const token = localStorage.getItem("auth_token")
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    // 添加DooTaskToken
+    const dooTaskToken = localStorage.getItem("dootask_token")
+    if (dooTaskToken) {
+      config.headers.DooTaskAuth = dooTaskToken
     }
     return config
   },
@@ -470,6 +476,11 @@ export const authApi = {
   setAuth: (token: string, user: AuthUser) => {
     localStorage.setItem("auth_token", token)
     localStorage.setItem("user_info", JSON.stringify(user))
+  },
+
+  // 设置DooTaskToken
+  setDooTaskToken: (token: string) => {
+    localStorage.setItem("dootask_token", token)
   },
 
   // 获取用户信息

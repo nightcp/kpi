@@ -10,7 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"dootask-kpi-server/models"
-	"github.com/dootask/tools/go/utils"
+
+	dootask "github.com/dootask/tools/server/go"
 )
 
 // JWT密钥 - 生产环境中应该使用环境变量
@@ -224,8 +225,8 @@ func LoginByDooTaskToken(c *gin.Context) {
 	}
 
 	// 连接 DooTask
-	client := utils.NewClient(req.Token)
-	dooTaskUser, err := client.GetUserInfo()
+	dooTaskClient := dootask.NewClient(req.Token)
+	dooTaskUser, err := dooTaskClient.GetUserInfo()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "验证身份失败"})
 		return
@@ -236,9 +237,10 @@ func LoginByDooTaskToken(c *gin.Context) {
 	if err := models.DB.Preload("Department").Where("email = ?", req.Email).First(&user).Error; err != nil {
 		// 如果用户不存在
 		user = models.Employee{
-			Name:     dooTaskUser.Nickname,
-			Email:    req.Email,
-			Position: dooTaskUser.Profession,
+			Name:          dooTaskUser.Nickname,
+			Email:         req.Email,
+			DooTaskUserID: &dooTaskUser.UserID,
+			Position:      dooTaskUser.Profession,
 		}
 		if slices.Contains(dooTaskUser.Identity, "admin") {
 			user.Role = "hr"
@@ -247,8 +249,7 @@ func LoginByDooTaskToken(c *gin.Context) {
 		}
 
 		// 检测部门
-		client := utils.NewClient(req.Token)
-		if departments, err := client.GetUserDepartments(); err == nil {
+		if departments, err := dooTaskClient.GetUserDepartments(); err == nil {
 			if len(departments) > 0 {
 				var existingDepartment models.Department
 				if err := models.DB.Where("name = ?", departments[0].Name).First(&existingDepartment).Error; err != nil {
@@ -279,6 +280,7 @@ func LoginByDooTaskToken(c *gin.Context) {
 	} else {
 		// 更新用户信息
 		user.Name = dooTaskUser.Nickname
+		user.DooTaskUserID = &dooTaskUser.UserID
 		user.Position = dooTaskUser.Profession
 		models.DB.Save(&user)
 	}

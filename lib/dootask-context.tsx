@@ -41,6 +41,7 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
           token: dooTaskUser.token,
         })
         authApi.setAuth(loginResponse.token, loginResponse.user)
+        authApi.setDooTaskToken(dooTaskUser.token)
 
         setDooTaskUser(dooTaskUser)
         setIsDootask(true)

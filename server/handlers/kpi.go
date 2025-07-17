@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -254,6 +255,14 @@ func CreateEvaluation(c *gin.Context) {
 	}
 
 	tx.Commit()
+
+	// TODO: 发送 DooTask 机器人通知
+	models.SendBotMessage(c, evaluation.Employee.DooTaskUserID, fmt.Sprintf(
+		"**您有新的考核任务，请及时处理。**\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **考核时间：** %s",
+		evaluation.Template.Name,
+		evaluation.Period,
+		evaluation.CreatedAt.Format("2006-01-02"),
+	))
 
 	// 获取完整的评估信息
 	models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").First(&evaluation, evaluation.ID)

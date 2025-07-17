@@ -123,6 +123,8 @@ func CreateInvitation(c *gin.Context) {
 
 	tx.Commit()
 
+	// TODO: 发送 DooTask 机器人通知
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "邀请创建成功",
 		"data":    createdInvitations,
@@ -641,6 +643,8 @@ func ReinviteInvitation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "重新邀请失败"})
 		return
 	}
+
+	// TODO: 发送 DooTask 机器人通知
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":    invitation,
