@@ -68,7 +68,7 @@ const MAX_RETRIES = -1
 const RETRY_INTERVALS = [1, 2, 5, 10, 30]
 
 // 是否输出日志
-const LOG_ENABLED = true
+const LOG_ENABLED = process.env.NODE_ENV === "development" ? true : false
 
 // 日志输出
 const logger = {

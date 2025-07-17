@@ -567,7 +567,9 @@ export const invitedScoreApi = {
 export interface SSEStatus {
   user_id: number
   is_online: boolean
-  online_count: number
+  user_connection_count: number
+  online_users: number
+  total_connections: number
 }
 
 // SSE API

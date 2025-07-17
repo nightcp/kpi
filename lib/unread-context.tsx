@@ -24,7 +24,7 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
   const [unreadEvaluations, setUnreadEvaluations] = useState(0)
   const [unreadInvitations, setUnreadInvitations] = useState(0)
 
-  // 使用useMemo创建防抖函数
+  // 待确认评估数量
   const refreshUnreadEvaluations = useMemo(
     () =>
       debounce(async () => {
@@ -43,6 +43,7 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
     [userId]
   )
 
+  // 待确认邀请数量
   const refreshUnreadInvitations = useMemo(
     () =>
       debounce(async () => {

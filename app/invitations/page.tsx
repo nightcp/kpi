@@ -60,49 +60,6 @@ export default function InvitationsPage() {
   // Popover 状态控制
   const [openPopovers, setOpenPopovers] = useState<{[key: string]: boolean}>({})
 
-  // 监听实时通知消息
-  useEffect(() => {
-    const unsubscribe = onMessage(message => {
-      if (message.type === "connected" || message.type === "heartbeat") {
-        return
-      }
-
-      const messageType = message.type
-      const eventData = message.data
-
-      // 处理邀请相关通知
-      if (messageType.includes("invitation")) {
-        // 刷新邀请列表
-        fetchInvitations()
-
-        // 如果当前正在查看的邀请被更新，刷新详情
-        if (selectedInvitation && "id" in eventData && eventData.id === selectedInvitation.id) {
-          fetchInvitationScores(selectedInvitation.id)
-          // 更新选中的邀请状态
-          if ("payload" in eventData) {
-            setSelectedInvitation(prev => (prev ? { ...prev, ...eventData.payload } : null))
-          }
-        }
-      }
-
-      // 处理评分相关通知
-      if (messageType.includes("invited_score")) {
-        // 如果正在查看邀请详情，刷新评分数据
-        if (selectedInvitation && "id" in eventData) {
-          fetchInvitationScores(selectedInvitation.id)
-        }
-
-        // 刷新邀请列表
-        fetchInvitations()
-      }
-    })
-
-    return unsubscribe
-
-    // 移除fetchInvitations依赖
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onMessage, selectedInvitation])
-
   // 获取邀请列表
   const fetchInvitations = async () => {
     try {
@@ -180,11 +137,6 @@ export default function InvitationsPage() {
       })
     }, 100)
   }
-
-  useEffect(() => {
-    fetchInvitations()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize])
 
   // 接受邀请
   const handleAcceptInvitation = async (invitationId: number) => {
@@ -311,8 +263,6 @@ export default function InvitationsPage() {
     }
   }
 
-
-
   // 获取状态样式
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -330,6 +280,53 @@ export default function InvitationsPage() {
         return <Badge variant="outline">未知状态</Badge>
     }
   }
+
+  // 监听实时通知消息
+  useEffect(() => {
+    const unsubscribe = onMessage(message => {
+      if (message.type === "connected" || message.type === "heartbeat") {
+        return
+      }
+
+      const messageType = message.type
+      const eventData = message.data
+
+      // 处理邀请相关通知
+      if (messageType.includes("invitation")) {
+        // 刷新邀请列表
+        fetchInvitations()
+
+        // 如果当前正在查看的邀请被更新，刷新详情
+        if (selectedInvitation && "id" in eventData && eventData.id === selectedInvitation.id) {
+          fetchInvitationScores(selectedInvitation.id)
+          // 更新选中的邀请状态
+          if ("payload" in eventData) {
+            setSelectedInvitation(prev => (prev ? { ...prev, ...eventData.payload } : null))
+          }
+        }
+      }
+
+      // 处理评分相关通知
+      if (messageType.includes("invited_score")) {
+        // 如果正在查看邀请详情，刷新评分数据
+        if (selectedInvitation && "id" in eventData) {
+          fetchInvitationScores(selectedInvitation.id)
+        }
+      }
+    })
+
+    return unsubscribe
+
+    // 移除 fetchInvitations 依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onMessage, selectedInvitation])
+
+  useEffect(() => {
+    fetchInvitations()
+
+    // 移除 fetchInvitations 依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize])
 
   return (
     <div className="space-y-6">

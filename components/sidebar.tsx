@@ -3,7 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Users, Building, ClipboardList, FileText, BarChart3, Settings, Home, Menu, X, HelpCircle, MessageSquare } from "lucide-react"
+import {
+  Users,
+  Building,
+  ClipboardList,
+  FileText,
+  BarChart3,
+  Settings,
+  Home,
+  Menu,
+  X,
+  HelpCircle,
+  MessageSquare,
+} from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
@@ -44,8 +56,18 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
           category: "核心功能",
           items: [
             { name: "仪表板", href: "/", icon: Home },
-            { name: "考核管理", href: "/evaluations", icon: FileText, badge: unreadEvaluations > 0 ? unreadEvaluations : undefined },
-            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: unreadInvitations > 0 ? unreadInvitations : undefined },
+            {
+              name: "考核管理",
+              href: "/evaluations",
+              icon: FileText,
+              badge: unreadEvaluations > 0 ? unreadEvaluations : undefined,
+            },
+            {
+              name: "邀请评分",
+              href: "/invitations",
+              icon: MessageSquare,
+              badge: unreadInvitations > 0 ? unreadInvitations : undefined,
+            },
             { name: "统计分析", href: "/statistics", icon: BarChart3 },
           ],
         },
@@ -70,8 +92,18 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
         {
           category: "我的功能",
           items: [
-            { name: "考核管理", href: "/evaluations", icon: FileText, badge: unreadEvaluations > 0 ? unreadEvaluations : undefined },
-            { name: "邀请评分", href: "/invitations", icon: MessageSquare, badge: unreadInvitations > 0 ? unreadInvitations : undefined },
+            {
+              name: "考核管理",
+              href: "/evaluations",
+              icon: FileText,
+              badge: unreadEvaluations > 0 ? unreadEvaluations : undefined,
+            },
+            {
+              name: "邀请评分",
+              href: "/invitations",
+              icon: MessageSquare,
+              badge: unreadInvitations > 0 ? unreadInvitations : undefined,
+            },
           ],
         },
         {
@@ -87,7 +119,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
     return menus
       .map(menu => ({
         ...menu,
-        items: menu.items.filter(item => !('hidden' in item && item.hidden)),
+        items: menu.items.filter(item => !("hidden" in item && item.hidden)),
       }))
       .filter(menu => menu.items.length > 0)
   }, [isHR, isDootask, unreadInvitations, unreadEvaluations])
@@ -99,7 +131,9 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
   // 监听用户角色变化
   useEffect(() => {
-    if (!isHR && !["/evaluations", "/invitations", "/settings", "/help"].includes(pathname)) {
+    if (isHR) return
+
+    if (!["/evaluations", "/invitations", "/settings", "/help", "/status"].includes(pathname)) {
       router.push("/evaluations")
     }
   }, [isHR, router, pathname])
@@ -136,9 +170,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             <h1 className="text-xl font-bold text-sidebar-foreground">KPI考核系统</h1>
             {currentUser && (
               <div className="text-sm text-sidebar-foreground/70 flex items-center gap-2">
-                <div>
-                  {[currentUser.name, currentUser.department?.name].filter(Boolean).join(" - ")}
-                </div>
+                <div>{[currentUser.name, currentUser.department?.name].filter(Boolean).join(" - ")}</div>
                 <div>{getRoleBadge(currentUser.role)}</div>
               </div>
             )}
@@ -182,7 +214,10 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                       {item.name}
                     </div>
                     {"badge" in item && item.badge && (
-                      <Badge variant="destructive" className="ml-2 min-w-[20px] h-5 flex items-center justify-center text-xs">
+                      <Badge
+                        variant="destructive"
+                        className="ml-2 min-w-[20px] h-5 flex items-center justify-center text-xs"
+                      >
                         {item.badge}
                       </Badge>
                     )}
@@ -206,7 +241,7 @@ export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
       <div className="flex items-center justify-between px-4 py-2">
         <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-accent relative">
           <Menu className="w-6 h-6 text-muted-foreground" />
-          {(unreadEvaluations + unreadInvitations) > 0 && (
+          {unreadEvaluations + unreadInvitations > 0 && (
             <div className="absolute top-0 left-5.5 min-w-6 h-5 px-1.5 flex items-center justify-center text-xs bg-destructive/90 text-white rounded-md scale-95">
               {unreadEvaluations + unreadInvitations}
             </div>

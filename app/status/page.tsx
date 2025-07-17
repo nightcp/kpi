@@ -196,23 +196,31 @@ export default function TestNotificationsPage() {
             <CardTitle className="text-lg">服务器状态</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
               <div>
-                <div className="text-sm text-muted-foreground">用户ID</div>
+                <div className="text-sm text-muted-foreground truncate">用户ID</div>
                 <div className="font-medium">{sseStatus.user_id}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">在线状态</div>
+                <div className="text-sm text-muted-foreground truncate">在线状态</div>
                 <Badge variant={sseStatus.is_online ? "default" : "secondary"}>
                   {sseStatus.is_online ? "在线" : "离线"}
                 </Badge>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">在线用户数</div>
-                <div className="font-medium">{sseStatus.online_count}</div>
+                <div className="text-sm text-muted-foreground truncate">在线用户数</div>
+                <div className="font-medium">{sseStatus.online_users}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">最后更新</div>
+                <div className="text-sm text-muted-foreground truncate">用户连接数</div>
+                <div className="font-medium">{sseStatus.user_connection_count}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground truncate">总连接数</div>
+                <div className="font-medium">{sseStatus.total_connections}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground truncate">最后更新</div>
                 <div className="font-medium">{new Date().toLocaleTimeString()}</div>
               </div>
             </div>
