@@ -10,7 +10,7 @@ import { LoadingInline } from "@/components/loading"
 import { Button } from "@/components/ui/button"
 import { useDootaskContext } from "@/lib/dootask-context"
 import { useNotification } from "@/lib/notification-context"
-import { popoutWindow } from "@dootask/tools"
+import { popoutWindow, closeApp } from "@dootask/tools"
 
 export default function Dashboard() {
   const { getStatusBadge } = useAppContext()
@@ -62,6 +62,7 @@ export default function Dashboard() {
         {isMainElectron && (
           <Button variant="outline" onClick={() => {
             popoutWindow()
+            closeApp()
           }}>
             <PictureInPicture2 className="w-4 h-4" />
             新窗口打卡
