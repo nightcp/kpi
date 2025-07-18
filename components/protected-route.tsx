@@ -53,7 +53,7 @@ export default function ProtectedRoute({
 
   // 显示加载状态
   if (loading || dooTaskLoading) {
-    return <Loading />
+    return <Loading delay={1000} />
   }
 
   // 显示错误状态
