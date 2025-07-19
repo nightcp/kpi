@@ -1,7 +1,7 @@
 "use client"
 
 import { DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool } from "@dootask/tools"
-import { createContext, useCallback, useContext, useEffect } from "react"
+import { createContext, useContext, useEffect } from "react"
 import { useState } from "react"
 import { authApi, settingsApi } from "./api"
 
@@ -22,8 +22,9 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [isMainElectron, setIsMainElectron] = useState(false)
   const [dooTaskUser, setDooTaskUser] = useState<DooTaskUserInfo | null>(null)
 
-  const preventBack = useCallback(async () => {
-    const interceptor = await interceptBack(() => {
+  useEffect(() => {
+    let cleanup: (() => void) | undefined
+    interceptBack(() => {
       if (typeof window === "undefined") return false
 
       try {
@@ -38,15 +39,13 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
       }
 
       return false
+    }).then((fn) => {
+      cleanup = fn
     })
     return () => {
-      interceptor()
+      cleanup?.()
     }
   }, [])
-
-  useEffect(() => {
-    preventBack()
-  }, [preventBack])
 
   useEffect(() => {
     const fetchSystemMode = async () => {
