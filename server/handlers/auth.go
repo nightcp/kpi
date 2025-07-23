@@ -369,7 +369,6 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 标记为已认证
 		if c.GetBool("is_authenticated") {
-			c.Next()
 			return
 		}
 		c.Set("is_authenticated", true)
