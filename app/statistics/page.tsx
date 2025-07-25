@@ -42,6 +42,7 @@ import { getPeriodValue } from "@/lib/utils"
 import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
 import { useNotification } from "@/lib/notification-context"
+import { downloadUrl } from "@dootask/tools"
 
 export default function StatisticsPage() {
   const { getStatusBadge } = useAppContext()
@@ -126,7 +127,7 @@ export default function StatisticsPage() {
       }
 
       // 直接跳转到下载URL
-      window.open(response.file_url, "_blank")
+      downloadUrl(response.file_url)
 
       // 显示成功消息
       console.log(response.message)
