@@ -129,6 +129,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
   }
