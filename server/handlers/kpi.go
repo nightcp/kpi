@@ -390,7 +390,40 @@ func UpdateEvaluation(c *gin.Context) {
 	}
 
 	// 重新加载更新后的数据
-	models.DB.Preload("Employee").First(&evaluation, evaluationId)
+	models.DB.Preload("Employee.Manager").Preload("Template").First(&evaluation, evaluationId)
+
+	// 发送DooTask机器人通知（根据状态变更）
+	if updateData.Status != "" {
+		dooTaskClient := utils.NewDooTaskClient(c.GetHeader("DooTaskAuth"))
+		periodValue := utils.GetPeriodValue(evaluation.Period, evaluation.Year, evaluation.Month, evaluation.Quarter)
+
+		switch updateData.Status {
+		case "self_evaluated":
+			// 完成自评：通知主管
+			if evaluation.Employee.Manager != nil && evaluation.Employee.Manager.DooTaskUserID != nil {
+				message := fmt.Sprintf(
+					"### 📋 「%s」已完成自评，请您进行主管评估。\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **员工姓名：** %s\n\n> 请前往「应用 - 绩效考核」中查看详情。",
+					evaluation.Employee.Name,
+					evaluation.Template.Name,
+					periodValue,
+					evaluation.Employee.Name,
+				)
+				dooTaskClient.SendBotMessage(evaluation.Employee.Manager.DooTaskUserID, message)
+			}
+
+		case "pending_confirm":
+			// 完成HR审核：通知员工确认
+			if evaluation.Employee.DooTaskUserID != nil {
+				message := fmt.Sprintf(
+					"### 📋 您的考核已完成HR审核，请确认最终得分。\n\n- **考核模板：** %s\n- **考核周期：** %s\n- **总分：** %.1f\n\n> 请前往「应用 - 绩效考核」中查看详情并确认。",
+					evaluation.Template.Name,
+					periodValue,
+					evaluation.TotalScore,
+				)
+				dooTaskClient.SendBotMessage(evaluation.Employee.DooTaskUserID, message)
+			}
+		}
+	}
 
 	// 发送实时通知
 	operatorID := c.GetUint("user_id")
