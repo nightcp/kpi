@@ -302,6 +302,8 @@ export interface PaginationParams {
   page?: number
   pageSize?: number
   search?: string
+  department_id?: string
+  role?: string
 }
 
 // 评估分页查询参数接口

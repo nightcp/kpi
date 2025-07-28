@@ -85,18 +85,34 @@ export default function EmployeesPage() {
     [resetPagination]
   )
 
-  // 根据选择的部门获取可能的上级
+  // 获取某个部门的上级员工
+  const fetchDepartmentManagers = useCallback(async (departmentId: string) => {
+    try {
+      const response = await employeeApi.getAll({
+        department_id: departmentId,
+        role: "manager,hr",
+        pageSize: 100, // 获取该部门所有上级
+      })
+      const departmentManagers = response.data || []
+      // 如果是编辑模式，排除当前编辑的员工
+      const filteredManagers = editingEmployee 
+        ? departmentManagers.filter(emp => emp.id !== editingEmployee.id)
+        : departmentManagers
+      setManagers(filteredManagers)
+    } catch (error) {
+      console.error("获取部门上级失败:", error)
+      setManagers([])
+    }
+  }, [editingEmployee])
+
+  // 当选择部门时获取该部门的上级
   useEffect(() => {
     if (formData.department_id) {
-      const departmentEmployees = employees.filter(
-        emp =>
-          emp.department_id === parseInt(formData.department_id) &&
-          (emp.role === "manager" || emp.role === "hr") &&
-          emp.id !== editingEmployee?.id
-      )
-      setManagers(departmentEmployees)
+      fetchDepartmentManagers(formData.department_id)
+    } else {
+      setManagers([])
     }
-  }, [formData.department_id, employees, editingEmployee])
+  }, [formData.department_id, fetchDepartmentManagers])
 
   // 创建或更新员工
   const handleSubmit = async (e: React.FormEvent) => {

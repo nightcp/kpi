@@ -17,6 +17,8 @@ func GetEmployees(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 	search := c.Query("search")
+	departmentID := c.Query("department_id")
+	role := c.Query("role")
 
 	// 验证分页参数
 	if page < 1 {
@@ -36,6 +38,20 @@ func GetEmployees(c *gin.Context) {
 			searchPattern, searchPattern, searchPattern)
 	}
 
+	// 添加部门筛选
+	if departmentID != "" {
+		query = query.Where("department_id = ?", departmentID)
+	}
+
+	// 添加角色筛选（支持多个角色，用逗号分隔）
+	if role != "" {
+		if role == "manager,hr" {
+			query = query.Where("role IN (?)", []string{"manager", "hr"})
+		} else {
+			query = query.Where("role = ?", role)
+		}
+	}
+
 	// 获取总数
 	var total int64
 	countQuery := models.DB.Model(&models.Employee{})
@@ -43,6 +59,16 @@ func GetEmployees(c *gin.Context) {
 		searchPattern := "%" + search + "%"
 		countQuery = countQuery.Where("name LIKE ? OR email LIKE ? OR position LIKE ?",
 			searchPattern, searchPattern, searchPattern)
+	}
+	if departmentID != "" {
+		countQuery = countQuery.Where("department_id = ?", departmentID)
+	}
+	if role != "" {
+		if role == "manager,hr" {
+			countQuery = countQuery.Where("role IN (?)", []string{"manager", "hr"})
+		} else {
+			countQuery = countQuery.Where("role = ?", role)
+		}
 	}
 
 	if err := countQuery.Count(&total).Error; err != nil {
