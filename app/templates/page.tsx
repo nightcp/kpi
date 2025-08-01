@@ -366,9 +366,14 @@ export default function TemplatesPage() {
                             id="max-score"
                             type="number"
                             value={itemFormData.max_score}
-                            onChange={e => setItemFormData({ ...itemFormData, max_score: parseInt(e.target.value) })}
+                            onChange={e => e.target.value !== "" && setItemFormData({ ...itemFormData, max_score: parseInt(e.target.value) })}
                             required
                           />
+                          <div className="text-sm text-muted-foreground">
+                            <p>1、如果满分小于0，则输入应在「满分-0」之间；</p>
+                            <p>2、如果满分大于0，则输入应在「0-满分」之间；</p>
+                            <p>3、如果满分等于0，则可输入任意分数。</p>
+                          </div>
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label htmlFor="order">排序</Label>
@@ -376,7 +381,7 @@ export default function TemplatesPage() {
                             id="order"
                             type="number"
                             value={itemFormData.order}
-                            onChange={e => setItemFormData({ ...itemFormData, order: parseInt(e.target.value) })}
+                            onChange={e => e.target.value !== "" && setItemFormData({ ...itemFormData, order: parseInt(e.target.value) })}
                             required
                           />
                         </div>

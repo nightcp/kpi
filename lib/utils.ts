@@ -26,14 +26,45 @@ export function getPeriodValue(evaluation: KPIEvaluation | RecentEvaluation) {
   return getPeriodLabel(evaluation.period) + " " + values.join("")
 }
 
+// 判断是否未知
+export function isUnknown(value: null | undefined | unknown) {
+  return value === null || value === undefined
+}
+
+// 导出一个函数，用于生成输入框的占位符
+export function generateInputPlaceholder(maxScore: number) {
+  if (maxScore < 0) {
+    // 如果最大分数小于等于0，输入应在maxScore-0之间
+    return `${maxScore}-0`
+  } else if (maxScore > 0) {
+    // 正常情况，输入应在0-maxScore之间
+    return `0-${maxScore}`
+  }
+  // 任意分数
+  return "请输入分数"
+}
+
 // 评分输入验证
 export function scoreInputValidation(e: React.FormEvent<HTMLInputElement>, maxScore: number) {
   const input = e.target as HTMLInputElement
   const value = parseFloat(input.value)
-  if (value > maxScore) {
-    input.value = maxScore.toString()
-  } else if (value < 0) {
-    input.value = "0"
+  if (isNaN(value)) {
+    return
+  }
+  if (maxScore < 0) {
+    // 如果最大分数小于等于0，输入应在maxScore-0之间
+    if (value > 0) {
+      input.value = "0"
+    } else if (value < maxScore) {
+      input.value = maxScore.toString()
+    }
+  } else if (maxScore > 0) {
+    // 正常情况，输入应在0-maxScore之间
+    if (value > maxScore) {
+      input.value = maxScore.toString()
+    } else if (value < 0) {
+      input.value = "0"
+    }
   }
 }
 

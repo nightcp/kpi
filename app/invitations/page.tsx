@@ -36,7 +36,7 @@ import {
 import { useAppContext } from "@/lib/app-context"
 import { useUnreadContext } from "@/lib/unread-context"
 import { useNotification } from "@/lib/notification-context"
-import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
+import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation } from "@/lib/utils"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
@@ -101,7 +101,7 @@ export default function InvitationsPage() {
     // 从当前项目的下一个开始查找
     for (let i = currentIndex + 1; i < invitationScores.length; i++) {
       const score = invitationScores[i]
-      if (!score.score || score.score === 0) {
+      if (isUnknown(score.score)) {
         return score.id
       }
     }
@@ -109,7 +109,7 @@ export default function InvitationsPage() {
     // 如果没找到，从头开始查找
     for (let i = 0; i < currentIndex; i++) {
       const score = invitationScores[i]
-      if (!score.score || score.score === 0) {
+      if (isUnknown(score.score)) {
         return score.id
       }
     }
@@ -203,12 +203,24 @@ export default function InvitationsPage() {
         return
       }
 
-      const maxScore = currentScore.item?.max_score || 100
+      const maxScore = currentScore.item?.max_score ?? 0
       const numericScore = parseFloat(scoreValue)
-      
-      if (isNaN(numericScore) || numericScore < 0 || numericScore > maxScore) {
-        Alert("输入错误", `请输入0-${maxScore}之间的有效分数`)
+
+      if (isNaN(numericScore)) {
+        Alert("输入错误", "请输入有效的数字")
         return
+      }
+      
+      if (maxScore < 0) {
+        if (numericScore > 0 || numericScore < maxScore) {
+          Alert("输入错误", `请输入${maxScore}-0之间的有效分数`)
+          return
+        }
+      } else if (maxScore > 0) {
+        if (numericScore < 0 || numericScore > maxScore) {
+          Alert("输入错误", `请输入0-${maxScore}之间的有效分数`)
+          return
+        }
       }
 
       await invitedScoreApi.update(scoreId, {
@@ -242,7 +254,7 @@ export default function InvitationsPage() {
   // 完成邀请评分
   const handleCompleteInvitation = async (invitationId: number) => {
     // 检查是否所有项目都已评分
-    const uncompletedItems = invitationScores.filter(score => !score.score || score.score === 0)
+    const uncompletedItems = invitationScores.filter(score => isUnknown(score.score))
     if (uncompletedItems.length > 0) {
       await Alert("评分未完成", `请先完成所有项目的评分。还有 ${uncompletedItems.length} 个项目未评分。`)
       scrollToNextUnscored(uncompletedItems[0].id, true)
@@ -608,7 +620,7 @@ export default function InvitationsPage() {
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                  {score.score || 0}
+                                  {score.score ?? "-"}
                                 </div>
                                 <div className="text-sm text-muted-foreground">当前评分</div>
                               </div>
@@ -653,13 +665,11 @@ export default function InvitationsPage() {
                                         <Input
                                           id="score"
                                           type="number"
-                                          min={0}
-                                          max={score.item?.max_score}
                                           step="0.1"
                                           defaultValue={score.score?.toString() || ""}
                                           className="col-span-2 h-8"
-                                          placeholder={`0-${score.item?.max_score || 100}`}
-                                          onInput={(e) => scoreInputValidation(e, score.item?.max_score || 100)}
+                                          placeholder={generateInputPlaceholder(score.item?.max_score ?? 0)}
+                                          onInput={(e) => scoreInputValidation(e, score.item?.max_score ?? 0)}
                                         />
                                       </div>
                                       <div className="grid grid-cols-3 items-start gap-4">
@@ -719,7 +729,7 @@ export default function InvitationsPage() {
                               </div>
                             </div>
                             <div className="text-lg font-semibold text-blue-600">
-                              {score.score || 0} / {score.item?.max_score || 0}
+                              {score.score ?? "-"} / {score.item?.max_score ?? "-"}
                             </div>
                           </div>
                         ))}
@@ -728,7 +738,7 @@ export default function InvitationsPage() {
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-gray-800 dark:text-gray-100">总分：</span>
                           <span className="text-2xl font-bold text-blue-600">
-                            {invitationScores.reduce((acc, score) => acc + (score.score || 0), 0)}
+                            {invitationScores.reduce((acc, score) => acc + (score.score ?? 0), 0)}
                           </span>
                         </div>
                       </div>

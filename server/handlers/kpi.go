@@ -103,6 +103,17 @@ func UpdateItem(c *gin.Context) {
 		return
 	}
 
+	if updateData.MaxScore == 0 {
+		result = models.DB.Model(&item).Update("max_score", 0)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "更新MaxScore失败",
+				"message": result.Error.Error(),
+			})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "KPI项目更新成功",
 		"data":    item,

@@ -48,7 +48,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { useUnreadContext } from "@/lib/unread-context"
 import { useNotification } from "@/lib/notification-context"
-import { getPeriodValue, scoreInputValidation } from "@/lib/utils"
+import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation } from "@/lib/utils"
 import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
@@ -435,12 +435,20 @@ export default function EvaluationsPage() {
       return { isValid: false, message: "请输入有效的数字" }
     }
 
-    if (numScore < 0) {
-      return { isValid: false, message: "评分不能小于0" }
-    }
-
-    if (numScore > maxScore) {
-      return { isValid: false, message: `评分不能超过${maxScore}分` }
+    if (maxScore < 0) {
+      if (numScore > 0) {
+        return { isValid: false, message: "评分不能大于0" }
+      }
+      if (numScore < maxScore) {
+        return { isValid: false, message: `评分不能小于${maxScore}` }
+      }
+    } else if (maxScore > 0) {
+      if (numScore < 0) {
+        return { isValid: false, message: "评分不能小于0" }
+      }
+      if (numScore > maxScore) {
+        return { isValid: false, message: `评分不能超过${maxScore}分` }
+      }
     }
 
     return { isValid: true }
@@ -454,13 +462,13 @@ export default function EvaluationsPage() {
     // 从当前项目的下一个开始查找
     for (let i = currentIndex + 1; i < scores.length; i++) {
       const score = scores[i]
-      if (type === "self" && (!score.self_score || score.self_score === 0)) {
+      if (type === "self" && isUnknown(score.self_score)) {
         return score.id
       }
-      if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
+      if (type === "manager" && isUnknown(score.manager_score)) {
         return score.id
       }
-      if (type === "hr" && (!score.hr_score || score.hr_score === 0)) {
+      if (type === "hr" && isUnknown(score.hr_score)) {
         return score.id
       }
     }
@@ -468,13 +476,13 @@ export default function EvaluationsPage() {
     // 如果没找到，从头开始查找
     for (let i = 0; i < currentIndex; i++) {
       const score = scores[i]
-      if (type === "self" && (!score.self_score || score.self_score === 0)) {
+      if (type === "self" && isUnknown(score.self_score)) {
         return score.id
       }
-      if (type === "manager" && (!score.manager_score || score.manager_score === 0)) {
+      if (type === "manager" && isUnknown(score.manager_score)) {
         return score.id
       }
-      if (type === "hr" && (!score.hr_score || score.hr_score === 0)) {
+      if (type === "hr" && isUnknown(score.hr_score)) {
         return score.id
       }
     }
@@ -518,7 +526,7 @@ export default function EvaluationsPage() {
         return
       }
 
-      const maxScore = currentScore.item?.max_score || 100
+      const maxScore = currentScore.item?.max_score ?? 0
       const validation = validateScore(scoreValue, maxScore)
 
       if (!validation.isValid) {
@@ -573,7 +581,7 @@ export default function EvaluationsPage() {
     // 自评阶段的特殊处理
     if (stage === "self") {
       // 检查是否所有项目都已自评
-      const uncompletedItems = scores.filter(score => !score.self_score || score.self_score === 0)
+      const uncompletedItems = scores.filter(score => isUnknown(score.self_score))
       if (uncompletedItems.length > 0) {
         await Alert("自评", `请先完成所有项目的自评。还有 ${uncompletedItems.length} 个项目未评分。`)
         scrollToNextUnscored(uncompletedItems[0].id)
@@ -592,7 +600,7 @@ export default function EvaluationsPage() {
     // 上级评分阶段的特殊处理
     if (stage === "manager") {
       // 检查是否所有项目都已进行主管评分
-      const uncompletedItems = scores.filter(score => !score.manager_score || score.manager_score === 0)
+      const uncompletedItems = scores.filter(score => isUnknown(score.manager_score))
       if (uncompletedItems.length > 0) {
         await Alert("主管评分", `请先完成所有项目的主管评分。还有 ${uncompletedItems.length} 个项目未评分。`)
         scrollToNextUnscored(uncompletedItems[0].id)
@@ -609,7 +617,7 @@ export default function EvaluationsPage() {
     // HR审核阶段的特殊处理
     if (stage === "hr") {
       // 检查是否所有项目都已确定最终得分
-      const unconfirmedItems = scores.filter(score => !score.hr_score || score.hr_score === 0)
+      const unconfirmedItems = scores.filter(score => isUnknown(score.hr_score))
       if (unconfirmedItems.length > 0) {
         await Alert("HR审核", `请先确认所有项目的最终得分。还有 ${unconfirmedItems.length} 个项目待确认。`)
         scrollToNextUnscored(unconfirmedItems[0].id)
@@ -626,7 +634,7 @@ export default function EvaluationsPage() {
     // 员工最后确认最终得分
     if (stage === "confirm") {
       // 检查是否所有项目都已确认最终得分
-      const alreadyConfirmed = scores.find(score => score.final_score)
+      const alreadyConfirmed = scores.find(score => !isUnknown(score.final_score))
       if (alreadyConfirmed) {
         Alert("确认最终得分", "已确认最终得分，无法再修改。")
         return
@@ -1807,7 +1815,7 @@ export default function EvaluationsPage() {
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                  {score.final_score || score.hr_score || score.manager_score || score.self_score || 0}
+                                  {score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? "-"}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   {getScoreLabel(selectedEvaluation.status)}
@@ -1849,13 +1857,11 @@ export default function EvaluationsPage() {
                                               <Input
                                                 id="self-score"
                                                 type="number"
-                                                min={0}
-                                                max={score.item?.max_score}
                                                 step="0.1"
                                                 defaultValue={score.self_score?.toString() || ""}
                                                 className="col-span-2 h-8"
-                                                placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                placeholder={generateInputPlaceholder(score.item?.max_score ?? 0)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score ?? 0)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1897,7 +1903,7 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.self_score || "未评分"}</div>
+                                  <div className="text-sm font-medium">{score.self_score ?? "未评分"}</div>
                                   <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                     {score.self_comment || "暂无说明"}
                                   </div>
@@ -1936,13 +1942,11 @@ export default function EvaluationsPage() {
                                               <Input
                                                 id="manager-score"
                                                 type="number"
-                                                min={0}
-                                                max={score.item?.max_score}
                                                 step="0.1"
                                                 defaultValue={score.manager_score?.toString() || ""}
                                                 className="col-span-2 h-8"
-                                                placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                placeholder={generateInputPlaceholder(score.item?.max_score ?? 0)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score ?? 0)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -1992,7 +1996,7 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.manager_score || "未评分"}</div>
+                                  <div className="text-sm font-medium">{score.manager_score ?? "未评分"}</div>
                                   <div
                                     className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
                                       score.manager_auto ? "border-amber-200 bg-amber-50/50" : ""
@@ -2038,13 +2042,11 @@ export default function EvaluationsPage() {
                                               <Input
                                                 id="hr-score"
                                                 type="number"
-                                                min={0}
-                                                max={score.item?.max_score}
                                                 step="0.1"
                                                 defaultValue={score.hr_score?.toString() || ""}
                                                 className="col-span-2 h-8"
-                                                placeholder={`0-${score.item?.max_score || 100}`}
-                                                onInput={e => scoreInputValidation(e, score.item?.max_score || 100)}
+                                                placeholder={generateInputPlaceholder(score.item?.max_score ?? 0)}
+                                                onInput={e => scoreInputValidation(e, score.item?.max_score ?? 0)}
                                               />
                                             </div>
                                             <div className="grid grid-cols-3 items-start gap-4">
@@ -2097,7 +2099,7 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.hr_score || "未评分"}</div>
+                                  <div className="text-sm font-medium">{score.hr_score ?? "未评分"}</div>
                                   <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                     {score.hr_comment || "暂无说明"}
                                   </div>
@@ -2120,7 +2122,7 @@ export default function EvaluationsPage() {
                               {scores.reduce(
                                 (acc, score) =>
                                   acc +
-                                  (score.final_score || score.hr_score || score.manager_score || score.self_score || 0),
+                                  (score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? 0),
                                 0
                               )}
                             </div>
@@ -2132,25 +2134,25 @@ export default function EvaluationsPage() {
                           <div className="grid grid-cols-4 gap-4 text-center">
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0)}
                               </div>
                               <div className="text-sm text-muted-foreground">自评总分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)}
                               </div>
                               <div className="text-sm text-muted-foreground">主管评分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.hr_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.hr_score ?? 0), 0)}
                               </div>
                               <div className="text-sm text-muted-foreground">HR评分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.final_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.final_score ?? 0), 0)}
                               </div>
                               <div className="text-sm text-muted-foreground">最终得分</div>
                             </div>
