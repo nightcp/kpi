@@ -918,7 +918,7 @@ export default function EvaluationsPage() {
         // 主管只能评估自己直接下属的员工，但不能评估自己
         return (
           evaluation.status === "self_evaluated" &&
-          isManager &&
+          (isManager || isHR) &&
           evaluation.employee?.manager_id === currentUser.id &&
           evaluation.employee_id !== currentUser.id
         )
@@ -1466,13 +1466,13 @@ export default function EvaluationsPage() {
                             <div>
                               <span className="text-orange-800 dark:text-orange-200">员工自评总分：</span>
                               <span className="font-semibold text-orange-900 dark:text-orange-100">
-                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)} 分
+                                {scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0)} 分
                               </span>
                             </div>
                             <div>
                               <span className="text-orange-800 dark:text-orange-200">主管评分进度：</span>
                               <span className="font-semibold text-orange-900 dark:text-orange-100">
-                                {scores.filter(s => s.manager_score && s.manager_score > 0).length} / {scores.length} 项
+                                {scores.filter(s => !isUnknown(s.manager_score)).length} / {scores.length} 项
                               </span>
                             </div>
                           </div>
@@ -1482,7 +1482,7 @@ export default function EvaluationsPage() {
                               <span className="text-xs font-medium text-orange-900 dark:text-orange-100">
                                 {scores.length > 0
                                   ? Math.round(
-                                      (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                                      (scores.filter(s => !isUnknown(s.manager_score)).length /
                                         scores.length) *
                                         100
                                     )
@@ -1496,7 +1496,7 @@ export default function EvaluationsPage() {
                                 style={{
                                   width: `${
                                     scores.length > 0
-                                      ? (scores.filter(s => s.manager_score && s.manager_score > 0).length /
+                                      ? (scores.filter(s => !isUnknown(s.manager_score)).length /
                                           scores.length) *
                                         100
                                       : 0
@@ -1530,13 +1530,13 @@ export default function EvaluationsPage() {
                             <div className="bg-card p-3 rounded border">
                               <div className="text-muted-foreground">员工自评总分</div>
                               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {scores.reduce((acc, score) => acc + (score.self_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0)}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                      scores.reduce((acc, score) => acc + (score.self_score || 0), 0) / scores.length
+                                      scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) / scores.length
                                     ).toFixed(1)
                                   : 0}
                               </div>
@@ -1544,13 +1544,13 @@ export default function EvaluationsPage() {
                             <div className="bg-card p-3 rounded border">
                               <div className="text-muted-foreground">主管评分总分</div>
                               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)}
+                                {scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
                                   ? (
-                                      scores.reduce((acc, score) => acc + (score.manager_score || 0), 0) / scores.length
+                                      scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0) / scores.length
                                     ).toFixed(1)
                                   : 0}
                               </div>
@@ -1559,8 +1559,8 @@ export default function EvaluationsPage() {
                               <div className="text-muted-foreground">评分差异分析</div>
                               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {Math.abs(
-                                  scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                                    scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                                  scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) -
+                                    scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)
                                 ).toFixed(1)}
                               </div>
                               <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
@@ -1569,8 +1569,8 @@ export default function EvaluationsPage() {
 
                           {/* 差异分析提示 */}
                           {Math.abs(
-                            scores.reduce((acc, score) => acc + (score.self_score || 0), 0) -
-                              scores.reduce((acc, score) => acc + (score.manager_score || 0), 0)
+                            scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) -
+                              scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)
                           ) > 10 && (
                             <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
                               <div className="text-sm text-yellow-800 dark:text-yellow-200">
