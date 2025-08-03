@@ -409,7 +409,7 @@ export default function TemplatesPage() {
                   <ul className="text-sm space-y-1 text-muted-foreground">
                     <li>• 当前模板: <span className="font-semibold">{selectedTemplate.name}</span></li>
                     <li>• 总项目数: <span className="font-semibold">{items.length}</span></li>
-                    <li>• 总分: <span className="font-semibold">{items.reduce((sum, item) => sum + item.max_score, 0)}分</span></li>
+                    <li>• 总分: <span className="font-semibold">{items.reduce((sum, item) => sum + Math.max(item.max_score, 0), 0)}分</span></li>
                   </ul>
                 </div>
                 {items.length === 0 ? (

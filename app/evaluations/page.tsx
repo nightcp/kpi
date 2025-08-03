@@ -2127,7 +2127,7 @@ export default function EvaluationsPage() {
                               )}
                             </div>
                             <p className="text-muted-foreground">
-                              满分 {scores.reduce((acc, score) => acc + (score.item?.max_score || 0), 0)} 分
+                              满分 {scores.reduce((acc, score) => acc + (Math.max(score.item?.max_score ?? 0, 0)), 0)} 分
                             </p>
                           </div>
 
