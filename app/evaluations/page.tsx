@@ -1408,7 +1408,6 @@ export default function EvaluationsPage() {
                           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">📝 自评指导</h4>
                           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                             <li>• 请根据本期间的实际工作表现进行客观评分</li>
-                            <li>• 评分需要在0到满分之间，建议结合具体工作成果</li>
                             <li>• 请在评价说明中详细描述您的工作亮点和改进计划</li>
                             <li>• 完成所有项目评分后，点击&quot;完成自评&quot;提交</li>
                           </ul>
@@ -1419,7 +1418,7 @@ export default function EvaluationsPage() {
                           <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">📊 评分进度</h4>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-green-800 dark:text-green-200">
-                              已完成 {scores.filter(s => s.self_score && s.self_score > 0).length} / {scores.length} 项
+                              已完成 {scores.filter(s => !isUnknown(s.self_score)).length} / {scores.length} 项
                             </span>
                             <div className="flex-1 mx-4 bg-green-200 dark:bg-green-800 rounded-full h-2">
                               <div
@@ -1427,7 +1426,7 @@ export default function EvaluationsPage() {
                                 style={{
                                   width: `${
                                     scores.length > 0
-                                      ? (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) *
+                                      ? (scores.filter(s => !isUnknown(s.self_score)).length / scores.length) *
                                         100
                                       : 0
                                   }%`,
@@ -1437,7 +1436,7 @@ export default function EvaluationsPage() {
                             <span className="text-sm font-medium text-green-900 dark:text-green-100">
                               {scores.length > 0
                                 ? Math.round(
-                                    (scores.filter(s => s.self_score && s.self_score > 0).length / scores.length) * 100
+                                    (scores.filter(s => !isUnknown(s.self_score)).length / scores.length) * 100
                                   )
                                 : 0}
                               %

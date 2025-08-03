@@ -303,7 +303,7 @@ export function EmployeeSelector({
                     <div className="divide-y">
                       {employees.map(employee => (
                         <Label key={employee.id} className={cn(
-                          "pl-8 pr-4 py-3 hover:bg-muted/50",
+                          "pl-4 pr-4 py-3 hover:bg-muted/50",
                           disabledEmployeeIds.includes(employee.id) && "opacity-50"
                         )}>
                           {disabledEmployeeIds.includes(employee.id) ? (
