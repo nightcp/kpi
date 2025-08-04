@@ -21,10 +21,5 @@ func (d *DooTaskClient) SendBotMessage(userID *uint, message string) error {
 		return errors.New("userID is required")
 	}
 
-	return d.Client.SendBotMessage(dootask.SendBotMessageRequest{
-		UserID:  int(*userID),
-		Text:    message,
-		BotType: "dootask-kpi",
-		BotName: "KPI 绩效考核",
-	})
+	return nil
 }

@@ -156,6 +156,7 @@ func GetEvaluations(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 	status := c.Query("status")
 	employeeID := c.Query("employee_id")
+	departmentID := c.Query("department_id")
 
 	// 验证分页参数
 	if page < 1 {
@@ -172,9 +173,11 @@ func GetEvaluations(c *gin.Context) {
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
-
 	if employeeID != "" {
 		query = query.Where("employee_id = ?", employeeID)
+	}
+	if departmentID != "" {
+		query = query.Where("employee_id IN (SELECT id FROM employees WHERE department_id = ?)", departmentID)
 	}
 
 	// 获取总数
@@ -186,7 +189,9 @@ func GetEvaluations(c *gin.Context) {
 	if employeeID != "" {
 		countQuery = countQuery.Where("employee_id = ?", employeeID)
 	}
-
+	if departmentID != "" {
+		countQuery = countQuery.Where("employee_id IN (SELECT id FROM employees WHERE department_id = ?)", departmentID)
+	}
 	if err := countQuery.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "获取评估总数失败",

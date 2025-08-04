@@ -148,7 +148,9 @@ export default function EvaluationsPage() {
         params.employee_id = currentUser?.id.toString()
       } else if (viewTab === "team") {
         // 团队绩效：根据角色显示
-        if (employeeFilter && employeeFilter !== "all") {
+        if (/^department:/.test(employeeFilter)) {
+          params.department_id = employeeFilter.replace("department:", "")
+        } else if (employeeFilter !== "all") {
           params.employee_id = employeeFilter
         }
         // 如果是主管但不是HR，只显示自己管理的员工（这里需要后端支持manager_id筛选）

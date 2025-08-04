@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils"
 import { Check, ChevronsUpDown, CircleMinus, Loader2, Search, Users } from "lucide-react"
 import { Checkbox } from "./ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "./ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from "./ui/command"
 import { CommandInputExpand } from "./ui/command.expand"
-import { employeeApi } from "@/lib/api"
+import { employeeApi, departmentApi, Department } from "@/lib/api"
 
 export interface Employee {
   id: number
@@ -354,6 +354,16 @@ interface EmployeeComboboxProps {
   align?: "start" | "center" | "end"
 }
 
+interface ComboboxOption {
+  id: string
+  type: "special" | "department" | "employee"
+  name: string
+  position: string
+  department?: {
+    name: string
+  }
+}
+
 export function EmployeeCombobox({
   value,
   onValueChange,
@@ -367,40 +377,92 @@ export function EmployeeCombobox({
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
 
-  const fetchEmployees = async (search: string) => {
+  const fetchData = async (search: string) => {
     setLoading(true)
     try {
-      const response = await employeeApi.getAll({ search, pageSize: 100 })
+      // 并行获取员工和部门数据
+      const [employeeResponse, departmentResponse] = await Promise.all([
+        employeeApi.getAll({ search, pageSize: 100 }),
+        departmentApi.getAll({ search, pageSize: 100 })
+      ])
+      
       setEmployees(prev => {
-        const newEmployees = response.data || []
+        const newEmployees = employeeResponse.data || []
         const newEmployeeIds = newEmployees.map(employee => employee.id.toString())
         return [...newEmployees, ...prev.filter(employee => !newEmployeeIds.includes(employee.id.toString()))]
       })
+      
+      setDepartments(prev => {
+        const newDepartments = departmentResponse.data || []
+        const newDepartmentIds = newDepartments.map(dept => dept.id.toString())
+        return [...newDepartments, ...prev.filter(dept => !newDepartmentIds.includes(dept.id.toString()))]
+      })
     } catch (error) {
-      console.error("获取员工列表失败:", error)
+      console.error("获取数据失败:", error)
       setEmployees([])
+      setDepartments([])
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredEmployees = useMemo(() => {
-    return [
+  const groups = [
+    {
+      type: "special",
+      name: "",
+    },
+    {
+      type: "department",
+      name: "部门",
+    },
+    {
+      type: "employee",
+      name: "员工",
+    },
+  ]
+
+  const filteredOptions = useMemo((): ComboboxOption[] => {
+    const options: ComboboxOption[] = [
       {
         id: "all",
+        type: "special",
         name: "全部员工",
         position: "",
         department: undefined,
       },
-      ...employees,
     ]
-  }, [employees])
+    
+    // 添加部门选项
+    departments.forEach(dept => {
+      options.push({
+        id: `department:${dept.id}`,
+        type: "department",
+        name: dept.name,
+        position: dept.description || "",
+        department: undefined,
+      })
+    })
+    
+    // 添加员工选项
+    employees.forEach(emp => {
+      options.push({
+        id: emp.id.toString(),
+        type: "employee",
+        name: emp.name,
+        position: emp.position,
+        department: emp.department,
+      })
+    })
+    
+    return options
+  }, [employees, departments])
 
   useEffect(() => {
     const timer = setTimeout(
       () => {
-        fetchEmployees(searchTerm)
+        fetchData(searchTerm)
       },
       searchTerm ? 500 : 0
     )
@@ -411,7 +473,7 @@ export function EmployeeCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" aria-expanded={open} className={className}>
-          {value ? filteredEmployees.find(employee => employee.id.toString() === value)?.name : placeholder}
+          {value ? filteredOptions.find(option => option.id === value)?.name : placeholder}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -426,30 +488,32 @@ export function EmployeeCombobox({
           />
           <CommandList>
             <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
-            <CommandGroup>
-              {filteredEmployees.map(employee => (
-                <CommandItem
-                  key={employee.id}
-                  value={`${employee.id}-${employee.name}-${employee.position}-${employee.department?.name}`}
-                  onSelect={currentValue => {
-                    onValueChange?.(currentValue === value ? "" : currentValue.split("-")[0])
-                    setOpen(false)
-                  }}
-                >
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                      <div className="shrink-0 text-foreground truncate">{employee.name}</div>
-                      {employee.position && (
-                        <div className="text-sm text-muted-foreground/80 font-normal truncate">
-                          {[employee.department?.name, employee.position].filter(Boolean).join(" - ")}
+            {groups.map((group) => (
+              <Fragment key={group.type}>
+                {group.name && <CommandSeparator />}
+                <CommandGroup heading={group.name}>
+                  {filteredOptions.filter(option => option.type === group.type).map(option => (
+                    <CommandItem
+                      key={option.id}
+                      value={`${option.id}-${option.name}-${option.position}-${option.department?.name || ""}`}
+                      onSelect={() => {
+                        const newValue = value === option.id ? "" : option.id
+                        onValueChange?.(newValue)
+                        setOpen(false)
+                      }}
+                    >
+                      <div className="flex w-full items-center justify-between gap-2" title={option.position}>
+                        <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                          <div className="shrink-0 text-foreground truncate">{option.name}</div>
+                          {option.department?.name && <div className="text-sm text-muted-foreground/80 font-normal truncate">{option.department?.name}</div>}
                         </div>
-                      )}
-                    </div>
-                    <Check className={value === employee.id.toString() ? "opacity-100" : "opacity-0"} />
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                        <Check className={value === option.id ? "opacity-100" : "opacity-0"} />
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Fragment>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
