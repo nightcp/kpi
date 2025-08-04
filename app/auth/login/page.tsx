@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,10 +9,14 @@ import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { toast } from "sonner"
+import Loading from "@/components/loading"
+import { useDootaskContext } from "@/lib/dootask-context"
+import router from "next/router"
 
 export default function LoginPage() {
   const { login } = useAuth()
   const { Alert } = useAppContext()
+  const { loading: dooTaskLoading, dooTaskUser } = useDootaskContext()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -48,6 +52,16 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  useEffect(() => {
+    if (dooTaskUser) {
+      router.push("/evaluations")
+    }
+  }, [dooTaskUser])
+
+  if (dooTaskLoading) {
+    return <Loading />
   }
 
   return (
