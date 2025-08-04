@@ -127,7 +127,11 @@ export default function StatisticsPage() {
       }
 
       // 直接跳转到下载URL
-      downloadUrl(response.file_url)
+      try {
+        await downloadUrl(response.file_url)
+      } catch {
+        window.open(response.file_url, "_blank")
+      }
 
       // 显示成功消息
       console.log(response.message)
