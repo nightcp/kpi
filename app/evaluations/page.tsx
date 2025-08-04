@@ -56,7 +56,7 @@ import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function EvaluationsPage() {
-  const { Alert, Confirm, getStatusBadge } = useAppContext()
+  const { Alert, Confirm, getStatusBadge, isTouch } = useAppContext()
   const { refreshUnreadEvaluations } = useUnreadContext()
   const { user: currentUser, isManager, isHR } = useAuth()
   const { onMessage } = useNotification()
@@ -1885,7 +1885,7 @@ export default function EvaluationsPage() {
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-80" align="start">
+                                      <PopoverContent className="w-80" align="start" onOpenAutoFocus={(e) => isTouch ? e.preventDefault() : undefined}>
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">自评编辑</h4>
@@ -1970,7 +1970,7 @@ export default function EvaluationsPage() {
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-80" align="start">
+                                      <PopoverContent className="w-80" align="start" onOpenAutoFocus={(e) => isTouch ? e.preventDefault() : undefined}>
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">主管评分编辑</h4>
@@ -2082,7 +2082,7 @@ export default function EvaluationsPage() {
                                           <Edit2 className="w-3 h-3" />
                                         </Button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-80" align="start">
+                                      <PopoverContent className="w-80" align="start" onOpenAutoFocus={(e) => isTouch ? e.preventDefault() : undefined}>
                                         <div className="grid gap-4">
                                           <div className="space-y-2">
                                             <h4 className="leading-none font-medium">HR评分编辑</h4>

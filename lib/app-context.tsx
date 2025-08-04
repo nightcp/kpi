@@ -1,12 +1,13 @@
 "use client"
 
-import { createContext, useCallback, useContext, useRef } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import AlertLayout, { AlertLayoutRef, AlertProps } from "@/components/alert"
 import { Toaster } from "@/components/ui/sonner"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Clock, Eye, FileText, Star } from "lucide-react"
 
 interface AppContextType {
+  isTouch: boolean
   Alert: (title: string | AlertProps, message?: string) => Promise<void>
   Confirm: (title: string | AlertProps, message?: string) => Promise<boolean>
 
@@ -16,6 +17,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [isTouch, setIsTouch] = useState(false)
   const alertLayoutRef = useRef<AlertLayoutRef>(null)
 
   const Alert = useCallback((title: string | AlertProps, message?: string) => {
@@ -47,6 +49,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         },
       })
     })
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsTouch(false)
+      return
+    }
+    setIsTouch('ontouchstart' in window || 'ontouchend' in window)
   }, [])
 
   const getStatusBadge = (status: string) => {
@@ -94,6 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        isTouch,
         Alert,
         Confirm,
         getStatusBadge,

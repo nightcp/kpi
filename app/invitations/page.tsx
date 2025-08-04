@@ -42,7 +42,7 @@ import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
 
 export default function InvitationsPage() {
-  const { Alert, Confirm } = useAppContext()
+  const { Alert, Confirm, isTouch } = useAppContext()
   const { refreshUnreadInvitations } = useUnreadContext()
   const { onMessage } = useNotification()
   const detailsRef = useRef<HTMLDivElement>(null)
@@ -650,7 +650,7 @@ export default function InvitationsPage() {
                                     <Edit2 className="w-4 h-4" />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80" align="end">
+                                <PopoverContent className="w-80" align="end" onOpenAutoFocus={(e) => isTouch ? e.preventDefault() : undefined}>
                                   <div className="grid gap-4">
                                     <div className="space-y-2">
                                       <h4 className="leading-none font-medium">评分编辑</h4>

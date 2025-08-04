@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandS
 import { CommandInputExpand } from "./ui/command.expand"
 import { employeeApi, departmentApi, Department } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import { useAppContext } from "@/lib/app-context"
 
 export interface Employee {
   id: number
@@ -375,6 +376,7 @@ export function EmployeeCombobox({
   align = "center",
   checkIcon = false,
 }: EmployeeComboboxProps) {
+  const { isTouch } = useAppContext()
   const { isHR, user } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -484,7 +486,7 @@ export function EmployeeCombobox({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0", contentClassName)} align={align}>
+      <PopoverContent className={cn("p-0", contentClassName)} align={align} onOpenAutoFocus={(e) => isTouch ? e.preventDefault() : undefined}>
         <Command>
           <CommandInputExpand
             placeholder={placeholder}
