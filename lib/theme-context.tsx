@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { storage } from "./storage"
 
 type Theme = "light" | "dark" | "system"
 type ActualTheme = "light" | "dark"
@@ -47,8 +48,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // 初始化主题
   useEffect(() => {
-    // 从localStorage获取保存的主题设置
-    const savedTheme = localStorage.getItem("theme") as Theme
+    // 从缓存中获取保存的主题设置
+    const savedTheme = storage.getItem("theme") as Theme
     if (savedTheme && ["light", "dark", "system"].includes(savedTheme)) {
       setTheme(savedTheme)
       const newActualTheme = calculateActualTheme(savedTheme)
@@ -79,7 +80,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // 主题切换函数
   const handleSetTheme = (newTheme: Theme) => {
     setTheme(newTheme)
-    localStorage.setItem("theme", newTheme)
+    storage.setItem("theme", newTheme)
     const newActualTheme = calculateActualTheme(newTheme)
     applyTheme(newActualTheme)
   }

@@ -1,4 +1,5 @@
 import axios from "axios"
+import { storage } from "./storage"
 
 // 获取API基础URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
@@ -16,12 +17,12 @@ const api = axios.create({
 api.interceptors.request.use(
   config => {
     // 添加Authorization
-    const token = localStorage.getItem("auth_token")
+    const token = storage.getItem("auth_token")
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
     // 添加DooTaskToken
-    const dooTaskToken = localStorage.getItem("dootask_token")
+    const dooTaskToken = storage.getItem("dootask_token")
     if (dooTaskToken) {
       config.headers.DooTaskAuth = dooTaskToken
     }
@@ -459,35 +460,35 @@ export const authApi = {
 
   // 登出（清除本地token）
   logout: () => {
-    localStorage.removeItem("auth_token")
-    localStorage.removeItem("user_info")
+    storage.removeItem("auth_token")
+    storage.removeItem("user_info")
   },
 
   // 检查是否已认证
   isAuthenticated: (): boolean => {
-    const token = localStorage.getItem("auth_token")
+    const token = storage.getItem("auth_token")
     return !!token
   },
 
   // 获取当前用户token
   getToken: (): string | null => {
-    return localStorage.getItem("auth_token")
+    return storage.getItem("auth_token")
   },
 
   // 设置用户token和信息
   setAuth: (token: string, user: AuthUser) => {
-    localStorage.setItem("auth_token", token)
-    localStorage.setItem("user_info", JSON.stringify(user))
+    storage.setItem("auth_token", token)
+    storage.setItem("user_info", JSON.stringify(user))
   },
 
   // 设置DooTaskToken
   setDooTaskToken: (token: string) => {
-    localStorage.setItem("dootask_token", token)
+    storage.setItem("dootask_token", token)
   },
 
   // 获取用户信息
   getUser: (): AuthUser | null => {
-    const userInfo = localStorage.getItem("user_info")
+    const userInfo = storage.getItem("user_info")
     return userInfo ? JSON.parse(userInfo) : null
   },
 }
@@ -581,7 +582,7 @@ export const sseApi = {
 
   // 获取SSE流
   getStream: (): EventSource => {
-    const token = localStorage.getItem("auth_token")
+    const token = storage.getItem("auth_token")
     if (!token) {
       throw new Error("No auth token found")
     }

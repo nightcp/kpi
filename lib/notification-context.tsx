@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { useAuth } from "./auth-context"
 import { toast } from "sonner"
 import { sseApi } from "./api"
+import { storage } from "./storage"
 
 // 通知事件类型
 export type NotificationEventType =
@@ -104,7 +105,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setIsConnecting(true)
 
     try {
-      const token = localStorage.getItem("auth_token")
+      const token = storage.getItem("auth_token")
       if (!token) {
         console.error("No auth token found")
         setIsConnecting(false)
