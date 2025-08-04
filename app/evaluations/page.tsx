@@ -153,8 +153,16 @@ export default function EvaluationsPage() {
         } else if (employeeFilter !== "all") {
           params.employee_id = employeeFilter
         }
-        // 如果是主管但不是HR，只显示自己管理的员工（这里需要后端支持manager_id筛选）
-        // 暂时使用现有的员工筛选逻辑
+        // 如果不是HR
+        if (!isHR) {
+          if (isManager) {
+            // 如果是主管，则显示自己管理的部门绩效
+            params.department_id = currentUser?.department_id?.toString() || "-1"
+          } else {
+            // 如果是员工，则显示自己
+            params.employee_id = currentUser?.id.toString()
+          }
+        }
       }
 
       const response = await evaluationApi.getAll(params)
@@ -169,7 +177,7 @@ export default function EvaluationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab, refreshUnreadEvaluations])
+  }, [currentUser, currentPage, pageSize, statusFilter, employeeFilter, viewTab, isHR, isManager, refreshUnreadEvaluations])
 
   // 获取模板列表
   const fetchTemplates = async () => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from "./ui/command"
 import { CommandInputExpand } from "./ui/command.expand"
 import { employeeApi, departmentApi, Department } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 export interface Employee {
   id: number
@@ -262,9 +263,8 @@ export function EmployeeSelector({
               </div>
               <span className="text-sm text-muted-foreground">
                 {searchTerm
-                  ? `${filteredEmployees.filter(emp => selectedEmployeeIds.includes(emp.id.toString())).length} / ${
-                      filteredEmployees.length
-                    } 搜索结果`
+                  ? `${filteredEmployees.filter(emp => selectedEmployeeIds.includes(emp.id.toString())).length} / ${filteredEmployees.length
+                  } 搜索结果`
                   : `${selectedEmployeeIds.length} / ${employees.length} 总计`}
               </span>
             </div>
@@ -375,27 +375,32 @@ export function EmployeeCombobox({
   align = "center",
   checkIcon = false,
 }: EmployeeComboboxProps) {
+  const { isHR, user } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [employees, setEmployees] = useState<Employee[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
 
-  const fetchData = async (search: string) => {
+  const fetchData = useCallback(async (search: string) => {
     setLoading(true)
     try {
       // 并行获取员工和部门数据
       const [employeeResponse, departmentResponse] = await Promise.all([
-        employeeApi.getAll({ search, pageSize: 100 }),
-        departmentApi.getAll({ search, pageSize: 100 })
+        employeeApi.getAll({
+          search,
+          pageSize: 100,
+          department_id: !isHR ? user?.department_id?.toString() : undefined,
+        }),
+        !isHR ? Promise.resolve({ data: [] }) : departmentApi.getAll({ search, pageSize: 100 })
       ])
-      
+
       setEmployees(prev => {
         const newEmployees = employeeResponse.data || []
         const newEmployeeIds = newEmployees.map(employee => employee.id.toString())
         return [...newEmployees, ...prev.filter(employee => !newEmployeeIds.includes(employee.id.toString()))]
       })
-      
+
       setDepartments(prev => {
         const newDepartments = departmentResponse.data || []
         const newDepartmentIds = newDepartments.map(dept => dept.id.toString())
@@ -408,7 +413,7 @@ export function EmployeeCombobox({
     } finally {
       setLoading(false)
     }
-  }
+  }, [isHR, user?.department_id])
 
   const groups = [
     {
@@ -417,11 +422,11 @@ export function EmployeeCombobox({
     },
     {
       type: "department",
-      name: "部门",
+      name: "按部门选择",
     },
     {
       type: "employee",
-      name: "员工",
+      name: "按员工选择",
     },
   ]
 
@@ -435,7 +440,7 @@ export function EmployeeCombobox({
         department: undefined,
       },
     ]
-    
+
     // 添加部门选项
     departments.forEach(dept => {
       options.push({
@@ -446,7 +451,7 @@ export function EmployeeCombobox({
         department: undefined,
       })
     })
-    
+
     // 添加员工选项
     employees.forEach(emp => {
       options.push({
@@ -457,7 +462,7 @@ export function EmployeeCombobox({
         department: emp.department,
       })
     })
-    
+
     return options
   }, [employees, departments])
 
@@ -469,7 +474,7 @@ export function EmployeeCombobox({
       searchTerm ? 500 : 0
     )
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm, fetchData])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -490,33 +495,38 @@ export function EmployeeCombobox({
           />
           <CommandList>
             <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
-            {groups.map((group) => (
-              <Fragment key={group.type}>
-                {group.name && <CommandSeparator />}
-                <CommandGroup heading={group.name}>
-                  {filteredOptions.filter(option => option.type === group.type).map(option => (
-                    <CommandItem
-                      key={option.id}
-                      value={`${option.id}-${option.name}-${option.position}-${option.department?.name || ""}`}
-                      onSelect={() => {
-                        const newValue = value === option.id ? "" : option.id
-                        onValueChange?.(newValue)
-                        setOpen(false)
-                      }}
-                      className={value === option.id ? "bg-accent" : ""}
-                    >
-                      <div className="flex w-full items-center justify-between gap-2" title={option.position}>
-                        <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                          <div className={cn("shrink-0 text-foreground truncate", value === option.id ? "text-blue-600" : "")}>{option.name}</div>
-                          {option.department?.name && <div className="text-sm text-muted-foreground/80 font-normal truncate">{option.department?.name}</div>}
+            {groups.map((group) => {
+              if (group.type === "department" && !isHR) {
+                return null
+              }
+              return (
+                <Fragment key={group.type}>
+                  {group.name && <CommandSeparator />}
+                  <CommandGroup heading={group.name}>
+                    {filteredOptions.filter(option => option.type === group.type).map(option => (
+                      <CommandItem
+                        key={option.id}
+                        value={`${option.id}-${option.name}-${option.position}-${option.department?.name || ""}`}
+                        onSelect={() => {
+                          const newValue = value === option.id ? "" : option.id
+                          onValueChange?.(newValue)
+                          setOpen(false)
+                        }}
+                        className={value === option.id ? "bg-accent" : ""}
+                      >
+                        <div className="flex w-full items-center justify-between gap-2" title={option.position}>
+                          <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                            <div className={cn("shrink-0 text-foreground truncate", value === option.id ? "text-blue-600" : "")}>{option.name}</div>
+                            {option.department?.name && <div className="text-sm text-muted-foreground/80 font-normal truncate">{option.department?.name}</div>}
+                          </div>
+                          {checkIcon && <Check className={value === option.id ? "opacity-100" : "opacity-0"} />}
                         </div>
-                        {checkIcon && <Check className={value === option.id ? "opacity-100" : "opacity-0"} />}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Fragment>
-            ))}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Fragment>
+              )
+            })}
           </CommandList>
         </Command>
       </PopoverContent>
