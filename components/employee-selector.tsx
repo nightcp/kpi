@@ -351,7 +351,8 @@ interface EmployeeComboboxProps {
   emptyPlaceholder?: string
   className?: string
   contentClassName?: string
-  align?: "start" | "center" | "end"
+  align?: "start" | "center" | "end",
+  checkIcon?: boolean
 }
 
 interface ComboboxOption {
@@ -372,6 +373,7 @@ export function EmployeeCombobox({
   className,
   contentClassName,
   align = "center",
+  checkIcon = false,
 }: EmployeeComboboxProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -501,13 +503,14 @@ export function EmployeeCombobox({
                         onValueChange?.(newValue)
                         setOpen(false)
                       }}
+                      className={value === option.id ? "bg-accent" : ""}
                     >
                       <div className="flex w-full items-center justify-between gap-2" title={option.position}>
                         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                          <div className="shrink-0 text-foreground truncate">{option.name}</div>
+                          <div className={cn("shrink-0 text-foreground truncate", value === option.id ? "text-blue-600" : "")}>{option.name}</div>
                           {option.department?.name && <div className="text-sm text-muted-foreground/80 font-normal truncate">{option.department?.name}</div>}
                         </div>
-                        <Check className={value === option.id ? "opacity-100" : "opacity-0"} />
+                        {checkIcon && <Check className={value === option.id ? "opacity-100" : "opacity-0"} />}
                       </div>
                     </CommandItem>
                   ))}
