@@ -371,7 +371,7 @@ export function EmployeeCombobox({
   const fetchEmployees = async (search: string) => {
     setLoading(true)
     try {
-      const response = await employeeApi.getAll({ search })
+      const response = await employeeApi.getAll({ search, pageSize: 100 })
       setEmployees(prev => {
         const newEmployees = response.data || []
         const newEmployeeIds = newEmployees.map(employee => employee.id.toString())
@@ -438,7 +438,7 @@ export function EmployeeCombobox({
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                      <div className="text-foreground truncate">{employee.name}</div>
+                      <div className="shrink-0 text-foreground truncate">{employee.name}</div>
                       {employee.position && (
                         <div className="text-sm text-muted-foreground/80 font-normal truncate">
                           {[employee.department?.name, employee.position].filter(Boolean).join(" - ")}

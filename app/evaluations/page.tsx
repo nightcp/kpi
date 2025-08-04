@@ -53,6 +53,7 @@ import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-select
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge } = useAppContext()
@@ -308,6 +309,28 @@ export default function EvaluationsPage() {
       console.error("删除邀请失败:", error)
       Alert("删除失败", "删除邀请失败，请重试")
     }
+  }
+
+  // 优化后的项目邀请评分函数
+  const itemInvitationScores = (itemId: number) => {
+    // 返回所有包含该itemId评分的邀请及其对应评分
+    return Object.entries(invitationScores)
+      .map(([invitationId, scores]) => {
+        const invitation = invitations.find(inv => inv.id === Number(invitationId))
+        const invitationScore = scores.find(s => s.item_id === itemId)
+        if (invitation && invitationScore) {
+          return { invitation, invitationScore }
+        }
+        return null
+      })
+      .filter(Boolean) as { invitation: EvaluationInvitation, invitationScore: InvitedScore }[]
+  }
+
+  // 获取项目平均分
+  const itemAverageScore = (score: KPIScore) => {
+    const scores = itemInvitationScores(score.item_id)
+    const totalScore = (score.manager_score ?? 0) + (score.self_score ?? 0) + scores.reduce((acc, score) => acc + (score.invitationScore.score ?? 0), 0)
+    return (totalScore / (scores.length + 2)).toFixed(1)
   }
 
   // 监听实时通知消息
@@ -1782,11 +1805,19 @@ export default function EvaluationsPage() {
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
                                       {scores.map(score => (
-                                        <div key={score.id} className="flex items-center justify-between text-sm">
-                                          <span className="text-muted-foreground">{score.item?.name}</span>
-                                          <span className="font-medium">
+                                        <div key={score.id} className="flex items-center justify-between text-sm relative pl-3.5">
+                                          <div className="absolute left-0 top-0 text-muted-foreground">• </div>
+                                          <div className="text-muted-foreground">
+                                            <div>{score.item?.name}</div>
+                                            {score.comment && (
+                                              <div className="text-muted-foreground text-xs">
+                                                说明：{score.comment}
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="font-medium">
                                             {score.score || 0} / {score.item?.max_score || 0}
-                                          </span>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1957,13 +1988,22 @@ export default function EvaluationsPage() {
                                                 placeholder="请输入评价说明..."
                                               />
                                             </div>
-                                            <div className="text-xs text-center mt-2">
-                                              <div className="text-blue-600">员工自评：{score.self_score || 0}分</div>
-                                              {score.manager_auto && (
-                                                <div className="text-amber-600 mt-1">
-                                                  ⚠️ 此评分为系统自动填入，该员工无直属主管
+                                            <div className="grid grid-cols-3 items-center gap-4 text-xs mt-2">
+                                              <div>&nbsp;</div>
+                                              <div className="col-span-2 text-blue-600">
+                                                <div
+                                                  onClick={() => {
+                                                    const scoreInput = document.getElementById(
+                                                      "manager-score"
+                                                    ) as HTMLInputElement
+                                                    scoreInput.value = score.self_score?.toString() || ""
+                                                  }}
+                                                  className="cursor-pointer hover:underline truncate"
+                                                  title="点击采用员工自评分数"
+                                                >
+                                                  员工自评：{score.self_score || 0}分
                                                 </div>
-                                              )}
+                                              </div>
                                             </div>
                                             <div className="flex justify-end space-x-2 pt-2">
                                               <Button
@@ -1995,17 +2035,20 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.manager_score ?? "未评分"}</div>
-                                  <div
-                                    className={`text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1 ${
-                                      score.manager_auto ? "border-amber-200 bg-amber-50/50" : ""
-                                    }`}
-                                  >
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-sm font-medium">{score.manager_score ?? "未评分"}</div>
+                                    {score.manager_auto && (
+                                      <Tooltip>
+                                        <TooltipTrigger className="text-xs">⚠️</TooltipTrigger>
+                                        <TooltipContent>
+                                          <p className="text-amber-600">⚠️ 主管评分为系统自动填入，该员工无直属主管</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                     {score.manager_comment || "暂无说明"}
                                   </div>
-                                  {score.manager_auto && (
-                                    <div className="text-xs text-amber-600 mt-1">⚠️ 系统自动填入的评分</div>
-                                  )}
                                 </div>
                               </div>
 
@@ -2057,16 +2100,73 @@ export default function EvaluationsPage() {
                                                 placeholder="请输入评价说明..."
                                               />
                                             </div>
-                                            <div className="text-xs text-center mt-2">
-                                              <div className="text-blue-600">
-                                                员工自评：{score.self_score || 0}分 | 主管评分：
-                                                {score.manager_score || 0}分
-                                              </div>
-                                              {score.manager_auto && (
-                                                <div className="text-amber-600 mt-1">
-                                                  ⚠️ 主管评分为系统自动填入，该员工无直属主管
+                                            <div className="grid grid-cols-3 items-center gap-4 text-xs mt-2">
+                                              <div>&nbsp;</div>
+                                              <div className="col-span-2 flex flex-col gap-1.5 text-blue-600">
+                                                <div
+                                                  onClick={() => {
+                                                    const scoreInput = document.getElementById(
+                                                      "hr-score"
+                                                    ) as HTMLInputElement
+                                                    scoreInput.value = score.self_score?.toString() || ""
+                                                  }}
+                                                  className="cursor-pointer hover:underline truncate"
+                                                  title="点击采用员工自评分数"
+                                                >
+                                                  员工自评：{score.self_score || 0}分
                                                 </div>
-                                              )}
+                                                <div className="flex items-center gap-1">
+                                                  <div
+                                                    onClick={() => {
+                                                      const scoreInput = document.getElementById(
+                                                        "hr-score"
+                                                      ) as HTMLInputElement
+                                                      scoreInput.value = score.manager_score?.toString() || ""
+                                                    }}
+                                                    className="cursor-pointer hover:underline truncate"
+                                                    title="点击采用主管评分"
+                                                  >
+                                                    主管评分：{score.manager_score || 0}分
+                                                  </div>
+                                                  {score.manager_auto && (
+                                                    <Tooltip>
+                                                      <TooltipTrigger>⚠️</TooltipTrigger>
+                                                      <TooltipContent>
+                                                        <p className="text-amber-600">⚠️ 主管评分为系统自动填入，该员工无直属主管</p>
+                                                      </TooltipContent>
+                                                    </Tooltip>
+                                                  )}
+                                                </div>
+                                                {itemInvitationScores(score.item_id).map(item => {
+                                                  return (
+                                                    <div 
+                                                    key={item.invitation.id}
+                                                    onClick={() => {
+                                                      const scoreInput = document.getElementById(
+                                                        "hr-score"
+                                                      ) as HTMLInputElement
+                                                      scoreInput.value = item.invitationScore.score?.toString() || ""
+                                                    }}
+                                                    className="cursor-pointer hover:underline truncate"
+                                                    title={`点击采用${item.invitation.invitee?.name}（邀请）的评分`}
+                                                    >
+                                                      {item.invitation.invitee?.name}（邀请）：{item.invitationScore.score ?? "-"}分
+                                                    </div>
+                                                  )
+                                                })}
+                                                <div
+                                                  onClick={() => {
+                                                    const scoreInput = document.getElementById(
+                                                      "hr-score"
+                                                    ) as HTMLInputElement
+                                                    scoreInput.value = itemAverageScore(score) || ""
+                                                  }}
+                                                  className="cursor-pointer hover:underline truncate"
+                                                  title="点击采用平均分"
+                                                >
+                                                  平均分：{itemAverageScore(score)}分
+                                                </div>
+                                              </div>
                                             </div>
                                             <div className="flex justify-end space-x-2 pt-2">
                                               <Button

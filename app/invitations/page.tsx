@@ -570,7 +570,6 @@ export default function InvitationsPage() {
                       <h4 className="font-medium text-green-800 dark:text-green-100 mb-2">📝 评分指导</h4>
                       <ul className="text-sm text-green-700 dark:text-green-200 space-y-1">
                         <li>• 请根据您对该员工的了解进行客观评分</li>
-                        <li>• 评分范围为0到各项目满分，请结合实际情况评分</li>
                         <li>• 在评价说明中详细描述您的评分依据</li>
                         <li>• 完成所有项目评分后，点击&quot;完成评分&quot;提交</li>
                       </ul>
@@ -581,14 +580,14 @@ export default function InvitationsPage() {
                       <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-2">📊 评分进度</h4>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700 dark:text-gray-200">
-                          已完成 {invitationScores.filter(s => s.score && s.score > 0).length} / {invitationScores.length} 项
+                          已完成 {invitationScores.filter(s => !isUnknown(s.score)).length} / {invitationScores.length} 项
                         </span>
                         <div className="flex-1 mx-4 bg-gray-200 dark:bg-gray-800 rounded-full h-2">
                           <div
                             className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
                             style={{
                               width: `${invitationScores.length > 0
-                                  ? (invitationScores.filter(s => s.score && s.score > 0).length / invitationScores.length) * 100
+                                  ? (invitationScores.filter(s => !isUnknown(s.score)).length / invitationScores.length) * 100
                                   : 0
                                 }%`,
                             }}
@@ -597,7 +596,7 @@ export default function InvitationsPage() {
                         <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
                           {invitationScores.length > 0
                             ? Math.round(
-                              (invitationScores.filter(s => s.score && s.score > 0).length / invitationScores.length) * 100
+                              (invitationScores.filter(s => !isUnknown(s.score)).length / invitationScores.length) * 100
                             )
                             : 0}
                           %
