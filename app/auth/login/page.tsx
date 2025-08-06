@@ -11,9 +11,10 @@ import { useAppContext } from "@/lib/app-context"
 import { toast } from "sonner"
 import Loading from "@/components/loading"
 import { useDootaskContext } from "@/lib/dootask-context"
-import router from "next/router"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
+  const router = useRouter()
   const { login } = useAuth()
   const { Alert } = useAppContext()
   const { loading: dooTaskLoading, dooTaskUser } = useDootaskContext()
@@ -58,7 +59,7 @@ export default function LoginPage() {
     if (dooTaskUser) {
       router.push("/evaluations")
     }
-  }, [dooTaskUser])
+  }, [dooTaskUser, router])
 
   if (dooTaskLoading) {
     return <Loading />
