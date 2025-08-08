@@ -127,7 +127,7 @@ export default function DepartmentsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAdd} className="w-full sm:w-auto">
+            <Button onClick={handleAdd} className="w-full sm:w-auto lg:mt-8">
               <Plus className="w-4 h-4 mr-2" />
               添加部门
             </Button>

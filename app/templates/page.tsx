@@ -188,7 +188,7 @@ export default function TemplatesPage() {
         </div>
         <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto lg:mt-8">
               <Plus className="w-4 h-4 mr-2" />
               创建模板
             </Button>

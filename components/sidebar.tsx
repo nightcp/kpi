@@ -21,7 +21,6 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
 import { Badge } from "./ui/badge"
-import { closeApp } from "@dootask/tools"
 import { useDootaskContext } from "@/lib/dootask-context"
 import { useUnreadContext } from "@/lib/unread-context"
 
@@ -234,11 +233,10 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
 
 // 移动端头部组件
 export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
-  const { isDootask } = useDootaskContext()
   const { unreadEvaluations, unreadInvitations } = useUnreadContext()
   return (
     <div className="lg:hidden bg-background shadow-sm border-b border-border flex-shrink-0">
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className="flex items-center justify-between px-4 py-1.5">
         <button onClick={onMenuClick} className="p-2 rounded-md hover:bg-accent relative">
           <Menu className="w-6 h-6 text-muted-foreground" />
           {unreadEvaluations + unreadInvitations > 0 && (
@@ -248,13 +246,7 @@ export function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
           )}
         </button>
         <h1 className="text-lg font-semibold text-foreground">KPI考核系统</h1>
-        {isDootask ? (
-          <button onClick={() => closeApp()} className="p-2 rounded-md hover:bg-accent">
-            <X className="w-6 h-6 text-muted-foreground" />
-          </button>
-        ) : (
-          <div className="w-10 h-10"></div>
-        )}
+        <div className="w-10 h-10"></div>
       </div>
     </div>
   )

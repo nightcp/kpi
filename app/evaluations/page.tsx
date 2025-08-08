@@ -1011,7 +1011,7 @@ export default function EvaluationsPage() {
         {isHR && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto lg:mt-8">
                 <Plus className="w-4 h-4 mr-2" />
                 创建考核
               </Button>

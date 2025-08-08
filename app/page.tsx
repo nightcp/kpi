@@ -2,19 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, Eye, Plus, PictureInPicture2 } from "lucide-react"
+import { Users, Building, TrendingUp, CheckCircle, AlertCircle, Award, Target, Eye, Plus } from "lucide-react"
 import { statisticsApi, type DashboardStats } from "@/lib/api"
 import Link from "next/link"
 import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
-import { Button } from "@/components/ui/button"
-import { useDootaskContext } from "@/lib/dootask-context"
 import { useNotification } from "@/lib/notification-context"
-import { popoutWindow, closeApp } from "@dootask/tools"
 
 export default function Dashboard() {
   const { getStatusBadge } = useAppContext()
-  const { isMainElectron } = useDootaskContext()
   const { onMessage } = useNotification()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -58,16 +54,6 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">仪表板</h1>
           <p className="text-muted-foreground mt-1 sm:mt-2">欢迎使用KPI绩效考核系统</p>
         </div>
-        {/* 新窗口打卡按钮 */}
-        {isMainElectron && (
-          <Button variant="outline" onClick={() => {
-            popoutWindow()
-            closeApp()
-          }}>
-            <PictureInPicture2 className="w-4 h-4" />
-            新窗口打卡
-          </Button>
-        )}
       </div>
 
       {/* 统计卡片 */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool } from "@dootask/tools"
+import { DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool, setCapsuleConfig } from "@dootask/tools"
 import { createContext, useContext, useEffect } from "react"
 import { useState } from "react"
 import { authApi, settingsApi } from "./api"
@@ -21,6 +21,23 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [isDootask, setIsDootask] = useState(false)
   const [isMainElectron, setIsMainElectron] = useState(false)
   const [dooTaskUser, setDooTaskUser] = useState<DooTaskUserInfo | null>(null)
+  const [isLargeScreen, setIsLargeScreen] = useState(false)
+
+  useEffect(() => {
+    setCapsuleConfig({
+      right: isLargeScreen ? 24 : 16
+    })
+  }, [isLargeScreen])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const resizeListener = () => {
+      setIsLargeScreen(window.innerWidth > 1024)
+    }
+    resizeListener()
+    window.addEventListener("resize", resizeListener)
+    return () => window.removeEventListener("resize", resizeListener)
+  }, [])
 
   useEffect(() => {
     let cleanup: (() => void) | undefined
