@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
 import { useNotification } from "@/lib/notification-context"
+import { formatScore } from "@/lib/utils"
 
 export default function Dashboard() {
   const { getStatusBadge } = useAppContext()
@@ -97,7 +98,7 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{stats?.average_score?.toFixed(1) || "0.0"}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats ? formatScore(stats.average_score) : "0"}</div>
             <p className="text-xs text-muted-foreground">整体表现</p>
           </CardContent>
         </Card>
@@ -181,7 +182,7 @@ export default function Dashboard() {
                       <div className="text-right">
                         <div className="flex items-center justify-end">
                           <div className="text-xs text-muted-foreground truncate">得分</div>
-                          <div className="text-lg font-semibold ml-1 truncate">{evaluation.total_score}</div>
+                          <div className="text-lg font-semibold ml-1 truncate">{formatScore(evaluation.total_score)}</div>
                         </div>
                       </div>
                       <div className="sm:ml-2 truncate">{getStatusBadge(evaluation.status)}</div>

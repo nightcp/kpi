@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Edit, Trash2, ClipboardList, Settings, Eye } from "lucide-react"
 import { templateApi, itemApi, type KPITemplate, type KPIItem } from "@/lib/api"
 import { useAppContext } from "@/lib/app-context"
-import { getPeriodLabel } from "@/lib/utils"
+import { getPeriodLabel, formatScore } from "@/lib/utils"
 import { LoadingInline } from "@/components/loading"
 
 const defaultTemplateFormData = {
@@ -409,7 +409,7 @@ export default function TemplatesPage() {
                   <ul className="text-sm space-y-1 text-muted-foreground">
                     <li>• 当前模板: <span className="font-semibold">{selectedTemplate.name}</span></li>
                     <li>• 总项目数: <span className="font-semibold">{items.length}</span></li>
-                    <li>• 总分: <span className="font-semibold">{items.reduce((sum, item) => sum + item.max_score, 0)}分</span></li>
+                    <li>• 总分: <span className="font-semibold">{formatScore(items.reduce((sum, item) => sum + item.max_score, 0))}分</span></li>
                   </ul>
                 </div>
                 {items.length === 0 ? (
@@ -438,7 +438,7 @@ export default function TemplatesPage() {
                             </pre>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{item.max_score}分</Badge>
+                            <Badge variant="secondary">{formatScore(item.max_score)}分</Badge>
                           </TableCell>
                           <TableCell className="text-right space-x-2">
                             <Button variant="outline" size="sm" onClick={() => handleEditItem(item)}>

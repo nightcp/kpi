@@ -36,7 +36,7 @@ import {
 import { useAppContext } from "@/lib/app-context"
 import { useUnreadContext } from "@/lib/unread-context"
 import { useNotification } from "@/lib/notification-context"
-import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation } from "@/lib/utils"
+import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation, formatScore } from "@/lib/utils"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
@@ -615,11 +615,11 @@ export default function InvitationsPage() {
                                 <pre className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
                                   {score.item?.description}
                                 </pre>
-                                <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
+                                <p className="text-sm text-muted-foreground">满分：{isUnknown(score.item?.max_score) ? "-" : formatScore(score.item?.max_score as number)}</p>
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                  {score.score ?? "-"}
+                                  {isUnknown(score.score) ? "-" : formatScore(score.score as number)}
                                 </div>
                                 <div className="text-sm text-muted-foreground">当前评分</div>
                               </div>
@@ -728,7 +728,7 @@ export default function InvitationsPage() {
                               </div>
                             </div>
                             <div className="text-lg font-semibold text-blue-600">
-                              {score.score ?? "-"} / {score.item?.max_score ?? "-"}
+                              {isUnknown(score.score) ? "-" : formatScore(score.score as number)} / {isUnknown(score.item?.max_score) ? "-" : formatScore(score.item?.max_score as number)}
                             </div>
                           </div>
                         ))}
@@ -737,7 +737,7 @@ export default function InvitationsPage() {
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-gray-800 dark:text-gray-100">总分：</span>
                           <span className="text-2xl font-bold text-blue-600">
-                            {invitationScores.reduce((acc, score) => acc + (score.score ?? 0), 0)}
+                            {formatScore(invitationScores.reduce((acc, s) => acc + (s.score ?? 0), 0))}
                           </span>
                         </div>
                       </div>

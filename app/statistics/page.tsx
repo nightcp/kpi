@@ -38,7 +38,7 @@ import {
   Download,
 } from "lucide-react"
 import { statisticsApi, exportApi, type DashboardStats, type StatisticsResponse } from "@/lib/api"
-import { getPeriodValue } from "@/lib/utils"
+import { getPeriodValue, formatScore } from "@/lib/utils"
 import { useAppContext } from "@/lib/app-context"
 import { LoadingInline } from "@/components/loading"
 import { useNotification } from "@/lib/notification-context"
@@ -282,7 +282,7 @@ export default function StatisticsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats?.average_score?.toFixed(1) || 0}</div>
+            <div className="text-2xl font-bold">{dashboardStats ? formatScore(dashboardStats.average_score) : 0}</div>
             <p className="text-xs text-muted-foreground">总体平均得分</p>
           </CardContent>
         </Card>
@@ -462,7 +462,7 @@ export default function StatisticsPage() {
                         <TableCell className="font-medium">{performer.name}</TableCell>
                         <TableCell>{performer.department}</TableCell>
                         <TableCell>
-                          <div className="text-lg font-semibold">{performer.score}</div>
+                          <div className="text-lg font-semibold">{formatScore(performer.score)}</div>
                         </TableCell>
                         <TableCell>{performer.evaluations}</TableCell>
                       </TableRow>
@@ -511,7 +511,7 @@ export default function StatisticsPage() {
                       {getPeriodValue(evaluation)}
                     </TableCell>
                     <TableCell>
-                      <div className="text-lg font-semibold">{evaluation.score}</div>
+                       <div className="text-lg font-semibold">{formatScore(evaluation.score)}</div>
                     </TableCell>
                     <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
                   </TableRow>

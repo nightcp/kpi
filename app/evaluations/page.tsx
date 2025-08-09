@@ -48,7 +48,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useAppContext } from "@/lib/app-context"
 import { useUnreadContext } from "@/lib/unread-context"
 import { useNotification } from "@/lib/notification-context"
-import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation } from "@/lib/utils"
+import { generateInputPlaceholder, getPeriodValue, isUnknown, scoreInputValidation, formatScore } from "@/lib/utils"
 import { EmployeeCombobox, EmployeeSelector } from "@/components/employee-selector"
 import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
@@ -340,7 +340,7 @@ export default function EvaluationsPage() {
   const itemAverageScore = (score: KPIScore) => {
     const scores = itemInvitationScores(score.item_id)
     const totalScore = (score.manager_score ?? 0) + (score.self_score ?? 0) + scores.reduce((acc, score) => acc + (score.invitationScore.score ?? 0), 0)
-    return (totalScore / (scores.length + 2)).toFixed(1)
+    return formatScore(totalScore / (scores.length + 2))
   }
 
   // 监听实时通知消息
@@ -1186,7 +1186,7 @@ export default function EvaluationsPage() {
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
               {getFilteredEvaluations.length > 0
-                ? Math.round(
+                ? formatScore(
                     getFilteredEvaluations.reduce((acc, e) => acc + e.total_score, 0) / getFilteredEvaluations.length
                   )
                 : 0}
@@ -1313,7 +1313,7 @@ export default function EvaluationsPage() {
                     <TableCell>{evaluation.template?.name}</TableCell>
                     <TableCell>{getPeriodValue(evaluation)}</TableCell>
                     <TableCell>
-                      <div className="text-lg font-semibold">{evaluation.total_score}</div>
+                      <div className="text-lg font-semibold">{formatScore(evaluation.total_score)}</div>
                     </TableCell>
                     <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
                     <TableCell className="text-right">
@@ -1499,7 +1499,7 @@ export default function EvaluationsPage() {
                             <div>
                               <span className="text-orange-800 dark:text-orange-200">员工自评总分：</span>
                               <span className="font-semibold text-orange-900 dark:text-orange-100">
-                                {scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0)} 分
+                                {formatScore(scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0))} 分
                               </span>
                             </div>
                             <div>
@@ -1568,9 +1568,7 @@ export default function EvaluationsPage() {
                               <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
-                                  ? (
-                                      scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) / scores.length
-                                    ).toFixed(1)
+                                  ? formatScore(scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) / scores.length)
                                   : 0}
                               </div>
                             </div>
@@ -1582,19 +1580,19 @@ export default function EvaluationsPage() {
                               <div className="text-xs text-muted-foreground">
                                 平均分：
                                 {scores.length > 0
-                                  ? (
-                                      scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0) / scores.length
-                                    ).toFixed(1)
+                                  ? formatScore(scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0) / scores.length)
                                   : 0}
                               </div>
                             </div>
                             <div className="bg-card p-3 rounded border">
                               <div className="text-muted-foreground">评分差异分析</div>
                               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                                {Math.abs(
-                                  scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) -
-                                    scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)
-                                ).toFixed(1)}
+                                {formatScore(
+                                  Math.abs(
+                                    scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) -
+                                      scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)
+                                  )
+                                )}
                               </div>
                               <div className="text-xs text-muted-foreground">自评与主管评分差值</div>
                             </div>
@@ -1604,7 +1602,7 @@ export default function EvaluationsPage() {
                           {Math.abs(
                             scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0) -
                               scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)
-                          ) > 10 && (
+                                  ) > 10 && (
                             <div className="mt-3 p-3 bg-yellow-50/80 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded">
                               <div className="text-sm text-yellow-800 dark:text-yellow-200">
                                 ⚠️ <strong>注意：</strong>
@@ -1806,7 +1804,7 @@ export default function EvaluationsPage() {
                                     <div className="flex items-center justify-between mb-2">
                                       <div className="font-medium text-sm">{invitation.invitee?.name} 的评分</div>
                                       <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                                        {totalScore} 分
+                                        {formatScore(totalScore)} 分
                                       </div>
                                     </div>
                                     <div className="text-xs text-muted-foreground mb-2">
@@ -1825,9 +1823,9 @@ export default function EvaluationsPage() {
                                               </div>
                                             )}
                                           </div>
-                                          <div className="font-medium">
-                                            {score.score || 0} / {score.item?.max_score || 0}
-                                          </div>
+                                           <div className="font-medium">
+                                             {formatScore(score.score || 0)} / {formatScore(score.item?.max_score || 0)}
+                                           </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1851,11 +1849,13 @@ export default function EvaluationsPage() {
                                 <pre className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
                                   {score.item?.description}
                                 </pre>
-                                <p className="text-sm text-muted-foreground">满分：{score.item?.max_score}</p>
+                                <p className="text-sm text-muted-foreground">满分：{isUnknown(score.item?.max_score) ? "-" : formatScore(score.item?.max_score as number)}</p>
                               </div>
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-600">
-                                  {score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? "-"}
+                                  {isUnknown(score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score)
+                                    ? "-"
+                                    : formatScore((score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score) as number)}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   {getScoreLabel(selectedEvaluation.status)}
@@ -1943,7 +1943,7 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.self_score ?? "未评分"}</div>
+                                  <div className="text-sm font-medium">{isUnknown(score.self_score) ? "未评分" : formatScore(score.self_score as number)}</div>
                                   <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                     {score.self_comment || "暂无说明"}
                                   </div>
@@ -2011,7 +2011,7 @@ export default function EvaluationsPage() {
                                                   className="cursor-pointer hover:underline truncate"
                                                   title="点击采用员工自评分数"
                                                 >
-                                                  员工自评：{score.self_score || 0}分
+                                                  员工自评：{formatScore(score.self_score || 0)}分
                                                 </div>
                                               </div>
                                             </div>
@@ -2046,7 +2046,7 @@ export default function EvaluationsPage() {
 
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <div className="text-sm font-medium">{score.manager_score ?? "未评分"}</div>
+                                    <div className="text-sm font-medium">{isUnknown(score.manager_score) ? "未评分" : formatScore(score.manager_score as number)}</div>
                                     {score.manager_auto && (
                                       <Tooltip>
                                         <TooltipTrigger className="text-xs">⚠️</TooltipTrigger>
@@ -2123,7 +2123,7 @@ export default function EvaluationsPage() {
                                                   className="cursor-pointer hover:underline truncate"
                                                   title="点击采用员工自评分数"
                                                 >
-                                                  员工自评：{score.self_score || 0}分
+                                                  员工自评：{formatScore(score.self_score || 0)}分
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                   <div
@@ -2136,7 +2136,7 @@ export default function EvaluationsPage() {
                                                     className="cursor-pointer hover:underline truncate"
                                                     title="点击采用主管评分"
                                                   >
-                                                    主管评分：{score.manager_score || 0}分
+                                                     主管评分：{formatScore(score.manager_score || 0)}分
                                                   </div>
                                                   {score.manager_auto && (
                                                     <Tooltip>
@@ -2160,7 +2160,7 @@ export default function EvaluationsPage() {
                                                     className="cursor-pointer hover:underline truncate"
                                                     title={`点击采用${item.invitation.invitee?.name}（邀请）的评分`}
                                                     >
-                                                      {item.invitation.invitee?.name}（邀请）：{item.invitationScore.score ?? "-"}分
+                                                      {item.invitation.invitee?.name}（邀请）：{isUnknown(item.invitationScore.score) ? "-" : formatScore(item.invitationScore.score as number)}分
                                                     </div>
                                                   )
                                                 })}
@@ -2208,7 +2208,7 @@ export default function EvaluationsPage() {
                                 </Label>
 
                                 <div>
-                                  <div className="text-sm font-medium">{score.hr_score ?? "未评分"}</div>
+                                  <div className="text-sm font-medium">{isUnknown(score.hr_score) ? "未评分" : formatScore(score.hr_score as number)}</div>
                                   <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded mt-1">
                                     {score.hr_comment || "暂无说明"}
                                   </div>
@@ -2228,40 +2228,42 @@ export default function EvaluationsPage() {
                           <div>
                             <h3 className="text-2xl font-bold">总分统计</h3>
                             <div className="text-4xl font-bold text-blue-600 mt-2">
-                              {scores.reduce(
-                                (acc, score) =>
-                                  acc +
-                                  (score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? 0),
-                                0
+                              {formatScore(
+                                scores.reduce(
+                                  (acc, score) =>
+                                    acc +
+                                    (score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? 0),
+                                  0
+                                )
                               )}
                             </div>
                             <p className="text-muted-foreground">
-                              满分 {scores.reduce((acc, score) => acc + (score.item?.max_score || 0), 0)} 分
+                              满分 {formatScore(scores.reduce((acc, score) => acc + (score.item?.max_score || 0), 0))} 分
                             </p>
                           </div>
 
                           <div className="grid grid-cols-4 gap-4 text-center">
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0)}
+                                {formatScore(scores.reduce((acc, score) => acc + (score.self_score ?? 0), 0))}
                               </div>
                               <div className="text-sm text-muted-foreground">自评总分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0)}
+                                {formatScore(scores.reduce((acc, score) => acc + (score.manager_score ?? 0), 0))}
                               </div>
                               <div className="text-sm text-muted-foreground">主管评分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.hr_score ?? 0), 0)}
+                                {formatScore(scores.reduce((acc, score) => acc + (score.hr_score ?? 0), 0))}
                               </div>
                               <div className="text-sm text-muted-foreground">HR评分</div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold">
-                                {scores.reduce((acc, score) => acc + (score.final_score ?? 0), 0)}
+                                {formatScore(scores.reduce((acc, score) => acc + (score.final_score ?? 0), 0))}
                               </div>
                               <div className="text-sm text-muted-foreground">最终得分</div>
                             </div>

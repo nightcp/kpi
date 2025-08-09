@@ -31,6 +31,23 @@ export function isUnknown(value: null | undefined | unknown) {
   return value === null || value === undefined
 }
 
+// 格式化浮点数到1位小数，去掉不必要的尾随零
+export function formatScore(score: number | null | undefined): string {
+  if (score === null || score === undefined || isNaN(score)) {
+    return "0"
+  }
+  // 保留1位小数并去掉尾随零
+  return parseFloat(score.toFixed(1)).toString()
+}
+
+// 格式化浮点数到1位小数，返回数字类型
+export function formatScoreNumber(score: number | null | undefined): number {
+  if (score === null || score === undefined || isNaN(score)) {
+    return 0
+  }
+  return parseFloat(score.toFixed(1))
+}
+
 // 导出一个函数，用于生成输入框的占位符
 export function generateInputPlaceholder(maxScore: number) {
   if (maxScore < 0) {
@@ -65,6 +82,10 @@ export function scoreInputValidation(e: React.FormEvent<HTMLInputElement>, maxSc
     } else if (value < 0) {
       input.value = "0"
     }
+  }
+  // 如果分数小数点超过1位，则截取前1位
+  if (/\.\d{2,}/.test(input.value)) {
+    input.value = input.value.slice(0, input.value.indexOf('.') + 2)
   }
 }
 
