@@ -25,8 +25,6 @@ import {
   Calendar,
   User,
   Building,
-  Send,
-  Inbox,
 } from "lucide-react"
 import {
   invitationApi,
