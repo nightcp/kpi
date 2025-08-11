@@ -517,8 +517,12 @@ export const invitationApi = {
     api.get(`/evaluations/${evaluationId}/invitations`),
 
   // 获取我的邀请列表
-  getMy: (params?: PaginationParams): Promise<PaginatedResponse<EvaluationInvitation>> =>
+  getMy: (params?: PaginationParams & { status?: string }): Promise<PaginatedResponse<EvaluationInvitation>> =>
     api.get("/invitations/my", { params }),
+
+  // 获取我发出的邀请列表
+  getSent: (params?: PaginationParams & { status?: string }): Promise<PaginatedResponse<EvaluationInvitation>> =>
+    api.get("/invitations/sent", { params }),
 
   // 获取待确认邀请数量
   getPendingCount: (): Promise<{ count: number }> => api.get("/invitations/pending/count"),

@@ -123,6 +123,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 		invitationRoutes := protected.Group("/invitations")
 		{
 			invitationRoutes.GET("/my", handlers.GetMyInvitations)                                            // 获取我的邀请列表
+			invitationRoutes.GET("/sent", handlers.GetMySentInvitations)                                      // 获取我发出的邀请列表
 			invitationRoutes.GET("/:id", handlers.GetInvitationDetails)                                       // 获取邀请详情
 			invitationRoutes.PUT("/:id/accept", handlers.AcceptInvitation)                                    // 接受邀请
 			invitationRoutes.PUT("/:id/decline", handlers.DeclineInvitation)                                  // 拒绝邀请

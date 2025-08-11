@@ -1,6 +1,6 @@
 "use client"
 
-import { DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool, setCapsuleConfig } from "@dootask/tools"
+import { isMicroApp, DooTaskUserInfo, getUserInfo, interceptBack, isMainElectron as isMainElectronTool, setCapsuleConfig } from "@dootask/tools"
 import { createContext, useContext, useEffect } from "react"
 import { useState } from "react"
 import { authApi, settingsApi } from "./api"
@@ -24,9 +24,15 @@ export function DootaskProvider({ children }: { children: React.ReactNode }) {
   const [isLargeScreen, setIsLargeScreen] = useState(false)
 
   useEffect(() => {
-    setCapsuleConfig({
-      right: isLargeScreen ? 24 : 16
-    })
+    (async () => {
+      const isMicro = await isMicroApp()
+      if (!isMicro) {
+        return
+      }
+      setCapsuleConfig({
+        right: isLargeScreen ? 24 : 16
+      })
+    })()
   }, [isLargeScreen])
 
   useEffect(() => {

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +25,8 @@ import {
   Calendar,
   User,
   Building,
+  Send,
+  Inbox,
 } from "lucide-react"
 import {
   invitationApi,
@@ -47,20 +50,31 @@ export default function InvitationsPage() {
   const { onMessage } = useNotification()
   const detailsRef = useRef<HTMLDivElement>(null)
   const [invitations, setInvitations] = useState<EvaluationInvitation[]>([])
+  const [sentInvitations, setSentInvitations] = useState<EvaluationInvitation[]>([])
   const [selectedInvitation, setSelectedInvitation] = useState<EvaluationInvitation | null>(null)
   const [invitationScores, setInvitationScores] = useState<InvitedScore[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [sentLoading, setSentLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sentError, setSentError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("received")
 
-  // 分页相关状态
+  // 筛选相关状态
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+
+  // 分页相关状态 - 收到的邀请
   const [paginationData, setPaginationData] = useState<PaginatedResponse<EvaluationInvitation> | null>(null)
-  const { currentPage, pageSize, setCurrentPage, handlePageSizeChange } = usePagination(10)
+  const { currentPage, pageSize, setCurrentPage, handlePageSizeChange, resetPagination } = usePagination(10)
+
+  // 分页相关状态 - 发出的邀请
+  const [sentPaginationData, setSentPaginationData] = useState<PaginatedResponse<EvaluationInvitation> | null>(null)
+  const { currentPage: sentCurrentPage, pageSize: sentPageSize, setCurrentPage: setSentCurrentPage, handlePageSizeChange: handleSentPageSizeChange, resetPagination: resetSentPagination } = usePagination(10)
 
   // Popover 状态控制
   const [openPopovers, setOpenPopovers] = useState<{[key: string]: boolean}>({})
 
-  // 获取邀请列表
+  // 获取收到的邀请列表
   const fetchInvitations = async () => {
     try {
       setLoading(true)
@@ -68,6 +82,7 @@ export default function InvitationsPage() {
       const response = await invitationApi.getMy({
         page: currentPage,
         pageSize: pageSize,
+        status: statusFilter !== "all" ? statusFilter : undefined,
       })
       setInvitations(response.data || [])
       setPaginationData(response)
@@ -79,6 +94,50 @@ export default function InvitationsPage() {
       setPaginationData(null)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 获取发出的邀请列表
+  const fetchSentInvitations = async () => {
+    try {
+      setSentLoading(true)
+      setSentError(null)
+      const response = await invitationApi.getSent({
+        page: sentCurrentPage,
+        pageSize: sentPageSize,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+      })
+      setSentInvitations(response.data || [])
+      setSentPaginationData(response)
+    } catch (error) {
+      console.error("获取发出邀请列表失败:", error)
+      setSentError("获取发出邀请列表失败，请刷新重试")
+      setSentInvitations([])
+      setSentPaginationData(null)
+    } finally {
+      setSentLoading(false)
+    }
+  }
+
+  // 切换标签页时重置筛选和分页
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    setStatusFilter("all")
+    if (tab === "received") {
+      resetPagination()
+    } else {
+      resetSentPagination()
+    }
+  }
+
+  // 处理筛选变化
+  const handleStatusFilterChange = (newStatus: string) => {
+    setStatusFilter(newStatus)
+    // 重置分页到第一页
+    if (activeTab === "received") {
+      resetPagination()
+    } else {
+      resetSentPagination()
     }
   }
 
@@ -307,6 +366,10 @@ export default function InvitationsPage() {
       if (messageType.includes("invitation")) {
         // 刷新邀请列表
         fetchInvitations()
+        // 如果当前在发出的邀请标签页，也刷新发出的邀请
+        if (activeTab === "sent") {
+          fetchSentInvitations()
+        }
 
         // 如果当前正在查看的邀请被更新，刷新详情
         if (selectedInvitation && "id" in eventData && eventData.id === selectedInvitation.id) {
@@ -334,11 +397,22 @@ export default function InvitationsPage() {
   }, [onMessage, selectedInvitation])
 
   useEffect(() => {
-    fetchInvitations()
+    if (activeTab === "received") {
+      fetchInvitations()
+    }
 
     // 移除 fetchInvitations 依赖
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, statusFilter, activeTab])
+
+  useEffect(() => {
+    if (activeTab === "sent") {
+      fetchSentInvitations()
+    }
+
+    // 移除 fetchSentInvitations 依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sentCurrentPage, sentPageSize, statusFilter, activeTab])
 
   return (
     <div className="space-y-6">
@@ -346,7 +420,7 @@ export default function InvitationsPage() {
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">邀请评分</h1>
-          <p className="text-muted-foreground mt-1 sm:mt-2">查看和处理收到的评分邀请</p>
+          <p className="text-muted-foreground mt-1 sm:mt-2">查看和处理评分邀请</p>
         </div>
       </div>
 
@@ -358,20 +432,31 @@ export default function InvitationsPage() {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{invitations.length}</div>
-            <p className="text-xs text-muted-foreground">全部邀请</p>
+            <div className="text-xl sm:text-2xl font-bold">
+              {activeTab === "received" ? paginationData?.total || 0 : sentPaginationData?.total || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {statusFilter === "all" ? "全部邀请" : "筛选结果"}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">待处理</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              {activeTab === "received" ? "待处理" : "待接受"}
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {invitations.filter(inv => inv.status === "pending").length}
+              {statusFilter === "pending" 
+                ? (activeTab === "received" ? paginationData?.total || 0 : sentPaginationData?.total || 0)
+                : (activeTab === "received" ? invitations : sentInvitations).filter(inv => inv.status === "pending").length
+              }
             </div>
-            <p className="text-xs text-muted-foreground">等待接受</p>
+            <p className="text-xs text-muted-foreground">
+              {activeTab === "received" ? "等待接受" : "等待接受"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -381,7 +466,10 @@ export default function InvitationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {invitations.filter(inv => inv.status === "accepted").length}
+              {statusFilter === "accepted" 
+                ? (activeTab === "received" ? paginationData?.total || 0 : sentPaginationData?.total || 0)
+                : (activeTab === "received" ? invitations : sentInvitations).filter(inv => inv.status === "accepted").length
+              }
             </div>
             <p className="text-xs text-muted-foreground">正在评分</p>
           </CardContent>
@@ -393,7 +481,10 @@ export default function InvitationsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {invitations.filter(inv => inv.status === "completed").length}
+              {statusFilter === "completed" 
+                ? (activeTab === "received" ? paginationData?.total || 0 : sentPaginationData?.total || 0)
+                : (activeTab === "received" ? invitations : sentInvitations).filter(inv => inv.status === "completed").length
+              }
             </div>
             <p className="text-xs text-muted-foreground">已完成评分</p>
           </CardContent>
@@ -401,26 +492,73 @@ export default function InvitationsPage() {
       </div>
 
       {/* 错误提示 */}
-      {error && (
+      {((activeTab === "received" && error) || (activeTab === "sent" && sentError)) && (
         <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="text-red-800 dark:text-red-200 text-sm">⚠️ {error}</div>
+          <div className="text-red-800 dark:text-red-200 text-sm">
+            ⚠️ {activeTab === "received" ? error : sentError}
+          </div>
         </div>
       )}
 
       {/* 邀请列表 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            邀请列表
-            {loading && <LoadingInline />}
+          <CardTitle className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              邀请列表
+              {((activeTab === "received" && loading) || (activeTab === "sent" && sentLoading)) && <LoadingInline />}
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-auto">
+                  <SelectValue placeholder="状态筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全部状态</SelectItem>
+                  <SelectItem value="pending">待接受</SelectItem>
+                  <SelectItem value="accepted">进行中</SelectItem>
+                  <SelectItem value="declined">已拒绝</SelectItem>
+                  <SelectItem value="cancelled">已撤销</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => handleStatusFilterChange("all")}
+              >
+                重置筛选
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* 邀请视图标签页 */}
+          <div className="mb-6">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+                <TabsTrigger value="received" className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  收到的邀请
+                </TabsTrigger>
+                <TabsTrigger value="sent" className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  发出的邀请
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="received" className="mt-4">
+                <div className="text-sm text-muted-foreground mb-4">📩 显示别人邀请您进行评分的记录</div>
+              </TabsContent>
+              <TabsContent value="sent" className="mt-4">
+                <div className="text-sm text-muted-foreground mb-4">📤 显示您邀请别人进行评分的记录</div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>评估对象</TableHead>
-                <TableHead>邀请人</TableHead>
+                <TableHead>{activeTab === "received" ? "邀请人" : "被邀请人"}</TableHead>
                 <TableHead>评估信息</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>创建时间</TableHead>
@@ -428,22 +566,27 @@ export default function InvitationsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invitations.length === 0 ? (
+              {(activeTab === "received" ? invitations : sentInvitations).length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    暂无邀请记录
+                    {statusFilter === "all" 
+                      ? (activeTab === "received" ? "暂无收到的邀请记录" : "暂无发出的邀请记录")
+                      : "暂无符合筛选条件的邀请记录"
+                    }
                   </TableCell>
                 </TableRow>
               ) : (
-                invitations.map(invitation => (
+                (activeTab === "received" ? invitations : sentInvitations).map(invitation => (
                   <TableRow key={invitation.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Building className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{invitation.evaluation?.employee?.name}</div>
+                          <div className="font-medium">
+                            {invitation.evaluation?.employee?.name || "员工已删除"}
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            {invitation.evaluation?.employee?.department?.name}
+                            {invitation.evaluation?.employee?.department?.name || "-"}
                           </div>
                         </div>
                       </div>
@@ -452,17 +595,23 @@ export default function InvitationsPage() {
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{invitation.inviter?.name}</div>
-                          <div className="text-sm text-muted-foreground">{invitation.inviter?.position}</div>
+                          <div className="font-medium">
+                            {activeTab === "received" ? invitation.inviter?.name : invitation.invitee?.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {activeTab === "received" ? invitation.inviter?.position : invitation.invitee?.position}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div>
-                          <div className="font-medium">{invitation.evaluation?.template?.name}</div>
+                          <div className="font-medium">
+                            {invitation.evaluation?.template?.name || "模板已删除"}
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            {invitation.evaluation && getPeriodValue(invitation.evaluation)}
+                            {invitation.evaluation ? getPeriodValue(invitation.evaluation) : "-"}
                           </div>
                         </div>
                       </div>
@@ -485,7 +634,7 @@ export default function InvitationsPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {invitation.status === "pending" && (
+                        {activeTab === "received" && invitation.status === "pending" && (
                           <>
                             <Button
                               variant="outline"
@@ -512,15 +661,15 @@ export default function InvitationsPage() {
           </Table>
 
           {/* 分页组件 */}
-          {paginationData && (
+          {((activeTab === "received" && paginationData) || (activeTab === "sent" && sentPaginationData)) && (
             <div className="mt-6">
               <Pagination
-                currentPage={currentPage}
-                totalPages={paginationData.totalPages}
-                pageSize={pageSize}
-                totalItems={paginationData.total}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={handlePageSizeChange}
+                currentPage={activeTab === "received" ? currentPage : sentCurrentPage}
+                totalPages={activeTab === "received" ? paginationData?.totalPages || 0 : sentPaginationData?.totalPages || 0}
+                pageSize={activeTab === "received" ? pageSize : sentPageSize}
+                totalItems={activeTab === "received" ? paginationData?.total || 0 : sentPaginationData?.total || 0}
+                onPageChange={activeTab === "received" ? setCurrentPage : setSentCurrentPage}
+                onPageSizeChange={activeTab === "received" ? handlePageSizeChange : handleSentPageSizeChange}
                 className="justify-center"
               />
             </div>

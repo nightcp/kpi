@@ -188,6 +188,14 @@ func GetEvaluationInvitations(c *gin.Context) {
 		return
 	}
 
+	// 验证评估是否存在且评估对象存在
+	var evaluation models.KPIEvaluation
+	if err := models.DB.Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
+		First(&evaluation, evalID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "评估不存在或评估对象已被删除"})
+		return
+	}
+
 	var invitations []models.EvaluationInvitation
 	if err := models.DB.Preload("Invitee").Preload("Inviter").
 		Where("evaluation_id = ?", evalID).Find(&invitations).Error; err != nil {
@@ -213,6 +221,7 @@ func GetMyInvitations(c *gin.Context) {
 	// 解析分页参数
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	status := c.Query("status")
 
 	// 验证分页参数
 	if page < 1 {
@@ -222,10 +231,18 @@ func GetMyInvitations(c *gin.Context) {
 		pageSize = 10
 	}
 
+	// 构建查询条件 - 只查询评估对象存在的邀请
+	query := models.DB.Model(&models.EvaluationInvitation{}).
+		Joins("JOIN kpi_evaluations ON evaluation_invitations.evaluation_id = kpi_evaluations.id").
+		Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
+		Where("evaluation_invitations.invitee_id = ?", userID)
+	if status != "" && status != "all" {
+		query = query.Where("evaluation_invitations.status = ?", status)
+	}
+
 	// 获取总数
 	var total int64
-	if err := models.DB.Model(&models.EvaluationInvitation{}).
-		Where("invitee_id = ?", userID).Count(&total).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取邀请总数失败"})
 		return
 	}
@@ -233,9 +250,88 @@ func GetMyInvitations(c *gin.Context) {
 	// 分页查询
 	var invitations []models.EvaluationInvitation
 	offset := (page - 1) * pageSize
-	if err := models.DB.Preload("Evaluation.Employee.Department").Preload("Evaluation.Employee").Preload("Evaluation.Template").
-		Preload("Inviter").Where("invitee_id = ?", userID).
-		Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&invitations).Error; err != nil {
+	queryBuilder := models.DB.Preload("Evaluation.Employee.Department").Preload("Evaluation.Employee").Preload("Evaluation.Template").
+		Preload("Inviter").
+		Joins("JOIN kpi_evaluations ON evaluation_invitations.evaluation_id = kpi_evaluations.id").
+		Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
+		Where("evaluation_invitations.invitee_id = ?", userID)
+	
+	if status != "" && status != "all" {
+		queryBuilder = queryBuilder.Where("evaluation_invitations.status = ?", status)
+	}
+	
+	if err := queryBuilder.Order("evaluation_invitations.created_at DESC").Offset(offset).Limit(pageSize).Find(&invitations).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取邀请列表失败"})
+		return
+	}
+
+	// 计算分页信息
+	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       invitations,
+		"total":      total,
+		"page":       page,
+		"pageSize":   pageSize,
+		"totalPages": totalPages,
+		"hasNext":    page < totalPages,
+		"hasPrev":    page > 1,
+	})
+}
+
+// 获取我发出的邀请列表
+func GetMySentInvitations(c *gin.Context) {
+	// 获取当前用户ID
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未找到用户信息"})
+		return
+	}
+	userID := currentUserID.(uint)
+
+	// 解析分页参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	status := c.Query("status")
+
+	// 验证分页参数
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	// 构建查询条件 - 只查询评估对象存在的邀请
+	query := models.DB.Model(&models.EvaluationInvitation{}).
+		Joins("JOIN kpi_evaluations ON evaluation_invitations.evaluation_id = kpi_evaluations.id").
+		Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
+		Where("evaluation_invitations.inviter_id = ?", userID)
+	if status != "" && status != "all" {
+		query = query.Where("evaluation_invitations.status = ?", status)
+	}
+
+	// 获取总数
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取邀请总数失败"})
+		return
+	}
+
+	// 分页查询
+	var invitations []models.EvaluationInvitation
+	offset := (page - 1) * pageSize
+	queryBuilder := models.DB.Preload("Evaluation.Employee.Department").Preload("Evaluation.Employee").Preload("Evaluation.Template").
+		Preload("Invitee").
+		Joins("JOIN kpi_evaluations ON evaluation_invitations.evaluation_id = kpi_evaluations.id").
+		Joins("JOIN employees ON kpi_evaluations.employee_id = employees.id").
+		Where("evaluation_invitations.inviter_id = ?", userID)
+	
+	if status != "" && status != "all" {
+		queryBuilder = queryBuilder.Where("evaluation_invitations.status = ?", status)
+	}
+	
+	if err := queryBuilder.Order("evaluation_invitations.created_at DESC").Offset(offset).Limit(pageSize).Find(&invitations).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取邀请列表失败"})
 		return
 	}
