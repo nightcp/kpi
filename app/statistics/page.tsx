@@ -107,24 +107,13 @@ export default function StatisticsPage() {
   }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter, fetchStatisticsData])
 
   // 导出报告
-  const handleExport = async (type: string) => {
+  const handleExport = async () => {
     try {
-      let response
-
-      switch (type) {
-        case "period":
-          response = await exportApi.period(selectedPeriod, {
-            year: selectedYear.toString(),
-            month: selectedPeriod === "monthly" ? selectedMonth.toString() : undefined,
-            quarter: selectedPeriod === "quarterly" ? selectedQuarter.toString() : undefined,
-          })
-          break
-        case "department":
-          response = await exportApi.department(1) // 示例部门ID
-          break
-        default:
-          return
-      }
+      const response = await exportApi.period(selectedPeriod, {
+        year: selectedYear.toString(),
+        month: selectedPeriod === "monthly" ? selectedMonth.toString() : undefined,
+        quarter: selectedPeriod === "quarterly" ? selectedQuarter.toString() : undefined,
+      })
 
       // 直接跳转到下载URL
       try {
@@ -232,7 +221,7 @@ export default function StatisticsPage() {
               </SelectContent>
             </Select>
           )}
-          <Button onClick={() => handleExport("period")}>
+          <Button onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" />
             导出报告
           </Button>
