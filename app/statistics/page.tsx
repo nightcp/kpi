@@ -50,10 +50,44 @@ export default function StatisticsPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [statisticsData, setStatisticsData] = useState<StatisticsResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  // 获取默认时间信息
+  const getDefaultPeriodInfo = useCallback((period: string) => {
+    const now = new Date()
+    
+    switch (period) {
+      case "yearly":
+        // 年度：默认选择今年
+        return {
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+          quarter: Math.floor(now.getMonth() / 3) + 1
+        }
+      case "quarterly":
+        // 季度：默认选择上个季度
+        const lastQuarter = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+        return {
+          year: lastQuarter.getFullYear(),
+          month: lastQuarter.getMonth() + 1,
+          quarter: Math.floor(lastQuarter.getMonth() / 3) + 1
+        }
+      case "monthly":
+      default:
+        // 月度：默认选择上个月
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        return {
+          year: lastMonth.getFullYear(),
+          month: lastMonth.getMonth() + 1,
+          quarter: Math.floor(lastMonth.getMonth() / 3) + 1
+        }
+    }
+  }, [])
+
+  const defaultInfo = getDefaultPeriodInfo("monthly")
+  
+  const [selectedYear, setSelectedYear] = useState(defaultInfo.year)
   const [selectedPeriod, setSelectedPeriod] = useState("monthly")
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
-  const [selectedQuarter, setSelectedQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1)
+  const [selectedMonth, setSelectedMonth] = useState(defaultInfo.month)
+  const [selectedQuarter, setSelectedQuarter] = useState(defaultInfo.quarter)
 
   // 图表配置 - 使用CSS变量以支持主题切换
   const chartConfig = {
@@ -101,6 +135,14 @@ export default function StatisticsPage() {
       setLoading(false)
     }
   }, [selectedYear, selectedPeriod, selectedMonth, selectedQuarter])
+
+  // 当周期类型改变时，自动调整默认时间
+  useEffect(() => {
+    const newDefaultInfo = getDefaultPeriodInfo(selectedPeriod)
+    setSelectedYear(newDefaultInfo.year)
+    setSelectedMonth(newDefaultInfo.month)
+    setSelectedQuarter(newDefaultInfo.quarter)
+  }, [selectedPeriod, getDefaultPeriodInfo])
 
   useEffect(() => {
     fetchStatisticsData()
