@@ -54,6 +54,7 @@ import { Pagination, usePagination } from "@/components/pagination"
 import { LoadingInline } from "@/components/loading"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { AxiosError } from "axios"
 
 export default function EvaluationsPage() {
   const { Alert, Confirm, getStatusBadge, isTouch } = useAppContext()
@@ -451,9 +452,13 @@ export default function EvaluationsPage() {
 
       // 成功提示
       Alert("创建成功", `已为 ${formData.employee_ids.length} 个员工创建考核`)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("创建评估失败:", error)
-      Alert("创建失败", "创建考核失败，请重试")
+      if (error instanceof AxiosError) {
+        Alert("创建失败", error.response?.data?.error || "创建考核失败，请重试")
+      } else {
+        Alert("创建失败", "创建考核失败，请重试")
+      }
     }
   }
 
@@ -1313,7 +1318,15 @@ export default function EvaluationsPage() {
                     <TableCell>{evaluation.template?.name}</TableCell>
                     <TableCell>{getPeriodValue(evaluation)}</TableCell>
                     <TableCell>
-                      <div className="text-lg font-semibold">{formatScore(evaluation.total_score)}</div>
+                      <div className="text-lg font-semibold">
+                        {formatScore(
+                          evaluation.scores?.reduce(
+                            (acc, score) =>
+                              acc +
+                              (score.final_score ?? score.hr_score ?? score.manager_score ?? score.self_score ?? 0), 0
+                          )
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(evaluation.status)}</TableCell>
                     <TableCell className="text-right">

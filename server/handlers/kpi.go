@@ -167,7 +167,7 @@ func GetEvaluations(c *gin.Context) {
 	}
 
 	// 构建查询
-	query := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores")
+	query := models.DB.Preload("Employee.Department").Preload("Template").Preload("Scores").Preload("Scores.Item")
 
 	// 添加筛选条件
 	if status != "" {
@@ -240,8 +240,28 @@ func CreateEvaluation(c *gin.Context) {
 	// 开始数据库事务
 	tx := models.DB.Begin()
 
+	row := models.KPIEvaluation{}
+	result := tx.Preload("Employee").
+		Where("employee_id = ? AND template_id = ? AND period = ? AND year = ? AND month = ?",
+			evaluation.EmployeeID, evaluation.TemplateID, evaluation.Period, evaluation.Year, evaluation.Month).
+		Find(&row).Limit(1)
+	if result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "创建评估失败",
+		})
+		return
+	}
+	if row.ID > 0 {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("员工【%s】评估记录已存在", row.Employee.Name),
+		})
+		return
+	}
+
 	// 创建评估记录
-	result := tx.Create(&evaluation)
+	result = tx.Create(&evaluation)
 	if result.Error != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
