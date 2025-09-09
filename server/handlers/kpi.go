@@ -157,6 +157,11 @@ func GetEvaluations(c *gin.Context) {
 	status := c.Query("status")
 	employeeID := c.Query("employee_id")
 	departmentID := c.Query("department_id")
+	// 周期筛选参数
+	period := c.Query("period")
+	yearStr := c.Query("year")
+	monthStr := c.Query("month")
+	quarterStr := c.Query("quarter")
 
 	// 验证分页参数
 	if page < 1 {
@@ -180,6 +185,23 @@ func GetEvaluations(c *gin.Context) {
 		query = query.Where("employee_id IN (SELECT id FROM employees WHERE department_id = ?)", departmentID)
 	}
 
+	// 添加周期筛选条件
+	if period != "" {
+		query = query.Where("period = ?", period)
+	}
+	if yearStr != "" {
+		year, _ := strconv.Atoi(yearStr)
+		query = query.Where("year = ?", year)
+	}
+	if monthStr != "" {
+		month, _ := strconv.Atoi(monthStr)
+		query = query.Where("month = ?", month)
+	}
+	if quarterStr != "" {
+		quarter, _ := strconv.Atoi(quarterStr)
+		query = query.Where("quarter = ?", quarter)
+	}
+
 	// 获取总数
 	var total int64
 	countQuery := models.DB.Model(&models.KPIEvaluation{})
@@ -191,6 +213,23 @@ func GetEvaluations(c *gin.Context) {
 	}
 	if departmentID != "" {
 		countQuery = countQuery.Where("employee_id IN (SELECT id FROM employees WHERE department_id = ?)", departmentID)
+	}
+
+	// 在计数查询中也添加周期筛选条件
+	if period != "" {
+		countQuery = countQuery.Where("period = ?", period)
+	}
+	if yearStr != "" {
+		year, _ := strconv.Atoi(yearStr)
+		countQuery = countQuery.Where("year = ?", year)
+	}
+	if monthStr != "" {
+		month, _ := strconv.Atoi(monthStr)
+		countQuery = countQuery.Where("month = ?", month)
+	}
+	if quarterStr != "" {
+		quarter, _ := strconv.Atoi(quarterStr)
+		countQuery = countQuery.Where("quarter = ?", quarter)
 	}
 	if err := countQuery.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
